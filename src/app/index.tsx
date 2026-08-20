@@ -2,15 +2,18 @@ import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentProps, useState } from 'react';
 import {
+    Image,
+    ImageBackground,
     Pressable,
     ScrollView,
     Text,
     TextInput,
-    View,
     useWindowDimensions,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import MapView from '@/components/Map/MapView';
 import { colors, styles } from '@/styles/home.styles';
 
 type SymbolName = NonNullable<ComponentProps<typeof SymbolView>['name']>;
@@ -35,7 +38,11 @@ export default function HomeScreen() {
         <View style={[styles.headerInner, isCompact && styles.headerInnerCompact]}>
           <Pressable onPress={() => router.push('/')} style={styles.brand}>
             <View style={styles.brandMark}>
-              <Text style={styles.brandMarkText}>⌃</Text>
+              <Image
+                source={require('@/assets/images/faviconT.png')}
+                style={styles.brandLogo}
+                accessibilityLabel="Logo de RutasTunja"
+              />
             </View>
             <View>
               <Text style={styles.brandName}>
@@ -80,7 +87,16 @@ export default function HomeScreen() {
       </SafeAreaView>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
+        <ImageBackground
+          source={require('@/assets/images/tunja.jpg')}
+          style={styles.hero}
+          imageStyle={styles.heroImage}
+        >
+          <View pointerEvents="none" style={styles.heroOverlay} />
+          <View pointerEvents="none" style={styles.heroFadeLayerOne} />
+          <View pointerEvents="none" style={styles.heroFadeLayerTwo} />
+          <View pointerEvents="none" style={styles.heroFadeLayerThree} />
+          <View pointerEvents="none" style={styles.heroFadeLayerFour} />
           <View style={styles.heroInner}>
             <View style={styles.locationPill}>
               <Icon name="mappin.and.ellipse" color={colors.coral} size={18} />
@@ -138,11 +154,14 @@ export default function HomeScreen() {
               )}
             </View>
           </View>
-        </View>
+        </ImageBackground>
 
         <View style={styles.belowFold}>
           <Text style={styles.sectionEyebrow}>LO QUE NECESITAS, MÁS CERCA</Text>
           <Text style={styles.sectionTitle}>Explora Tunja a tu ritmo</Text>
+          <View style={styles.mapContainer}>
+            <MapView />
+          </View>
         </View>
       </ScrollView>
     </View>

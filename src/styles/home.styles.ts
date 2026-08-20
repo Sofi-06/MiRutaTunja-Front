@@ -47,6 +47,7 @@ export const styles = StyleSheet.create({
     fontWeight: "800",
     lineHeight: 36,
   },
+  brandLogo: { width: 43, height: 43 },
   brandName: {
     color: colors.ink,
     fontSize: 21,
@@ -110,7 +111,40 @@ export const styles = StyleSheet.create({
   },
   loginText: { color: colors.white, fontWeight: "700", fontSize: 16 },
   scrollContent: { flexGrow: 1 },
-  hero: { backgroundColor: colors.sky, minHeight: 620, paddingHorizontal: 44 },
+  hero: {
+    backgroundColor: colors.white,
+    minHeight: 620,
+    paddingHorizontal: 44,
+    overflow: "hidden",
+  },
+  heroImage: {
+    resizeMode: "cover",
+    transform: [{ scale: 1.08 }, { translateX: 72 }],
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(43, 84, 121, 0.10)",
+  },
+  heroFadeLayerOne: {
+    ...StyleSheet.absoluteFill,
+    width: 72,
+    backgroundColor: "rgba(255, 255, 255, 0.30)",
+  },
+  heroFadeLayerTwo: {
+    ...StyleSheet.absoluteFill,
+    width: 124,
+    backgroundColor: "rgba(255, 255, 255, 0.20)",
+  },
+  heroFadeLayerThree: {
+    ...StyleSheet.absoluteFill,
+    width: 176,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+  },
+  heroFadeLayerFour: {
+    ...StyleSheet.absoluteFill,
+    width: 232,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+  },
   heroInner: {
     width: "100%",
     maxWidth: 1820,
@@ -242,5 +276,12 @@ export const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "800",
     marginTop: 10,
+  },
+  mapContainer: {
+    marginTop: 28,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
   },
 });
