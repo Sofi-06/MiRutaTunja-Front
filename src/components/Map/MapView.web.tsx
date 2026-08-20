@@ -2,7 +2,7 @@ import { mapHtml } from './mapHtml';
 
 export default function MapView() {
   return (
-    <div style={{ height: 520, position: 'relative', width: '100%' }}>
+    <div style={{ height: '100%', minHeight: 620, position: 'relative', width: '100%' }}>
       <iframe
         title="Mapa de Tunja"
         srcDoc={mapHtml}

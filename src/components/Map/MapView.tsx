@@ -22,7 +22,7 @@ export default function MapView() {
 }
 
 const styles = StyleSheet.create({
-  container: { height: 520, overflow: 'hidden', borderRadius: 24 },
+  container: { flex: 1, minHeight: 620, overflow: 'hidden', borderRadius: 24 },
   map: { flex: 1 },
   label: {
     position: 'absolute',

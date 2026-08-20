@@ -1,4 +1,4 @@
-const TUNJA_COORDINATES: [number, number] = [5.5353, -73.3678];
+const TUNJA_COORDINATES: [number, number] = [5.5323217, -73.3616267];
 
 export const mapHtml = `
   <!DOCTYPE html>
@@ -15,14 +15,14 @@ export const mapHtml = `
       <div id="map"></div>
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
       <script>
-        const map = L.map('map', { zoomControl: true }).setView([${TUNJA_COORDINATES[0]}, ${TUNJA_COORDINATES[1]}], 15);
+        const map = L.map('map', { zoomControl: true }).setView([${TUNJA_COORDINATES[0]}, ${TUNJA_COORDINATES[1]}], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(map);
         L.marker([${TUNJA_COORDINATES[0]}, ${TUNJA_COORDINATES[1]}])
           .addTo(map)
-          .bindPopup('Tunja')
+          .bindPopup('Plaza de Bolívar · Centro histórico de Tunja')
           .openPopup();
       </script>
     </body>
