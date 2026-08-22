@@ -12,7 +12,7 @@ const stops = [
 
 export default function SelectedRouteCard({ isCompact = false }: Readonly<{ isCompact?: boolean }>) {
   return (
-    <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact]}>
+    <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact, isCompact && styles.selectedRouteCardPhone]}>
       <View style={styles.selectedRouteHeader}>
         <View>
           <Text style={styles.selectedRouteEyebrow}>RECORRIDO SELECCIONADO</Text>
@@ -56,7 +56,7 @@ export default function SelectedRouteCard({ isCompact = false }: Readonly<{ isCo
       <Pressable style={styles.startTripButton}>
         <Text style={styles.startTripButtonText}>Iniciar viaje</Text>
       </Pressable>
-      <Pressable accessibilityLabel="Guardar ruta" style={styles.saveRouteButton}>
+      <Pressable accessibilityLabel="Guardar ruta" style={[styles.saveRouteButton, isCompact && styles.saveRouteButtonPhone]}>
         <Icon name="star" color={colors.muted} size={19} />
       </Pressable>
     </View>

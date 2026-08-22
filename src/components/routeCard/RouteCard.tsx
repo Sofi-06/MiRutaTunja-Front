@@ -11,6 +11,7 @@ type RouteCardProps = Readonly<{
   frequency: string;
   stops: string;
   tone: 'blue' | 'green' | 'coral' | 'gold';
+  isCompact?: boolean;
 }>;
 
 const toneStyles = {
@@ -20,11 +21,12 @@ const toneStyles = {
   gold: styles.routeCodeGold,
 };
 
-export default function RouteCard({ code, title, description, duration, frequency, stops, tone }: RouteCardProps) {
+export default function RouteCard({ code, title, description, duration, frequency, stops, tone, isCompact = false }: RouteCardProps) {
   return (
     <Pressable
       style={({ hovered }) => [
         styles.routeCard,
+        isCompact && styles.routeCardPhone,
         hovered && styles.routeCardHovered,
       ]}
     >
@@ -32,10 +34,10 @@ export default function RouteCard({ code, title, description, duration, frequenc
         <Text style={[styles.routeCode, toneStyles[tone]]}>{code}</Text>
         <Icon name="arrow" color={colors.muted} size={16} />
       </View>
-      <Text style={styles.routeCardTitle}>{title}</Text>
-      <Text style={styles.routeCardDescription}>{description}</Text>
-      <View style={styles.routeCardDivider} />
-      <View style={styles.routeCardMeta}>
+      <Text style={[styles.routeCardTitle, isCompact && styles.routeCardTitlePhone]}>{title}</Text>
+      <Text style={[styles.routeCardDescription, isCompact && styles.routeCardDescriptionPhone]}>{description}</Text>
+      <View style={[styles.routeCardDivider, isCompact && styles.routeCardDividerPhone]} />
+      <View style={[styles.routeCardMeta, isCompact && styles.routeCardMetaPhone]}>
         <View style={styles.routeMetaItem}>
           <Icon name="clock" size={15} />
           <Text style={styles.routeMetaText}>{duration}</Text>

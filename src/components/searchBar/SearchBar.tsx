@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
@@ -18,8 +18,8 @@ export default function SearchBar({ destination, isCompact, onDestinationChange 
   };
 
   return (
-    <View style={[styles.searchRow, isCompact && styles.searchRowCompact]}>
-      <View style={[styles.searchBox, isCompact && styles.searchBoxCompact]}>
+    <View style={[styles.searchRow, isCompact && styles.searchRowCompact, isCompact && styles.searchRowPhone]}>
+      <View style={[styles.searchBox, isCompact && styles.searchBoxCompact, isCompact && styles.searchBoxPhone]}>
         <Icon name="search" color={colors.muted} size={23} />
         <TextInput
           value={destination}
@@ -28,7 +28,7 @@ export default function SearchBar({ destination, isCompact, onDestinationChange 
           placeholder="¿A dónde quieres ir?"
           placeholderTextColor={colors.muted}
           returnKeyType="search"
-          style={styles.searchInput}
+          style={[styles.searchInput, isCompact && styles.searchInputPhone]}
         />
         {!isCompact && <View style={styles.searchDivider} />}
         {!isCompact && (
@@ -37,8 +37,8 @@ export default function SearchBar({ destination, isCompact, onDestinationChange 
             <Text style={styles.locationActionText}>Mi ubicación</Text>
           </Pressable>
         )}
-        <Pressable onPress={openSearch} style={styles.searchButton}>
-          <Text style={styles.searchButtonText}>Buscar</Text>
+        <Pressable onPress={openSearch} style={[styles.searchButton, isCompact && styles.searchButtonPhone]}>
+          <Text style={[styles.searchButtonText, isCompact && styles.searchButtonTextPhone]}>Buscar</Text>
           <Icon name="arrow" color={colors.white} size={17} />
         </Pressable>
       </View>
@@ -58,6 +58,26 @@ export default function SearchBar({ destination, isCompact, onDestinationChange 
             <Text style={styles.quickText}>Todas las rutas</Text>
           </Pressable>
         </View>
+      )}
+      {isCompact && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickActionsPhone}
+        >
+          <Pressable onPress={() => router.push('/favorites')} style={[styles.quickPill, styles.quickPillActive, styles.quickPillPhone]}>
+            <Icon name="heart" color={colors.blue} size={18} />
+            <Text style={[styles.quickTextActive, styles.quickTextPhone]}>Favoritos</Text>
+          </Pressable>
+          <Pressable onPress={openSearch} style={[styles.quickPill, styles.quickPillPhone]}>
+            <Icon name="history" color={colors.ink} size={17} />
+            <Text style={[styles.quickText, styles.quickTextPhone]}>Recientes</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/explore')} style={[styles.quickPill, styles.quickPillPhone]}>
+            <Icon name="bus" color={colors.ink} size={18} />
+            <Text style={[styles.quickText, styles.quickTextPhone]}>Rutas</Text>
+          </Pressable>
+        </ScrollView>
       )}
     </View>
   );

@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import {
-    ImageBackground,
-    ScrollView,
-    Text,
-    useWindowDimensions,
-    View,
+  ImageBackground,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import MapView from '@/components/Map/MapView';
 import SelectedRouteCard from '@/components/Map/SelectedRouteCard';
+import Footer from '@/components/footer/Footer';
 import Header from '@/components/header/Header';
 import RouteCard from '@/components/routeCard/RouteCard';
 import RouteInsights from '@/components/routeCard/RouteInsights';
@@ -40,24 +41,24 @@ export default function HomeScreen() {
       >
         <ImageBackground
           source={require('@/assets/images/tunja.jpg')}
-          style={styles.hero}
-          imageStyle={styles.heroImage}
+          style={[styles.hero, isCompact && styles.heroPhone]}
+          imageStyle={[styles.heroImage, isCompact && styles.heroImagePhone]}
         >
           <View pointerEvents="none" style={styles.heroOverlay} />
-          <View pointerEvents="none" style={styles.heroFadeLayerOne} />
-          <View pointerEvents="none" style={styles.heroFadeLayerTwo} />
-          <View pointerEvents="none" style={styles.heroFadeLayerThree} />
-          <View pointerEvents="none" style={styles.heroFadeLayerFour} />
-          <View style={[styles.heroInner, isCompact && styles.heroInnerCompact]}>
-            <View style={styles.locationPill}>
+          <View pointerEvents="none" style={[styles.heroFadeLayerOne, isCompact && styles.heroFadePhone]} />
+          <View pointerEvents="none" style={[styles.heroFadeLayerTwo, isCompact && styles.heroFadePhone]} />
+          <View pointerEvents="none" style={[styles.heroFadeLayerThree, isCompact && styles.heroFadePhone]} />
+          <View pointerEvents="none" style={[styles.heroFadeLayerFour, isCompact && styles.heroFadePhone]} />
+          <View style={[styles.heroInner, isCompact && styles.heroInnerCompact, isCompact && styles.heroInnerPhone]}>
+            <View style={[styles.locationPill, isCompact && styles.locationPillPhone]}>
               <Icon name="location" color={colors.coral} size={18} />
-              <Text style={styles.locationText}>TUNJA · BOYACÁ</Text>
+              <Text style={[styles.locationText, isCompact && styles.locationTextPhone]}>TUNJA · BOYACÁ</Text>
             </View>
-            <Text style={[styles.heroTitle, isCompact && styles.heroTitleCompact]}>
+            <Text style={[styles.heroTitle, isCompact && styles.heroTitleCompact, isCompact && styles.heroTitlePhone]}>
               Muévete por la ciudad,{ '\n' }
               <Text style={styles.heroTitleBlue}>tan simple como{ '\n' }caminar el centro.</Text>
             </Text>
-            <Text style={styles.heroDescription}>
+            <Text style={[styles.heroDescription, isCompact && styles.heroDescriptionPhone]}>
               Consulta rutas de buses urbanos, encuentra el paradero más cercano y planifica{ '\n' }
               tu viaje con información clara y en tiempo real.
             </Text>
@@ -70,29 +71,29 @@ export default function HomeScreen() {
           </View>
         </ImageBackground>
 
-        <View style={styles.exploreSection}>
+        <View style={[styles.exploreSection, isCompact && styles.exploreSectionPhone]}>
           <View style={styles.mapSection}>
             <Text style={styles.sectionEyebrow}>DESCUBRE LA CIUDAD</Text>
-            <Text style={styles.sectionTitle}>Planifica tu recorrido</Text>
-            <Text style={styles.sectionDescription}>Consulta el trayecto, los paraderos y el tiempo estimado de llegada.</Text>
+            <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Planifica tu recorrido</Text>
+            <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el trayecto, los paraderos y el tiempo estimado de llegada.</Text>
             <View style={[styles.mapRouteLayout, isCompact && styles.mapRouteLayoutCompact]}>
-              <View style={styles.mapContainer}>
+              <View style={[styles.mapContainer, isCompact && styles.mapContainerPhone]}>
                 <MapView />
               </View>
               <SelectedRouteCard isCompact={isCompact} />
             </View>
           </View>
 
-          <View style={styles.sectionHeaderRow}>
-            <View>
+          <View style={[styles.sectionHeaderRow, isCompact && styles.sectionHeaderRowPhone]}>
+            <View style={styles.sectionHeaderCopy}>
               <Text style={styles.sectionEyebrow}>MOVIDAS ESTA SEMANA</Text>
-              <Text style={styles.sectionTitle}>Rutas más utilizadas</Text>
-              <Text style={styles.sectionDescription}>Las líneas con mayor demanda en Tunja durante esta semana.</Text>
+              <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas más utilizadas</Text>
+              <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Las líneas con mayor demanda en Tunja durante esta semana.</Text>
             </View>
-            <Text style={styles.sectionLink}>Ver todas  ›</Text>
+            {!isCompact && <Text style={styles.sectionLink}>Ver todas  ›</Text>}
           </View>
 
-          <View style={styles.routeGrid}>
+          <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
             <RouteCard
               code="R-02"
               title="Centro – UPTC"
@@ -101,6 +102,7 @@ export default function HomeScreen() {
               frequency="cada 6 min"
               stops="14 paradas"
               tone="blue"
+              isCompact={isCompact}
             />
             <RouteCard
               code="R-07"
@@ -110,6 +112,7 @@ export default function HomeScreen() {
               frequency="cada 9 min"
               stops="19 paradas"
               tone="green"
+              isCompact={isCompact}
             />
             <RouteCard
               code="R-11"
@@ -119,6 +122,7 @@ export default function HomeScreen() {
               frequency="cada 12 min"
               stops="16 paradas"
               tone="gold"
+              isCompact={isCompact}
             />
             <RouteCard
               code="R-15"
@@ -128,11 +132,16 @@ export default function HomeScreen() {
               frequency="cada 15 min"
               stops="11 paradas"
               tone="coral"
+              isCompact={isCompact}
             />
           </View>
 
-          <RouteInsights />
+          {isCompact && <Text style={[styles.sectionLink, styles.sectionLinkBelowPhone]}>Ver todas las rutas  ›</Text>}
+
+          <RouteInsights isCompact={isCompact} />
         </View>
+
+        <Footer isCompact={isCompact} />
       </ScrollView>
     </View>
   );

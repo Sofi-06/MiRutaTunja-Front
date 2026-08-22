@@ -14,20 +14,20 @@ export default function Header({ isCompact }: HeaderProps) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   return (
-    <View style={[styles.headerInner, isCompact && styles.headerInnerCompact]}>
-      <Pressable onPress={() => router.push('/')} style={styles.brand}>
-        <View style={styles.brandMark}>
+    <View style={[styles.headerInner, isCompact && styles.headerInnerCompact, isCompact && styles.headerInnerPhone]}>
+      <Pressable onPress={() => router.push('/')} style={[styles.brand, isCompact && styles.brandPhone]}>
+        <View style={[styles.brandMark, isCompact && styles.brandMarkPhone]}>
           <Image
             source={require('@/assets/images/faviconT.png')}
-            style={styles.brandLogo}
+            style={[styles.brandLogo, isCompact && styles.brandLogoPhone]}
             accessibilityLabel="Logo de RutasTunja"
           />
         </View>
         <View>
-          <Text style={styles.brandName}>
+          <Text style={[styles.brandName, isCompact && styles.brandNamePhone]}>
             Rutas<Text style={styles.brandAccent}>Tunja</Text>
           </Text>
-          <Text style={styles.brandTagline}>MOVILIDAD URBANA</Text>
+          <Text style={[styles.brandTagline, isCompact && styles.brandTaglinePhone]}>MOVILIDAD URBANA</Text>
         </View>
       </Pressable>
 
@@ -60,7 +60,7 @@ export default function Header({ isCompact }: HeaderProps) {
             accessibilityLabel="Notificaciones"
             accessibilityState={{ expanded: isNotificationsOpen }}
             onPress={() => setIsNotificationsOpen((open) => !open)}
-            style={styles.iconButton}
+            style={[styles.iconButton, isCompact && styles.iconButtonPhone]}
           >
             <Icon name="notification" color={colors.muted} size={20} />
           </Pressable>
@@ -84,8 +84,8 @@ export default function Header({ isCompact }: HeaderProps) {
             </View>
           )}
         </View>
-        <Pressable style={styles.loginButton}>
-          <Text style={styles.loginText}>{isCompact ? 'Entrar' : 'Iniciar sesión'}</Text>
+        <Pressable style={[styles.loginButton, isCompact && styles.loginButtonPhone]}>
+          <Text style={[styles.loginText, isCompact && styles.loginTextPhone]}>{isCompact ? 'Entrar' : 'Iniciar sesión'}</Text>
         </Pressable>
       </View>
     </View>
