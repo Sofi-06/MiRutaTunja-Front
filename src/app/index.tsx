@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import MapView from '@/components/Map/MapView';
 import SelectedRouteCard from '@/components/Map/SelectedRouteCard';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget';
 import Footer from '@/components/footer/Footer';
 import Header from '@/components/header/Header';
 import RouteCard from '@/components/routeCard/RouteCard';
@@ -23,6 +24,7 @@ export default function HomeScreen() {
   const isCompact = width < 760;
   const [destination, setDestination] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isTripStarted, setIsTripStarted] = useState(false);
 
   return (
     <View style={styles.page}>
@@ -78,9 +80,13 @@ export default function HomeScreen() {
             <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el trayecto, los paraderos y el tiempo estimado de llegada.</Text>
             <View style={[styles.mapRouteLayout, isCompact && styles.mapRouteLayoutCompact]}>
               <View style={[styles.mapContainer, isCompact && styles.mapContainerPhone]}>
-                <MapView />
+                <MapView isTripStarted={isTripStarted} />
               </View>
-              <SelectedRouteCard isCompact={isCompact} />
+              <SelectedRouteCard
+                isCompact={isCompact}
+                isTripStarted={isTripStarted}
+                onToggleTrip={() => setIsTripStarted((started) => !started)}
+              />
             </View>
           </View>
 
@@ -143,6 +149,8 @@ export default function HomeScreen() {
 
         <Footer isCompact={isCompact} />
       </ScrollView>
+
+      <ChatbotWidget isCompact={isCompact} />
     </View>
   );
 }

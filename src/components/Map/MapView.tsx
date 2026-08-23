@@ -1,17 +1,34 @@
+import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import { mapHtml } from './mapHtml';
 
-export default function MapView() {
+type MapViewProps = Readonly<{
+  isTripStarted?: boolean;
+}>;
+
+export default function MapView({ isTripStarted = false }: MapViewProps) {
+  const webViewRef = useRef<WebView>(null);
+
+  useEffect(() => {
+    const script = `if (window.setTripStarted) { window.setTripStarted(${isTripStarted}); }`;
+    webViewRef.current?.injectJavaScript(script);
+  }, [isTripStarted]);
+
   return (
     <View style={styles.container}>
       <WebView
+        ref={webViewRef}
         originWhitelist={['*']}
         source={{ html: mapHtml }}
         style={styles.map}
         javaScriptEnabled
         domStorageEnabled
+        onLoadEnd={() => {
+          const script = `if (window.setTripStarted) { window.setTripStarted(${isTripStarted}); }`;
+          webViewRef.current?.injectJavaScript(script);
+        }}
       />
       <View pointerEvents="none" style={styles.label}>
         <Text style={styles.labelEyebrow}>MAPA INTERACTIVO</Text>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import Icon from '@/components/ui/Icon';
@@ -10,7 +11,30 @@ const stops = [
   ['Universidad UPTC', 'Destino final', '8:04'],
 ] as const;
 
-export default function SelectedRouteCard({ isCompact = false }: Readonly<{ isCompact?: boolean }>) {
+type SelectedRouteCardProps = Readonly<{
+  isCompact?: boolean;
+  isTripStarted?: boolean;
+  onToggleTrip?: () => void;
+}>;
+
+export default function SelectedRouteCard({
+  isCompact = false,
+  isTripStarted: controlledTripStarted,
+  onToggleTrip,
+}: SelectedRouteCardProps) {
+  const [internalTripStarted, setInternalTripStarted] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  const isTripStarted = controlledTripStarted ?? internalTripStarted;
+
+  const handleTripPress = () => {
+    if (onToggleTrip) {
+      onToggleTrip();
+    } else {
+      setInternalTripStarted((prev) => !prev);
+    }
+  };
+
   return (
     <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact, isCompact && styles.selectedRouteCardPhone]}>
       <View style={styles.selectedRouteHeader}>
@@ -53,11 +77,25 @@ export default function SelectedRouteCard({ isCompact = false }: Readonly<{ isCo
         ))}
       </View>
 
-      <Pressable style={styles.startTripButton}>
-        <Text style={styles.startTripButtonText}>Iniciar viaje</Text>
+      <Pressable
+        onPress={handleTripPress}
+        style={[styles.startTripButton, isTripStarted && styles.startTripButtonActive]}
+      >
+        <Text style={styles.startTripButtonText}>
+          {isTripStarted ? '✓ Viaje iniciado' : 'Iniciar viaje'}
+        </Text>
       </Pressable>
-      <Pressable accessibilityLabel="Guardar ruta" style={[styles.saveRouteButton, isCompact && styles.saveRouteButtonPhone]}>
-        <Icon name="star" color={colors.muted} size={19} />
+
+      <Pressable
+        accessibilityLabel="Guardar ruta"
+        onPress={() => setIsSaved((saved) => !saved)}
+        style={[
+          styles.saveRouteButton,
+          isCompact && styles.saveRouteButtonPhone,
+          isSaved && styles.saveRouteButtonActive,
+        ]}
+      >
+        <Icon name="star" color={isSaved ? colors.coral : colors.muted} size={19} />
       </Pressable>
     </View>
   );

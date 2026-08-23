@@ -1,12 +1,32 @@
+import { useEffect, useRef } from 'react';
+
 import { mapHtml } from './mapHtml';
 
-export default function MapView() {
+type MapViewProps = Readonly<{
+  isTripStarted?: boolean;
+}>;
+
+export default function MapView({ isTripStarted = false }: MapViewProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({ isStarted: isTripStarted }, '*');
+    }
+  }, [isTripStarted]);
+
   return (
     <div style={{ height: '100%', minHeight: 620, position: 'relative', width: '100%' }}>
       <iframe
+        ref={iframeRef}
         title="Mapa de Tunja"
         srcDoc={mapHtml}
         style={{ border: 0, display: 'block', height: '100%', width: '100%' }}
+        onLoad={() => {
+          if (iframeRef.current?.contentWindow) {
+            iframeRef.current.contentWindow.postMessage({ isStarted: isTripStarted }, '*');
+          }
+        }}
       />
       <div
         style={{

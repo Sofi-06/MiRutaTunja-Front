@@ -549,6 +549,9 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 18,
   },
+  startTripButtonActive: {
+    backgroundColor: "#4e9b78",
+  },
   startTripButtonText: { color: colors.white, fontSize: 16, fontWeight: "700" },
   saveRouteButton: {
     position: "absolute",
@@ -562,6 +565,10 @@ export const styles = StyleSheet.create({
     borderColor: "#dce8ef",
     alignItems: "center",
     justifyContent: "center",
+  },
+  saveRouteButtonActive: {
+    backgroundColor: "#fcf8ee",
+    borderColor: "#e8c97e",
   },
   insightsGrid: {
     flexDirection: "row",
