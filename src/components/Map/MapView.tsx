@@ -54,6 +54,10 @@ export default function MapView({
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'CONSOLE_LOG') {
+        console.log('[Leaflet Map WebView]:', data.message);
+        return;
+      }
       if (data.type === 'MAP_CLICK' && onMapClick) {
         onMapClick(data.lat, data.lng);
       }

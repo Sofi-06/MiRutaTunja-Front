@@ -41,8 +41,8 @@ export default function HomeScreen() {
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [calculatedRoute, setCalculatedRoute] = useState<[number, number][] | undefined>(undefined);
   const [routeStats, setRouteStats] = useState({
-    distanceText: '1.2 km',
-    durationText: '22 min',
+    distanceText: '0 km',
+    durationText: '0 min',
   });
 
   // Estado para la información activa de la ruta que se muestra en la tarjeta de detalles
@@ -52,10 +52,10 @@ export default function HomeScreen() {
     originName: string;
     destinationName: string;
   }>({
-    code: 'R-02',
-    title: 'Ruta Centro - UPTC',
+    code: 'PERS',
+    title: 'Selecciona una ruta o destino',
     originName: 'Plaza de Bolívar',
-    destinationName: 'Universidad UPTC',
+    destinationName: 'Ninguno',
   });
 
   // Estados para controlar visualización de Ida y Vuelta en las rutas
@@ -270,6 +270,27 @@ export default function HomeScreen() {
     }
   };
 
+  // Obtener ubicación GPS actual al iniciar la aplicación de forma silenciosa
+  useEffect(() => {
+    const fetchCurrentLocationSilently = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          const { latitude, longitude } = location.coords;
+          setOriginCoords({ lat: latitude, lng: longitude });
+          setOriginName('Mi ubicación actual');
+        }
+      } catch (error) {
+        console.error('Error obteniendo ubicación actual al iniciar:', error);
+      }
+    };
+
+    fetchCurrentLocationSilently();
+  }, []);
+
   // Manejador para el click en el mapa
   const handleMapClick = (lat: number, lng: number) => {
     // Establecer como destino y actualizar campo de texto con coordenadas para feedback visual
@@ -283,11 +304,10 @@ export default function HomeScreen() {
     });
   };
 
-  // Función para buscar un lugar/dirección y marcarlo en el mapa como punto de llegada
-  const handleSearchDestination = async (query: string) => {
-    if (!query.trim()) return;
+  // Función de geocodificación individual para origen o destino
+  const geocodeLocation = async (query: string): Promise<{ lat: number; lng: number; name: string } | null> => {
+    if (!query.trim()) return null;
 
-    // Diccionario de lugares comunes en Tunja para respuesta offline y rápida
     const localPlaces: Record<string, { lat: number; lng: number; name: string }> = {
       'uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
       'universidad uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
@@ -305,52 +325,74 @@ export default function HomeScreen() {
       'centro': { lat: 5.5332, lng: -73.3620, name: 'Centro Histórico' },
       'viva': { lat: 5.5492, lng: -73.3490, name: 'C.C. Viva Tunja' },
       'viva tunja': { lat: 5.5492, lng: -73.3490, name: 'C.C. Viva Tunja' },
+      'mi ubicacion': { lat: originCoords?.lat || 5.5324627, lng: originCoords?.lng || -73.3615504, name: originName || 'Mi ubicación' },
+      'mi ubicación': { lat: originCoords?.lat || 5.5324627, lng: originCoords?.lng || -73.3615504, name: originName || 'Mi ubicación' },
+      'mi ubicación actual': { lat: originCoords?.lat || 5.5324627, lng: originCoords?.lng || -73.3615504, name: originName || 'Mi ubicación actual' },
     };
 
     const cleanQuery = query.toLowerCase().trim();
     if (localPlaces[cleanQuery]) {
-      const place = localPlaces[cleanQuery];
-      setDestCoords({ lat: place.lat, lng: place.lng });
-      setDestination(place.name);
-      setActiveRouteInfo({
-        code: 'PERS',
-        title: 'Ruta a ' + place.name,
-        originName: originName,
-        destinationName: place.name,
-      });
-      Alert.alert('Lugar encontrado', `Se ha marcado "${place.name}" como destino en el mapa.`);
-      return;
+      return localPlaces[cleanQuery];
     }
 
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Tunja, Boyacá, Colombia')}`
       );
-      if (!response.ok) throw new Error('Error de red');
-      const results = await response.json();
-
-      if (results && results.length > 0) {
-        const bestResult = results[0];
-        const lat = parseFloat(bestResult.lat);
-        const lng = parseFloat(bestResult.lon);
-        const displayName = bestResult.display_name.split(',')[0];
-
-        setDestCoords({ lat, lng });
-        setDestination(displayName);
-        setActiveRouteInfo({
-          code: 'PERS',
-          title: 'Ruta a ' + displayName,
-          originName: originName,
-          destinationName: displayName,
-        });
-        Alert.alert('Dirección encontrada', `Ubicado: ${displayName}\nCoordenadas: (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
-      } else {
-        Alert.alert('No encontrado', 'No se pudo geolocalizar esa dirección o lugar. Intenta con un nombre de punto conocido o dirección en Tunja.');
+      if (response.ok) {
+        const results = await response.json();
+        if (results && results.length > 0) {
+          const bestResult = results[0];
+          return {
+            lat: parseFloat(bestResult.lat),
+            lng: parseFloat(bestResult.lon),
+            name: bestResult.display_name.split(',')[0],
+          };
+        }
       }
-    } catch (error) {
-      console.error('Error in geocoding:', error);
-      Alert.alert('Error', 'Hubo un error de conexión al buscar el lugar.');
+    } catch (e) {
+      console.error('Error in single geocoding:', e);
     }
+    return null;
+  };
+
+  // Función para buscar ambos puntos e inyectar origen/destino en el mapa
+  const handleSearchRoute = async (originQuery: string, destQuery: string) => {
+    if (!originQuery.trim() || !destQuery.trim()) {
+      Alert.alert('Campos vacíos', 'Por favor ingresa tanto el punto de partida como el destino.');
+      return;
+    }
+
+    // Geocodificar origen y destino
+    const originPlace = await geocodeLocation(originQuery);
+    const destPlace = await geocodeLocation(destQuery);
+
+    if (!originPlace) {
+      Alert.alert('Origen no encontrado', `No se pudo encontrar la ubicación de partida: "${originQuery}"`);
+      return;
+    }
+    if (!destPlace) {
+      Alert.alert('Destino no encontrado', `No se pudo encontrar la ubicación de destino: "${destQuery}"`);
+      return;
+    }
+
+    // Actualizar coordenadas y nombres
+    setOriginCoords({ lat: originPlace.lat, lng: originPlace.lng });
+    setOriginName(originPlace.name);
+    setDestCoords({ lat: destPlace.lat, lng: destPlace.lng });
+    setDestination(destPlace.name);
+
+    setActiveRouteInfo({
+      code: 'PERS',
+      title: `Ruta de ${originPlace.name} a ${destPlace.name}`,
+      originName: originPlace.name,
+      destinationName: destPlace.name,
+    });
+
+    Alert.alert(
+      'Ruta configurada',
+      `Marcado trayecto desde "${originPlace.name}" hasta "${destPlace.name}" en el mapa.`
+    );
   };
 
   // Función para cargar e inyectar cualquier ruta en el mapa desde el archivo JSON
@@ -506,11 +548,13 @@ export default function HomeScreen() {
             </Text>
 
             <SearchBar
+              origin={originName}
+              onOriginChange={setOriginName}
               destination={destination}
-              isCompact={isCompact}
               onDestinationChange={setDestination}
+              isCompact={isCompact}
               onUseCurrentLocation={handleUseCurrentLocation}
-              onSearch={handleSearchDestination}
+              onSearchBoth={handleSearchRoute}
             />
           </View>
         </ImageBackground>

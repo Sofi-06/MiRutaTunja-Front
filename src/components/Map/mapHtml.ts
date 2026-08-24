@@ -5,6 +5,7 @@ export const mapHtml = `
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
       <style>
         * { box-sizing: border-box; }
         html, body, #map { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -116,8 +117,19 @@ export const mapHtml = `
     <body>
       <div id="map"></div>
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
       <script>
-      
+        // Redirigir console.log a React Native para verlos en la terminal de la computadora
+        const originalLog = console.log;
+        console.log = function(...args) {
+          originalLog.apply(console, args);
+          const msg = JSON.stringify({ type: 'CONSOLE_LOG', message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ') });
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(msg);
+          }
+        };
+
+        console.log("Leaflet WebView: Iniciando mapa...");
 
         const map = L.map('map', {
           zoomControl: true
@@ -127,6 +139,80 @@ export const mapHtml = `
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(map);
+
+        // Agregar la barra de búsqueda configurada para Tunja
+        const geocoder = L.Control.geocoder({
+          defaultMarkGeocode: false,
+          placeholder: "Buscar dirección o sitio en Tunja...",
+          geocoder: L.Control.Geocoder.nominatim({
+            geocodingQueryParams: {
+              countrycodes: 'co', // Limita la búsqueda a Colombia
+              viewbox: '-73.38,5.50,-73.32,5.58', // Delimita el área geográfica de Tunja
+              bounded: 1
+            }
+          })
+        })
+        .on('markgeocode', function(e) {
+          const lat = e.geocode.center.lat;
+          const lng = e.geocode.center.lng;
+          
+          console.log("Leaflet WebView: Dirección geocodificada seleccionada:", e.geocode.name, "en coordenadas:", lat, lng);
+
+          // Centrar el mapa
+          map.setView([lat, lng], 16);
+
+          // Colocar el marcador de llegada inmediatamente para feedback visual instantáneo
+          if (destinationMarker) map.removeLayer(destinationMarker);
+          destinationMarker = L.marker([lat, lng], {
+            icon: L.divIcon({
+              html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
+                      '<div style="background:#d8957d;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">FIN</div>' +
+                      '<div style="background:#d8957d;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+                    '</div>',
+              className: '',
+              iconSize: [50, 40],
+              iconAnchor: [25, 35]
+            })
+          }).addTo(map).bindPopup('<b>' + e.geocode.name + '</b>').openPopup();
+
+          // Enviar coordenadas seleccionadas de vuelta a React Native
+          const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(msg);
+          } else {
+            window.parent.postMessage(msg, '*');
+          }
+        })
+        .addTo(map);
+
+        // Click Handler para selección de destino en mapa
+        map.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          console.log("Leaflet WebView: Click detectado en mapa en:", lat, lng);
+          
+          // Colocar marcador de llegada inmediatamente
+          if (destinationMarker) map.removeLayer(destinationMarker);
+          destinationMarker = L.marker([lat, lng], {
+            icon: L.divIcon({
+              html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
+                      '<div style="background:#d8957d;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">FIN</div>' +
+                      '<div style="background:#d8957d;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+                    '</div>',
+              className: '',
+              iconSize: [50, 40],
+              iconAnchor: [25, 35]
+            })
+          }).addTo(map).bindPopup('<b>Destino seleccionado</b>').openPopup();
+
+          // Enviar evento de vuelta al contenedor de React Native o web
+          const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(msg);
+          } else {
+            window.parent.postMessage(msg, '*');
+          }
+        });
 
         let shadowLine = null;
         let routeLine = null;
@@ -363,9 +449,11 @@ export const mapHtml = `
           if (!data) return;
 
           if (typeof data.isStarted !== 'undefined') {
+            console.log("Leaflet WebView: Actualizando estado del viaje (isTripStarted):", data.isStarted);
             setTripStarted(data.isStarted);
           }
           if (data.type === 'UPDATE_ROUTE') {
+            console.log("Leaflet WebView: Recibida actualización de ruta en el mapa.");
             if (data.route && data.route[0] && typeof data.route[0].path !== 'undefined') {
               var formattedSegments = data.route.map(function(seg) {
                 return {
@@ -381,6 +469,7 @@ export const mapHtml = `
             setPoints(data.origin, data.destination);
           }
           if (data.type === 'UPDATE_POINTS_ONLY') {
+            console.log("Leaflet WebView: Recibida actualización de puntos de inicio/fin.");
             setPoints(data.origin, data.destination);
           }
         });
