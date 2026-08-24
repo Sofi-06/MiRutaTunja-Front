@@ -9,6 +9,7 @@ type SearchBarProps = Readonly<{
   isCompact: boolean;
   onDestinationChange: (destination: string) => void;
   onUseCurrentLocation?: () => void;
+  onSearch?: (query: string) => void;
 }>;
 
 export default function SearchBar({
@@ -16,11 +17,16 @@ export default function SearchBar({
   isCompact,
   onDestinationChange,
   onUseCurrentLocation,
+  onSearch,
 }: SearchBarProps) {
   const router = useRouter();
 
   const openSearch = () => {
-    router.push({ pathname: '/routes/search', params: { destination } });
+    if (onSearch) {
+      onSearch(destination);
+    } else {
+      router.push({ pathname: '/routes/search', params: { destination } });
+    }
   };
 
   return (

@@ -21,7 +21,7 @@ import RouteInsights from '@/components/routeCard/RouteInsights';
 import SearchBar from '@/components/searchBar/SearchBar';
 import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
-import { routesRegistry } from './routesRegistry';
+import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 
 export default function HomeScreen() {
@@ -283,6 +283,76 @@ export default function HomeScreen() {
     });
   };
 
+  // Función para buscar un lugar/dirección y marcarlo en el mapa como punto de llegada
+  const handleSearchDestination = async (query: string) => {
+    if (!query.trim()) return;
+
+    // Diccionario de lugares comunes en Tunja para respuesta offline y rápida
+    const localPlaces: Record<string, { lat: number; lng: number; name: string }> = {
+      'uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
+      'universidad uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
+      'terminal': { lat: 5.530809, lng: -73.34496, name: 'Terminal de Transportes' },
+      'terminal de transportes': { lat: 5.530809, lng: -73.34496, name: 'Terminal de Transportes' },
+      'plaza de bolivar': { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' },
+      'plaza de bolívar': { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' },
+      'uniboyaca': { lat: 5.5682, lng: -73.3320, name: 'Universidad de Boyacá' },
+      'universidad de boyaca': { lat: 5.5682, lng: -73.3320, name: 'Universidad de Boyacá' },
+      'universidad de boyacá': { lat: 5.5682, lng: -73.3320, name: 'Universidad de Boyacá' },
+      'hospital san rafael': { lat: 5.5269, lng: -73.3578, name: 'Hospital San Rafael' },
+      'muiscas': { lat: 5.5724, lng: -73.3396, name: 'Barrio Los Muiscas' },
+      'los muiscas': { lat: 5.5724, lng: -73.3396, name: 'Barrio Los Muiscas' },
+      'arboleda': { lat: 5.575069, lng: -73.331541, name: 'Despacho Arboleda' },
+      'centro': { lat: 5.5332, lng: -73.3620, name: 'Centro Histórico' },
+      'viva': { lat: 5.5492, lng: -73.3490, name: 'C.C. Viva Tunja' },
+      'viva tunja': { lat: 5.5492, lng: -73.3490, name: 'C.C. Viva Tunja' },
+    };
+
+    const cleanQuery = query.toLowerCase().trim();
+    if (localPlaces[cleanQuery]) {
+      const place = localPlaces[cleanQuery];
+      setDestCoords({ lat: place.lat, lng: place.lng });
+      setDestination(place.name);
+      setActiveRouteInfo({
+        code: 'PERS',
+        title: 'Ruta a ' + place.name,
+        originName: originName,
+        destinationName: place.name,
+      });
+      Alert.alert('Lugar encontrado', `Se ha marcado "${place.name}" como destino en el mapa.`);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Tunja, Boyacá, Colombia')}`
+      );
+      if (!response.ok) throw new Error('Error de red');
+      const results = await response.json();
+
+      if (results && results.length > 0) {
+        const bestResult = results[0];
+        const lat = parseFloat(bestResult.lat);
+        const lng = parseFloat(bestResult.lon);
+        const displayName = bestResult.display_name.split(',')[0];
+
+        setDestCoords({ lat, lng });
+        setDestination(displayName);
+        setActiveRouteInfo({
+          code: 'PERS',
+          title: 'Ruta a ' + displayName,
+          originName: originName,
+          destinationName: displayName,
+        });
+        Alert.alert('Dirección encontrada', `Ubicado: ${displayName}\nCoordenadas: (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+      } else {
+        Alert.alert('No encontrado', 'No se pudo geolocalizar esa dirección o lugar. Intenta con un nombre de punto conocido o dirección en Tunja.');
+      }
+    } catch (error) {
+      console.error('Error in geocoding:', error);
+      Alert.alert('Error', 'Hubo un error de conexión al buscar el lugar.');
+    }
+  };
+
   // Función para cargar e inyectar cualquier ruta en el mapa desde el archivo JSON
   const handleSelectRoute = (routeCode: string) => {
     try {
@@ -440,6 +510,7 @@ export default function HomeScreen() {
               isCompact={isCompact}
               onDestinationChange={setDestination}
               onUseCurrentLocation={handleUseCurrentLocation}
+              onSearch={handleSearchDestination}
             />
           </View>
         </ImageBackground>
