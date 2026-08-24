@@ -20,6 +20,8 @@ type SelectedRouteCardProps = Readonly<{
   showVuelta?: boolean;
   onToggleIda?: () => void;
   onToggleVuelta?: () => void;
+  idaLabel?: string;
+  vueltaLabel?: string;
   schedule?: {
     weekdays: { label: string; hours: string; frequency: string };
     sundaysAndHolidays: { label: string; hours: string; frequency: string };
@@ -42,6 +44,8 @@ export default function SelectedRouteCard({
   showVuelta = true,
   onToggleIda,
   onToggleVuelta,
+  idaLabel = 'Ida',
+  vueltaLabel = 'Vuelta',
   schedule,
 }: SelectedRouteCardProps) {
   const [internalTripStarted, setInternalTripStarted] = useState(false);
@@ -109,7 +113,7 @@ export default function SelectedRouteCard({
               {showIda && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
             </View>
             <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              🟢 Ida: {originName} → {destinationName}
+              🟢 {idaLabel}
             </Text>
           </Pressable>
 
@@ -131,7 +135,7 @@ export default function SelectedRouteCard({
               {showVuelta && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
             </View>
             <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              🟡 Vuelta: {destinationName} → {originName}
+              🟡 {vueltaLabel}
             </Text>
           </Pressable>
         </View>

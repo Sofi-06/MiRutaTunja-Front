@@ -547,9 +547,42 @@ export default function HomeScreen() {
         durationText: key === 'R1' ? '25 min' : '30 min',
       });
 
-      // Asegurar que ambos sentidos estén activos por defecto
-      setShowIda(true);
-      setShowVuelta(true);
+      // Autodetectar el sentido de la ruta que corresponde a la dirección del viaje del usuario
+      let defaultShowIda = true;
+      let defaultShowVuelta = true;
+
+      if (originCoords && destCoords) {
+        const isUserGoingNorth = destCoords.lat > originCoords.lat;
+        
+        // Extraer los sentidos de la ruta
+        const features = routeData.path.features.filter((f: any) => f.geometry && f.geometry.type === 'LineString');
+        if (features.length >= 2) {
+          const f1 = features[0];
+          const f2 = features[1];
+          
+          const f1Coords = f1.geometry.coordinates;
+          const f1StartLat = f1Coords[0][1];
+          const f1EndLat = f1Coords[f1Coords.length - 1][1];
+          const f1GoingNorth = f1EndLat > f1StartLat;
+
+          const f2Coords = f2.geometry.coordinates;
+          const f2StartLat = f2Coords[0][1];
+          const f2EndLat = f2Coords[f2Coords.length - 1][1];
+          const f2GoingNorth = f2EndLat > f2StartLat;
+
+          // Si uno va al norte y el otro al sur, seleccionamos el correspondiente
+          if (f1GoingNorth === isUserGoingNorth && f2GoingNorth !== isUserGoingNorth) {
+            defaultShowIda = true;
+            defaultShowVuelta = false;
+          } else if (f2GoingNorth === isUserGoingNorth && f1GoingNorth !== isUserGoingNorth) {
+            defaultShowIda = false;
+            defaultShowVuelta = true;
+          }
+        }
+      }
+
+      setShowIda(defaultShowIda);
+      setShowVuelta(defaultShowVuelta);
 
       // Pasar segmentos con color al componente del mapa
       setCalculatedRoute(segments as any);
@@ -568,6 +601,35 @@ export default function HomeScreen() {
       handleSelectRoute(routeCode);
     }
   }, [routeCode]);
+
+  // Obtener etiquetas descriptivas de dirección (ej: "Sur a Norte (Terminal - Norte)")
+  const directionLabels = (() => {
+    if (!localRouteData?.path?.features) return { ida: 'Ida', vuelta: 'Vuelta' };
+    const features = localRouteData.path.features.filter((f: any) => f.geometry && f.geometry.type === 'LineString');
+    
+    let ida = 'Ida';
+    let vuelta = 'Vuelta';
+
+    if (features.length >= 1) {
+      const f1 = features[0];
+      const name = f1.properties?.name || 'Ida';
+      const coords = f1.geometry.coordinates;
+      const startLat = coords[0][1];
+      const endLat = coords[coords.length - 1][1];
+      const dir = endLat > startLat ? 'Sur a Norte' : 'Norte a Sur';
+      ida = `${dir} (${name})`;
+    }
+    if (features.length >= 2) {
+      const f2 = features[1];
+      const name = f2.properties?.name || 'Vuelta';
+      const coords = f2.geometry.coordinates;
+      const startLat = coords[0][1];
+      const endLat = coords[coords.length - 1][1];
+      const dir = endLat > startLat ? 'Sur a Norte' : 'Norte a Sur';
+      vuelta = `${dir} (${name})`;
+    }
+    return { ida, vuelta };
+  })();
 
   return (
     <View style={styles.page}>
@@ -650,6 +712,8 @@ export default function HomeScreen() {
                 showVuelta={showVuelta}
                 onToggleIda={() => setShowIda(prev => !prev)}
                 onToggleVuelta={() => setShowVuelta(prev => !prev)}
+                idaLabel={directionLabels.ida}
+                vueltaLabel={directionLabels.vuelta}
                 schedule={(() => {
                   const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
                   const key = match ? `R${match[1]}` : activeRouteInfo.code;
