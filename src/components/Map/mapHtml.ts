@@ -1,37 +1,3 @@
-const WAYPOINTS: [number, number][] = [
-  [5.5324627, -73.3615504], // Plaza de Bolívar (Inicio)
-  [5.5318222, -73.3612502], // Carrera 9 con Calle 19
-  [5.5610480, -73.3483751], // Avenida Norte
-  [5.5520095, -73.3566646], // Universidad UPTC (Fin)
-];
-
-const BUS_STOPS = [
-  {
-    name: 'Plaza de Bolívar (Punto B)',
-    desc: 'Paradero techado · Inicio de ruta',
-    coords: [5.5324627, -73.3615504],
-    isTerminal: true,
-  },
-  {
-    name: 'Carrera 9 · Calle 19',
-    desc: 'Transbordo R-07',
-    coords: [5.5318222, -73.3612502],
-    isTerminal: false,
-  },
-  {
-    name: 'Avenida Norte (Punto C)',
-    desc: 'Sector Santa Rita · Vía 55',
-    coords: [5.5610480, -73.3483751],
-    isTerminal: false,
-  },
-  {
-    name: 'Universidad UPTC (Punto D)',
-    desc: 'Campus Central · Destino final',
-    coords: [5.5520095, -73.3566646],
-    isTerminal: true,
-  },
-];
-
 export const mapHtml = `
   <!DOCTYPE html>
   <html lang="es">
@@ -151,10 +117,11 @@ export const mapHtml = `
       <div id="map"></div>
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
       <script>
-        const waypoints = ${JSON.stringify(WAYPOINTS)};
-        const stopsData = ${JSON.stringify(BUS_STOPS)};
+      
 
-        const map = L.map('map', { zoomControl: true }).setView(waypoints[0], 14);
+        const map = L.map('map', {
+          zoomControl: true
+        }).setView([5.5324627, -73.3615504], 14);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
@@ -164,30 +131,26 @@ export const mapHtml = `
         let shadowLine = null;
         let routeLine = null;
         let busMarker = null;
+        let originMarker = null;
+        let destinationMarker = null;
         let activePath = [];
         let isTripStarted = false;
         let animationFrameId = null;
         let subIndex = 0;
         const BUS_SPEED = 0.045;
 
-        // Render Bus Stop Pins
-        stopsData.forEach(function(stop) {
-          const isTerminal = stop.isTerminal;
-          const iconHtml = '<div class="stop-marker ' + (isTerminal ? 'stop-marker-terminal' : '') + '"><div class="stop-marker-inner"></div></div>';
+        // Click Handler for custom destination selection
+        map.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
           
-          const stopIcon = L.divIcon({
-            html: iconHtml,
-            className: '',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-          });
-
-          const popupContent = '<div class="popup-title">' + stop.name + '</div>' +
-                               '<div class="popup-desc">' + stop.desc + '</div>' +
-                               '<div class="popup-tag">Línea R-02</div>';
-
-          const marker = L.marker(stop.coords, { icon: stopIcon }).addTo(map);
-          marker.bindPopup(popupContent);
+          // Enviar evento de vuelta al contenedor de React Native o web
+          const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(msg);
+          } else {
+            window.parent.postMessage(msg, '*');
+          }
         });
 
         function getBusIconHtml(isMoving) {
@@ -200,17 +163,26 @@ export const mapHtml = `
         function updateBusPopup(isMoving) {
           if (!busMarker) return;
           const content = isMoving ?
-            '<div class="popup-title">🚌 Bus R-02 en movimiento</div><div class="popup-desc">Plaza de Bolívar ➔ UPTC</div><div class="popup-tag" style="background:#e4f3eb;color:#5f9b7f;">En viaje · 28 km/h</div>' :
-            '<div class="popup-title">🚌 Bus R-02 estacionado</div><div class="popup-desc">Presiona "Iniciar viaje" para comenzar</div><div class="popup-tag">Paradero Plaza de Bolívar</div>';
+            '<div class="popup-title">🚌 Bus en movimiento</div><div class="popup-tag" style="background:#e4f3eb;color:#5f9b7f;">En viaje</div>' :
+            '<div class="popup-title">🚌 Bus estacionado</div><div class="popup-desc">Presiona "Iniciar viaje" para comenzar</div>';
           busMarker.bindPopup(content);
         }
 
-        function setupRouteAndBus(pathPoints) {
-          activePath = pathPoints;
+        let routePolylines = [];
 
-          if (shadowLine) map.removeLayer(shadowLine);
-          if (routeLine) map.removeLayer(routeLine);
-          if (busMarker) map.removeLayer(busMarker);
+        function clearRouteLayers() {
+          if (shadowLine) { map.removeLayer(shadowLine); shadowLine = null; }
+          if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+          routePolylines.forEach(function(l) { map.removeLayer(l); });
+          routePolylines = [];
+          if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
+        }
+
+        function drawRoute(pathPoints) {
+          activePath = pathPoints;
+          clearRouteLayers();
+
+          if (!activePath || activePath.length === 0) return;
 
           shadowLine = L.polyline(activePath, {
             color: '#2b5479',
@@ -229,7 +201,51 @@ export const mapHtml = `
           }).addTo(map);
 
           map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+          setupBusMarker(activePath[0]);
+        }
 
+        function drawRouteSegments(segments) {
+          clearRouteLayers();
+          if (!segments || segments.length === 0) return;
+
+          activePath = [];
+          
+          segments.forEach(function(seg) {
+            if (!seg.path || seg.path.length === 0) return;
+            
+            activePath = activePath.concat(seg.path);
+            const color = seg.color || '#3f719b';
+            
+            const shadow = L.polyline(seg.path, {
+              color: color,
+              weight: 9,
+              opacity: 0.2,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(map);
+            routePolylines.push(shadow);
+
+            const line = L.polyline(seg.path, {
+              color: color,
+              weight: 5,
+              opacity: 0.9,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(map);
+            routePolylines.push(line);
+          });
+
+          if (routePolylines.length > 0) {
+            const group = L.featureGroup(routePolylines);
+            map.fitBounds(group.getBounds(), { padding: [40, 40] });
+          }
+
+          if (activePath.length > 0) {
+            setupBusMarker(activePath[0]);
+          }
+        }
+
+        function setupBusMarker(startLatLng) {
           const busIcon = L.divIcon({
             html: getBusIconHtml(isTripStarted),
             className: '',
@@ -237,11 +253,48 @@ export const mapHtml = `
             iconAnchor: [22, 22]
           });
 
-          busMarker = L.marker(activePath[0], { icon: busIcon, zIndexOffset: 1000 }).addTo(map);
+          busMarker = L.marker(startLatLng, { icon: busIcon, zIndexOffset: 1000 }).addTo(map);
           updateBusPopup(isTripStarted);
 
           if (isTripStarted) {
             startAnimation();
+          }
+        }
+
+        function setPoints(origin, destination) {
+          if (originMarker) map.removeLayer(originMarker);
+          if (destinationMarker) map.removeLayer(destinationMarker);
+
+          if (origin) {
+            originMarker = L.marker([origin.lat, origin.lng], {
+              icon: L.divIcon({
+                html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
+                        '<div style="background:#2b5479;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">INICIO</div>' +
+                        '<div style="background:#4e9b78;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+                      '</div>',
+                className: '',
+                iconSize: [50, 40],
+                iconAnchor: [25, 35]
+              })
+            }).addTo(map).bindPopup('<b>Punto de Inicio</b>');
+            
+            if (!destination) {
+              map.setView([origin.lat, origin.lng], 15);
+            }
+          }
+
+          if (destination) {
+            destinationMarker = L.marker([destination.lat, destination.lng], {
+              icon: L.divIcon({
+                html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
+                        '<div style="background:#d8957d;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">FIN</div>' +
+                        '<div style="background:#d8957d;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+                      '</div>',
+                className: '',
+                iconSize: [50, 40],
+                iconAnchor: [25, 35]
+              })
+            }).addTo(map).bindPopup('<b>Punto de Destino</b>');
           }
         }
 
@@ -303,29 +356,36 @@ export const mapHtml = `
         window.setTripStarted = setTripStarted;
 
         window.addEventListener('message', function(event) {
-          if (event.data && typeof event.data.isStarted !== 'undefined') {
-            setTripStarted(event.data.isStarted);
+          let data = event.data;
+          if (typeof data === 'string') {
+            try { data = JSON.parse(data); } catch(e) {}
+          }
+          if (!data) return;
+
+          if (typeof data.isStarted !== 'undefined') {
+            setTripStarted(data.isStarted);
+          }
+          if (data.type === 'UPDATE_ROUTE') {
+            if (data.route && data.route[0] && typeof data.route[0].path !== 'undefined') {
+              var formattedSegments = data.route.map(function(seg) {
+                return {
+                  path: seg.path.map(function(c) { return [c[1], c[0]]; }),
+                  color: seg.color
+                };
+              });
+              drawRouteSegments(formattedSegments);
+            } else {
+              var formatted = data.route.map(function(c) { return [c[1], c[0]]; });
+              drawRoute(formatted);
+            }
+            setPoints(data.origin, data.destination);
+          }
+          if (data.type === 'UPDATE_POINTS_ONLY') {
+            setPoints(data.origin, data.destination);
           }
         });
 
-        // Initialize with waypoints immediately so map displays instantly
-        setupRouteAndBus(waypoints);
-
-        // Fetch OSRM exact road snapping in background
-        const osrmWaypointsStr = waypoints.map(function(p) { return p[1] + ',' + p[0]; }).join(';');
-        const osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + osrmWaypointsStr + '?overview=full&geometries=geojson';
-
-        fetch(osrmUrl)
-          .then(function(res) { return res.json(); })
-          .then(function(data) {
-            if (data && data.routes && data.routes[0] && data.routes[0].geometry) {
-              const osrmCoords = data.routes[0].geometry.coordinates.map(function(c) {
-                return [c[1], c[0]];
-              });
-              setupRouteAndBus(osrmCoords);
-            }
-          })
-          .catch(function() {});
+      
       </script>
     </body>
   </html>

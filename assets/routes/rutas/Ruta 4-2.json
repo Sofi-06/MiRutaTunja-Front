@@ -1,0 +1,4 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.362467,5.5041866,0]},"properties":{"name":"Despacho Urb Pinos de Oriente","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.3383141,5.5687512,0]},"properties":{"name":"RETORNO","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}}
+]}

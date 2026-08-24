@@ -4,9 +4,19 @@ import { mapHtml } from './mapHtml';
 
 type MapViewProps = Readonly<{
   isTripStarted?: boolean;
+  route?: [number, number][] | any[];
+  origin?: { lat: number; lng: number } | null;
+  destination?: { lat: number; lng: number } | null;
+  onMapClick?: (lat: number, lng: number) => void;
 }>;
 
-export default function MapView({ isTripStarted = false }: MapViewProps) {
+export default function MapView({
+  isTripStarted = false,
+  route,
+  origin,
+  destination,
+  onMapClick,
+}: MapViewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -14,6 +24,46 @@ export default function MapView({ isTripStarted = false }: MapViewProps) {
       iframeRef.current.contentWindow.postMessage({ isStarted: isTripStarted }, '*');
     }
   }, [isTripStarted]);
+
+  useEffect(() => {
+    if (route && iframeRef.current?.contentWindow) {
+      const data = {
+        type: 'UPDATE_ROUTE',
+        route,
+        origin,
+        destination,
+      };
+      iframeRef.current.contentWindow.postMessage(data, '*');
+    }
+  }, [route, origin, destination]);
+
+  useEffect(() => {
+    if ((origin || destination) && iframeRef.current?.contentWindow) {
+      const data = {
+        type: 'UPDATE_POINTS_ONLY',
+        origin,
+        destination,
+      };
+      iframeRef.current.contentWindow.postMessage(data, '*');
+    }
+  }, [origin, destination]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      let data = event.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch(e) {}
+      }
+      if (data && data.type === 'MAP_CLICK' && onMapClick) {
+        onMapClick(data.lat, data.lng);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [onMapClick]);
 
   return (
     <div style={{ height: '100%', minHeight: 620, position: 'relative', width: '100%' }}>
@@ -25,6 +75,15 @@ export default function MapView({ isTripStarted = false }: MapViewProps) {
         onLoad={() => {
           if (iframeRef.current?.contentWindow) {
             iframeRef.current.contentWindow.postMessage({ isStarted: isTripStarted }, '*');
+            if (route) {
+              const data = {
+                type: 'UPDATE_ROUTE',
+                route,
+                origin,
+                destination,
+              };
+              iframeRef.current.contentWindow.postMessage(data, '*');
+            }
           }
         }}
       />

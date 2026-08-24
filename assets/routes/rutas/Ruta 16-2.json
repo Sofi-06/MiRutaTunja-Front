@@ -1,0 +1,5 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.348031,5.571378,0]},"properties":{"name":"Despacho Asís","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.366125,5.515222,0]},"properties":{"name":"Punto de Retorno","styleUrl":"#icon-1826-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.34859,5.560447,0]},"properties":{"name":"Semáforo Calle 53","styleUrl":"#icon-1884-FFD600-nodesc","icon-opacity":1,"icon-color":"#ffd600","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}}
+]}

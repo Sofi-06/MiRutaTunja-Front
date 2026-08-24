@@ -8,9 +8,15 @@ type SearchBarProps = Readonly<{
   destination: string;
   isCompact: boolean;
   onDestinationChange: (destination: string) => void;
+  onUseCurrentLocation?: () => void;
 }>;
 
-export default function SearchBar({ destination, isCompact, onDestinationChange }: SearchBarProps) {
+export default function SearchBar({
+  destination,
+  isCompact,
+  onDestinationChange,
+  onUseCurrentLocation,
+}: SearchBarProps) {
   const router = useRouter();
 
   const openSearch = () => {
@@ -32,7 +38,7 @@ export default function SearchBar({ destination, isCompact, onDestinationChange 
         />
         {!isCompact && <View style={styles.searchDivider} />}
         {!isCompact && (
-          <Pressable style={styles.locationAction}>
+          <Pressable onPress={onUseCurrentLocation} style={styles.locationAction}>
             <Icon name="gps" color={colors.blue} size={19} />
             <Text style={styles.locationActionText}>Mi ubicación</Text>
           </Pressable>
@@ -69,9 +75,9 @@ export default function SearchBar({ destination, isCompact, onDestinationChange 
             <Icon name="heart" color={colors.blue} size={18} />
             <Text style={[styles.quickTextActive, styles.quickTextPhone]}>Favoritos</Text>
           </Pressable>
-          <Pressable onPress={openSearch} style={[styles.quickPill, styles.quickPillPhone]}>
-            <Icon name="history" color={colors.ink} size={17} />
-            <Text style={[styles.quickText, styles.quickTextPhone]}>Recientes</Text>
+          <Pressable onPress={onUseCurrentLocation} style={[styles.quickPill, styles.quickPillPhone]}>
+            <Icon name="gps" color={colors.ink} size={17} />
+            <Text style={[styles.quickText, styles.quickTextPhone]}>Mi ubicación</Text>
           </Pressable>
           <Pressable onPress={() => router.push('/explore')} style={[styles.quickPill, styles.quickPillPhone]}>
             <Icon name="bus" color={colors.ink} size={18} />

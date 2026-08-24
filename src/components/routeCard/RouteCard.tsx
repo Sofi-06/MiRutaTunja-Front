@@ -12,6 +12,7 @@ type RouteCardProps = Readonly<{
   stops: string;
   tone: 'blue' | 'green' | 'coral' | 'gold';
   isCompact?: boolean;
+  onPress?: () => void;
 }>;
 
 const toneStyles = {
@@ -21,9 +22,10 @@ const toneStyles = {
   gold: styles.routeCodeGold,
 };
 
-export default function RouteCard({ code, title, description, duration, frequency, stops, tone, isCompact = false }: RouteCardProps) {
+export default function RouteCard({ code, title, description, duration, frequency, stops, tone, isCompact = false, onPress }: RouteCardProps) {
   return (
     <Pressable
+      onPress={onPress}
       style={({ hovered }) => [
         styles.routeCard,
         isCompact && styles.routeCardPhone,

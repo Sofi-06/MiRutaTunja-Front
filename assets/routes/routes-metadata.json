@@ -1,0 +1,470 @@
+{
+  "R1": {
+    "code": "R1",
+    "name": "Arboleda - Avenida Norte - Terminal de Transporte - Avenida Norte - Arboleda",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "7 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:45:00 a 21:43:00",
+        "frequency": "13 min"
+      }
+    },
+    "mapLink": ""
+  },
+  "R2": {
+    "code": "R2",
+    "name": "Pinos de oriente - San Francisco - Viaducto — Avenida Universitaria - Arboleda-Viaducto - San Francisco - Pinos de oriente",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "7 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "11 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1bed3U2Cj8p7Xkwr4jhR72JpsSpqqLJ8&usp=drive_link"
+  },
+  "R3": {
+    "code": "R3",
+    "name": "Arboleda-Santa Ines-Escandinavo-Santa Inés - Arboleda",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:45:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "14 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1ZhWpAzr1G35lzNaQnV_Hf7Ie1UkKfVE&usp=drive_link"
+  },
+  "R4": {
+    "code": "R4",
+    "name": "Arboleda - Muiscas - San Francisco - Ramal Pinos de Oriente-San Francisco - Muiscas - Arboleda",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:33:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "8 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1J8f6kKxksaNQXKCFI3lwCQ-ryD6Voho&usp=drive_link"
+  },
+  "R5": {
+    "code": "R5",
+    "name": "Arboleda - Muiscas - Reten sur-Paraíso - Muiscas - Arboleda",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "12 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=12MHFeo6TomE7TOY1hIznu1yVd9IIMIg&usp=drive_link"
+  },
+  "R6": {
+    "code": "R6",
+    "name": "Estancia del roble - Avenida norte - Reten sur-Vía Moniquirá - Estancia del roble",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "8 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "20 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=17U6jmQtSPhVnYQV8cSMSs7wAxAo81MA&usp=drive_link"
+  },
+  "R7": {
+    "code": "R7",
+    "name": "Estancia del roble - Vía Moniquirá - Juan de Castellanos - Florida-Juan de Castellanos - Avenida norte - Estancia del roble",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "9 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "--"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1eRJ7qm9i5zXX1mwawixWllXkzTegx70&usp=drive_link"
+  },
+  "R8": {
+    "code": "R8",
+    "name": "Cooservicios - La Fuente-Plaza de Bolívar — Terminal — ESE Santiago de Tunja - Cooservicios",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "13 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1oqcvw7AEcj7gYIlSX0yN9bBxqL6ygtg&usp=drive_link"
+  },
+  "R9": {
+    "code": "R9",
+    "name": "Arboleda-Av Norte-La Fuente-Avenida universitaria - Arboleda.",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "5 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "8 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1oHH34OQE8ohMcAu3vkwyOfE-4npAJLo&usp=drive_link"
+  },
+  "R10": {
+    "code": "R10",
+    "name": "Muiscas - Avenida Norte - Triunfo (Circular)",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "7 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "16 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1m86r9hybxEvg_xqwOnbN2IhrqCJ9aTY&usp=drive_link"
+  },
+  "R11": {
+    "code": "R11",
+    "name": "Br. Santa Marta - Cooservicios - Viaducto - Muiscas-Viaducto - Cooservicios - Br. Santa Marta",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "7 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1dtxI10iAsM0rVvCBknohCENcbEa2pgE&usp=drive_link"
+  },
+  "R12": {
+    "code": "R12",
+    "name": "Runta — Avenida Oriental — Nieves - Avenida Norte - Muiscas-Uniboyacá — Avenida Norte — Plaza de Bolívar — Avenida Oriental - Runta",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "8 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "--"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=19SJdXxCQgGrukAWBOsqCwd3mnK0_2Ns&usp=drive_link"
+  },
+  "R13": {
+    "code": "R13",
+    "name": "Limite Perímetro Tunja-Sector El Lago-Estadio - Triunfo-Limite Perímetro Tunja-Sector El Lago",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "11 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1WOnjL-bUisZRIz1Q3762JFjjKs2DqpY&usp=drive_link"
+  },
+  "R14": {
+    "code": "R14",
+    "name": "Estancia del Roble-Viaducto-Paraíso-Avenida norte - Estancia del roble.",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "7 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "--"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=17Wd36tkYxESAtzpPdQgsljXzgNJBEKk&usp=drive_link"
+  },
+  "R15": {
+    "code": "R15",
+    "name": "Cooservicios - Avenida Norte - Muiscas-Avenida Norte - Cooservicios",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "7 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1DapnoAnXKZZd25gJ2sIiUXJwmRf7ZVM&usp=drive_link"
+  },
+  "R16": {
+    "code": "R16",
+    "name": "Asís - Avenida norte - Florida-Avenida norte - Asís",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "15 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1vJ_qfc3q9C8LWHMml48kMGiaNq0jSEM&usp=drive_link"
+  },
+  "R17": {
+    "code": "R17",
+    "name": "Asís - Avenida norte - Altamira-Avenida norte - Asís",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "45 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1RPG3jI5fClpB00o2Ufgp8E5GQkv_ArI&usp=drive_link"
+  },
+  "R18": {
+    "code": "R18",
+    "name": "Limite Perímetro Tunja Sector El Lago-Avenida norte -Prados de San Luis",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "12 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1HUeIRiF7ilCRl6YFFffTa-KhZzoslic&usp=drive_link"
+  },
+  "R19": {
+    "code": "R19",
+    "name": "Ruta de Influencia Tunja-Ventaquemada",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "7 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "11 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1jtJMmh-HSa9MwyhkPUPXdgT6vEfYGmI&usp=drive_link"
+  },
+  "R20": {
+    "code": "R20",
+    "name": "Pirgua - Terminal de Transporte - Avenida Norte - Arboleda-Avenida Norte - Terminal de Transporte - Pirgua",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "8 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "12 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1CfhLbzjBVv4OWsrYcN1JqKFeyMzrziU&usp=drive_link"
+  },
+  "R21": {
+    "code": "R21",
+    "name": "Pirgua - Terminal de Transporte - Estadio - Retén sur-Estadio - Terminal de Transporte - Pirgua",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "8 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "17 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1ekzmAjoOPCopokongA49rMUlTnhOLfA&usp=drive_link"
+  },
+  "R22": {
+    "code": "R22",
+    "name": "Barrio Asís - Barrio Muiscas - Avenida Universitaria - C.C. Viva - Terminal deTransporte - Barrio la fuente (Circular)",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "7 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "13 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1offZUKeO1dtehA9mdaxpbsePh9yUdIY&usp=drive_link"
+  },
+  "R23": {
+    "code": "R23",
+    "name": "Arboleda - Uniboyacá - Ramal Florida - San Francisco-Ramal Florida - Uniboyacá - Arboleda",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "11 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1U2an2O8xu1MClwkXPTNpcN4gTApTDnk&usp=drive_link"
+  },
+  "R24": {
+    "code": "R24",
+    "name": "Runta - La Fuente - Ramal Florencia-La Fuente - Runta",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "9 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "20 min"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1W6rKWrwaU4PYHQPlqwFSpeKLEFmwMW4&usp=drive_link"
+  },
+  "R25": {
+    "code": "R25",
+    "name": "Runta-La Fuente-Runta",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "8 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "--"
+      }
+    },
+    "mapLink": "https://www.google.com/maps/d/edit?mid=1gtbzt4FPTgmbWeKOt119iICn3LS4Ggs&usp=drive_link"
+  },
+  "R26": {
+    "code": "R26",
+    "name": "Muiscas - Avenida Norte - Antonia Santos - Ramal Sol de Oriente-Antonia Santos - Avenida Norte - Muiscas.",
+    "category": "RUTAS Y RAMALES",
+    "schedule": {
+      "weekdays": {
+        "label": "Lunes a Sábado",
+        "hours": "05:30:00 a 22:00:00",
+        "frequency": "6 min"
+      },
+      "sundaysAndHolidays": {
+        "label": "Domingos y Festivos",
+        "hours": "05:50:00 a 22:00:00",
+        "frequency": "8 min"
+      }
+    },
+    "mapLink": ""
+  }
+}

@@ -1,0 +1,4 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.348015,5.571397,0]},"properties":{"name":"Despacho Asis","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.36732,5.54748,0]},"properties":{"name":"Punto de Retorno","styleUrl":"#icon-1826-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}}
+]}

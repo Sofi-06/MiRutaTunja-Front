@@ -1,0 +1,4 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.3624938,5.5041759,0]},"properties":{"name":"Despacho Ciudad Jardín","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.3340279,5.5716877,0]},"properties":{"name":"Retorno","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}}
+]}

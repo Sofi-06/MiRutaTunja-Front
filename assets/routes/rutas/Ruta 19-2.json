@@ -1,0 +1,4 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.338312,5.568983,0]},"properties":{"name":"Retorno","styleUrl":"#icon-1826-E65100-nodesc","icon-opacity":1,"icon-color":"#e65100","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.433792,5.4462969,0]},"properties":{"name":"Despacho Puente de Boyaca","styleUrl":"#icon-1694-0288D1-nodesc","icon-opacity":1,"icon-color":"#0288d1","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}}
+]}

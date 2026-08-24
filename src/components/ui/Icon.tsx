@@ -17,6 +17,7 @@ const iconMap = {
   chevron: 'chevron-right',
   close: 'close',
   pin: 'map-marker-outline',
+  back: 'arrow-left',
 } as const satisfies Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']>;
 
 type IconName = keyof typeof iconMap;

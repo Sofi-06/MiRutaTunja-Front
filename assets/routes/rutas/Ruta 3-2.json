@@ -1,0 +1,5 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.33226,5.573499,0]},"properties":{"name":"Despacho Arboledas","styleUrl":"#icon-1899-DB4436-nodesc","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon-offset":[32,64],"icon-offset-units":["pixels","insetPixels"],"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.373165,5.523731,0]},"properties":{"name":"Calle 7A","description":"Punto de Retorno","styleUrl":"#icon-1826-DB4436","icon-opacity":1,"icon-color":"#db4436","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.350436,5.556479,0]},"properties":{"name":"Semáforo Calle 48","styleUrl":"#icon-1884-FFD600-nodesc","icon-opacity":1,"icon-color":"#ffd600","icon-scale":1,"icon":"https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"}}
+]}
