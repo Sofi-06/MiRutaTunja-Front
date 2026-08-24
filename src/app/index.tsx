@@ -190,6 +190,67 @@ export default function HomeScreen() {
       })()
     : calculatedRoute;
 
+  // Calcular la lista de rutas recomendadas en tiempo de renderizado
+  const recommendedRoutesList = (() => {
+    if (!originCoords || !destCoords) return [];
+
+    const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+      const dLat = lat1 - lat2;
+      const dLng = lng1 - lng2;
+      return Math.sqrt(dLat * dLat + dLng * dLng) * 111.32; // Distancia aproximada en km
+    };
+
+    const suggestions: { code: string; title: string; dist: number; originDist: number; destDist: number }[] = [];
+
+    Object.keys(routesRegistry).forEach((key) => {
+      const route = routesRegistry[key];
+      if (!route || !route.path || !route.path.features) return;
+
+      let minOriginDist = Infinity;
+      let minDestDist = Infinity;
+
+      route.path.features.forEach((feature: any) => {
+        if (feature.geometry && feature.geometry.type === 'LineString') {
+          feature.geometry.coordinates.forEach((coord: [number, number]) => {
+            const lngVal = coord[0];
+            const latVal = coord[1];
+
+            const distToOrig = getDistance(originCoords.lat, originCoords.lng, latVal, lngVal);
+            const distToDt = getDistance(destCoords.lat, destCoords.lng, latVal, lngVal);
+
+            if (distToOrig < minOriginDist) {
+              minOriginDist = distToOrig;
+            }
+            if (distToDt < minDestDist) {
+              minDestDist = distToDt;
+            }
+          });
+        }
+      });
+
+      // Si el trayecto de la ruta pasa a menos de 750 metros (0.75 km) de ambos puntos
+      if (minOriginDist <= 0.75 && minDestDist <= 0.75) {
+        const metadata = routesMetadata[key as keyof typeof routesMetadata];
+        const num = key.replace('R', '');
+        const formattedCode = `R-${num.padStart(2, '0')}`;
+        const title = metadata
+          ? `${metadata.name.split(' - ')[0]} – ${metadata.name.split(' - ').slice(-1)[0]}`
+          : `Ruta ${key}`;
+
+        suggestions.push({
+          code: formattedCode,
+          title,
+          dist: minOriginDist + minDestDist,
+          originDist: minOriginDist,
+          destDist: minDestDist,
+        });
+      }
+    });
+
+    // Ordenar por cercanía acumulada
+    return suggestions.sort((a, b) => a.dist - b.dist);
+  })();
+
   // Efecto para calcular ruta cuando cambie el origen o el destino
   useEffect(() => {
     if (!originCoords || !destCoords) return;
@@ -597,6 +658,45 @@ export default function HomeScreen() {
               />
             </View>
           </View>
+
+          {destCoords && (
+            <View style={{ marginTop: 24, marginBottom: 12 }}>
+              <Text style={styles.sectionEyebrow}>TRAYECTOS DETECTADOS</Text>
+              <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas recomendadas para tu viaje</Text>
+              <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone, { marginBottom: 16 }]}>
+                Rutas de bus que pasan a menos de 750 metros de tu origen y destino.
+              </Text>
+              
+              {recommendedRoutesList.length === 0 ? (
+                <View style={{ padding: 24, backgroundColor: '#f1f5f9', borderRadius: 16, alignItems: 'center' }}>
+                  <Text style={{ color: '#64748b', fontWeight: '600', textAlign: 'center' }}>No encontramos rutas de bus directo que cubran este trayecto exacto. Puedes usar la ruta personalizada en el mapa.</Text>
+                </View>
+              ) : (
+                <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
+                  {recommendedRoutesList.slice(0, 4).map((route) => {
+                    const numVal = parseInt(route.code.replace('R-', ''));
+                    const tones = ['blue', 'green', 'gold', 'coral'] as const;
+                    const tone = tones[numVal % tones.length];
+
+                    return (
+                      <RouteCard
+                        key={route.code}
+                        code={route.code}
+                        title={route.title}
+                        description={`Paso origen a ${(route.originDist * 1000).toFixed(0)}m · Paso destino a ${(route.destDist * 1000).toFixed(0)}m`}
+                        duration="Aprox. 20-30 min"
+                        frequency="Frecuencia normal"
+                        stops="Ver trayecto"
+                        tone={tone}
+                        isCompact={isCompact}
+                        onPress={() => handleSelectRoute(route.code)}
+                      />
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
 
           <View style={[styles.sectionHeaderRow, isCompact && styles.sectionHeaderRowPhone]}>
             <View style={styles.sectionHeaderCopy}>
