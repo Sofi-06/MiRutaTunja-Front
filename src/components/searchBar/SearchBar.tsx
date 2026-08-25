@@ -27,7 +27,7 @@ export default function SearchBar({
 
   return (
     <View style={[styles.searchRow, isCompact && styles.searchRowCompact, isCompact && styles.searchRowPhone, { width: '100%' }]}>
-      <View style={[styles.searchBox, { flexDirection: 'column', height: 'auto', gap: 10, padding: 14, width: '100%', borderRadius: 16 }, isCompact && styles.searchBoxCompact, isCompact && styles.searchBoxPhone]}>
+      <View style={[styles.searchBox, { flexDirection: 'column', gap: 10, padding: 14, width: '100%', borderRadius: 16 }, isCompact && styles.searchBoxCompact, isCompact && styles.searchBoxPhone]}>
         
         {/* Fila del Origen */}
         <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', gap: 8 }}>

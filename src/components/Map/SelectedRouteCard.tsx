@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 
 import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
@@ -26,6 +26,9 @@ type SelectedRouteCardProps = Readonly<{
     weekdays: { label: string; hours: string; frequency: string };
     sundaysAndHolidays: { label: string; hours: string; frequency: string };
   };
+  routeName?: string;
+  routeCategory?: string;
+  routeMapLink?: string;
 }>;
 
 export default function SelectedRouteCard({
@@ -47,9 +50,13 @@ export default function SelectedRouteCard({
   idaLabel = 'Ida',
   vueltaLabel = 'Vuelta',
   schedule,
+  routeName,
+  routeCategory,
+  routeMapLink,
 }: SelectedRouteCardProps) {
   const [internalTripStarted, setInternalTripStarted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const isTripStarted = controlledTripStarted ?? internalTripStarted;
 
@@ -65,6 +72,10 @@ export default function SelectedRouteCard({
     [originName, 'Punto de partida', 'Inicio'],
     [destinationName, 'Punto de llegada', 'Fin'],
   ] as const;
+  const signDestinations = Array.from(new Set((routeName || title)
+    .split(/\s*(?:-|–|—)\s*/)
+    .map((place) => place.trim())
+    .filter(Boolean))).slice(0, 4);
 
   return (
     <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact, isCompact && styles.selectedRouteCardPhone]}>
@@ -73,7 +84,16 @@ export default function SelectedRouteCard({
           <Text style={styles.selectedRouteEyebrow}>RECORRIDO SELECCIONADO</Text>
           <Text numberOfLines={1} style={styles.selectedRouteTitle}>{title}</Text>
         </View>
-        <Text style={styles.selectedRouteCode}>{code}</Text>
+        <View style={styles.selectedRouteHeaderActions}>
+          <Text style={styles.selectedRouteCode}>{code}</Text>
+          <Pressable
+            accessibilityLabel="Guardar ruta"
+            onPress={() => setIsSaved((saved) => !saved)}
+            style={[styles.saveRouteHeaderButton, isSaved && styles.saveRouteButtonActive]}
+          >
+            <Icon name="star" color={isSaved ? colors.coral : colors.muted} size={18} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.routeStats}>
@@ -181,17 +201,42 @@ export default function SelectedRouteCard({
         </Text>
       </Pressable>
 
-      <Pressable
-        accessibilityLabel="Guardar ruta"
-        onPress={() => setIsSaved((saved) => !saved)}
-        style={[
-          styles.saveRouteButton,
-          isCompact && styles.saveRouteButtonPhone,
-          isSaved && styles.saveRouteButtonActive,
-        ]}
-      >
-        <Icon name="star" color={isSaved ? colors.coral : colors.muted} size={19} />
+      <Pressable onPress={() => setIsDetailsOpen(true)} style={styles.routeDetailsButton}>
+        <Text style={styles.routeDetailsButtonText}>Saber más de esta ruta</Text>
+        <Icon name="chevron" color={colors.blueDark} size={18} />
       </Pressable>
+
+      <Modal transparent animationType="fade" visible={isDetailsOpen} onRequestClose={() => setIsDetailsOpen(false)}>
+        <Pressable style={styles.routeModalBackdrop} onPress={() => setIsDetailsOpen(false)}>
+          <Pressable style={styles.routeModalCard} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.routeModalContent}>
+              <View style={styles.routeModalHeader}>
+                <View style={styles.routeModalTitleWrap}><Text style={styles.selectedRouteEyebrow}>INFORMACIÓN DE LA RUTA</Text><Text style={styles.routeModalTitle}>{routeName || title}</Text></View>
+                <Pressable accessibilityLabel="Cerrar información" onPress={() => setIsDetailsOpen(false)} style={styles.routeModalClose}><Icon name="close" color={colors.muted} size={18} /></Pressable>
+              </View>
+              <Text style={styles.routeModalCategory}>{routeCategory || 'Ruta urbana'}</Text>
+
+              <View style={[styles.routeModalColumns, isCompact && styles.routeModalColumnsPhone]}>
+                <View style={styles.routeModalInfoColumn}>
+                  {schedule && <View style={styles.routeModalSchedule}><Text style={styles.routeModalScheduleTitle}>Horarios</Text><Text style={styles.routeModalText}>{schedule.weekdays.label}: {schedule.weekdays.hours}</Text><Text style={styles.routeModalText}>Frecuencia: cada {schedule.weekdays.frequency}</Text><Text style={[styles.routeModalText, { marginTop: 7 }]}>{schedule.sundaysAndHolidays.label}: {schedule.sundaysAndHolidays.hours}</Text><Text style={styles.routeModalText}>Frecuencia: cada {schedule.sundaysAndHolidays.frequency}</Text></View>}
+                  <View style={styles.farePanel}><Text style={styles.farePanelTitle}>Tarifas</Text><Text style={styles.farePanelText}>Diurna: por confirmar</Text><Text style={styles.farePanelText}>Nocturna: por confirmar</Text></View>
+                </View>
+                <View style={styles.routeModalSignColumn}>
+                  <Text style={styles.routeModalHint}>El número identifica la ruta y los nombres indican sus sectores principales.</Text>
+                  <View style={styles.busSign}>
+                    <View style={styles.busSignCode}><Text style={styles.busSignCodeText}>{code}</Text></View>
+                    <Text style={styles.busSignLabel}>LETRERO DEL BUS</Text>
+                    <View style={styles.busSignDestinations}>
+                      {signDestinations.map((place, index) => <Text key={place + index} style={[styles.busSignDestination, index % 2 === 1 && styles.busSignDestinationAccent]}>{place.toUpperCase()}</Text>)}
+                    </View>
+                  </View>
+                </View>
+              </View>
+              {routeMapLink ? <Text style={styles.routeModalMapNote}>La ruta cuenta con referencia cartográfica disponible.</Text> : null}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

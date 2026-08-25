@@ -27,16 +27,14 @@ export default function MapView({
   }, [isTripStarted]);
 
   useEffect(() => {
-    if (route) {
-      const data = {
-        type: 'UPDATE_ROUTE',
-        route,
-        origin,
-        destination,
-      };
-      const script = `window.postMessage(${JSON.stringify(data)}, '*');`;
-      webViewRef.current?.injectJavaScript(script);
-    }
+    const data = {
+      type: 'UPDATE_ROUTE',
+      route: route ?? [],
+      origin,
+      destination,
+    };
+    const script = `window.postMessage(${JSON.stringify(data)}, '*');`;
+    webViewRef.current?.injectJavaScript(script);
   }, [route, origin, destination]);
 
   useEffect(() => {
@@ -75,21 +73,21 @@ export default function MapView({
         style={styles.map}
         javaScriptEnabled
         domStorageEnabled
+        nestedScrollEnabled
+        overScrollMode="never"
         onMessage={handleMessage}
         onLoadEnd={() => {
           const script = `if (window.setTripStarted) { window.setTripStarted(${isTripStarted}); }`;
           webViewRef.current?.injectJavaScript(script);
           
-          if (route) {
-            const data = {
-              type: 'UPDATE_ROUTE',
-              route,
-              origin,
-              destination,
-            };
-            const updateScript = `window.postMessage(${JSON.stringify(data)}, '*');`;
-            webViewRef.current?.injectJavaScript(updateScript);
-          }
+          const data = {
+            type: 'UPDATE_ROUTE',
+            route: route ?? [],
+            origin,
+            destination,
+          };
+          const updateScript = `window.postMessage(${JSON.stringify(data)}, '*');`;
+          webViewRef.current?.injectJavaScript(updateScript);
         }}
       />
       <View pointerEvents="none" style={styles.label}>

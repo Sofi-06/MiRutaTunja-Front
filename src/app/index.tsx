@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   ImageBackground,
+  Platform,
   ScrollView,
   Text,
   useWindowDimensions,
@@ -20,11 +21,16 @@ import RouteCard from '@/components/routeCard/RouteCard';
 import RouteInsights from '@/components/routeCard/RouteInsights';
 import SearchBar from '@/components/searchBar/SearchBar';
 import Icon from '@/components/ui/Icon';
+import MobileHome from '@/components/mobile/MobileHome';
 import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 
 export default function HomeScreen() {
+  return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
+}
+
+function WebHomeScreen() {
   const { width } = useWindowDimensions();
   const isCompact = width < 760;
   const [destination, setDestination] = useState('');
@@ -718,6 +724,21 @@ export default function HomeScreen() {
                   const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
                   const key = match ? `R${match[1]}` : activeRouteInfo.code;
                   return routesMetadata[key as keyof typeof routesMetadata]?.schedule;
+                })()}
+                routeName={(() => {
+                  const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
+                  const key = match ? `R${match[1]}` : activeRouteInfo.code;
+                  return routesMetadata[key as keyof typeof routesMetadata]?.name;
+                })()}
+                routeCategory={(() => {
+                  const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
+                  const key = match ? `R${match[1]}` : activeRouteInfo.code;
+                  return routesMetadata[key as keyof typeof routesMetadata]?.category;
+                })()}
+                routeMapLink={(() => {
+                  const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
+                  const key = match ? `R${match[1]}` : activeRouteInfo.code;
+                  return routesMetadata[key as keyof typeof routesMetadata]?.mapLink;
                 })()}
               />
             </View>

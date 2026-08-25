@@ -9,6 +9,7 @@ export const mapHtml = `
       <style>
         * { box-sizing: border-box; }
         html, body, #map { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { touch-action: none; }
         .leaflet-control-attribution { font-size: 10px; background: rgba(255,255,255,0.85) !important; padding: 2px 6px !important; border-radius: 6px; }
         
         /* Bus stop marker */
@@ -381,6 +382,10 @@ export const mapHtml = `
                 iconAnchor: [25, 35]
               })
             }).addTo(map).bindPopup('<b>Punto de Destino</b>');
+          }
+
+          if (origin && destination) {
+            map.fitBounds([[origin.lat, origin.lng], [destination.lat, destination.lng]], { padding: [45, 45] });
           }
         }
 

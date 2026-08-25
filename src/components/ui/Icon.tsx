@@ -18,6 +18,10 @@ const iconMap = {
   close: 'close',
   pin: 'map-marker-outline',
   back: 'arrow-left',
+  home: 'home-variant-outline',
+  account: 'account-circle-outline',
+  route: 'map-marker-path',
+  chatbot: 'robot-outline',
 } as const satisfies Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']>;
 
 type IconName = keyof typeof iconMap;
