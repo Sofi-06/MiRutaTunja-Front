@@ -4,13 +4,37 @@ export const mapHtml = `
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-      <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+      <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+      <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet" />
+      
+      <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+      <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+      
       <style>
         * { box-sizing: border-box; }
         html, body, #map { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         #map { touch-action: none; }
-        .leaflet-control-attribution { font-size: 10px; background: rgba(255,255,255,0.85) !important; padding: 2px 6px !important; border-radius: 6px; }
+        
+        /* Custom Geocoder Styles to look premium */
+        .mapboxgl-ctrl-geocoder {
+          border-radius: 12px !important;
+          box-shadow: 0 4px 12px rgba(23, 40, 59, 0.15) !important;
+          border: 1px solid #e2edf5 !important;
+          font-family: inherit !important;
+          width: 280px !important;
+          max-width: 280px !important;
+        }
+        .mapboxgl-ctrl-geocoder--input {
+          height: 40px !important;
+          padding: 6px 35px !important;
+        }
+        .mapboxgl-ctrl-geocoder--icon-search {
+          top: 10px !important;
+          left: 10px !important;
+        }
+        .mapboxgl-ctrl-geocoder--button {
+          top: 8px !important;
+        }
         
         /* Bus stop marker */
         .stop-marker {
@@ -83,14 +107,20 @@ export const mapHtml = `
         }
 
         /* Glassmorphic Popups */
-        .leaflet-popup-content-wrapper {
+        .mapboxgl-popup-content {
+          background: rgba(255, 255, 255, 0.95) !important;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
           border-radius: 14px !important;
-          padding: 4px 6px !important;
+          padding: 12px 14px !important;
           box-shadow: 0 8px 24px rgba(23, 40, 59, 0.18) !important;
-          border: 1px solid #e2edf5;
+          border: 1px solid #e2edf5 !important;
+          font-family: inherit;
         }
-        .leaflet-popup-tip {
-          background: #ffffff;
+        .mapboxgl-popup-close-button {
+          padding: 4px 8px !important;
+          font-size: 14px !important;
+          color: #728092 !important;
         }
         .popup-title {
           font-size: 14px;
@@ -117,8 +147,6 @@ export const mapHtml = `
     </head>
     <body>
       <div id="map"></div>
-      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-      <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
       <script>
         // Redirigir console.log a React Native para verlos en la terminal de la computadora
         const originalLog = console.log;
@@ -130,53 +158,49 @@ export const mapHtml = `
           }
         };
 
-        console.log("Leaflet WebView: Iniciando mapa...");
+        console.log("Mapbox WebView: Iniciando mapa vectorial...");
 
-        const map = L.map('map', {
-          zoomControl: true
-        }).setView([5.5324627, -73.3615504], 14);
+        mapboxgl.accessToken = 'MAPBOX_TOKEN_PLACEHOLDER';
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 19
-        }).addTo(map);
+        const map = new mapboxgl.Map({
+          container: 'map',
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [-73.3615504, 5.5324627], // Formato [lng, lat] para Mapbox
+          zoom: 14,
+          projection: 'globe' // Efecto globo 3D premium
+        });
+
+        // Controles de navegación de Mapbox
+        map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
         // Agregar la barra de búsqueda configurada para Tunja
-        const geocoder = L.Control.geocoder({
-          defaultMarkGeocode: false,
-          placeholder: "Buscar dirección o sitio en Tunja...",
-          geocoder: L.Control.Geocoder.nominatim({
-            geocodingQueryParams: {
-              countrycodes: 'co', // Limita la búsqueda a Colombia
-              viewbox: '-73.38,5.50,-73.32,5.58', // Delimita el área geográfica de Tunja
-              bounded: 1
-            }
-          })
-        })
-        .on('markgeocode', function(e) {
-          const lat = e.geocode.center.lat;
-          const lng = e.geocode.center.lng;
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          placeholder: "Buscar en Tunja...",
+          countries: 'co', // Limita a Colombia
+          bbox: [-73.38, 5.50, -73.32, 5.58], // Delimita a Tunja [minLng, minLat, maxLng, maxLat]
+          proximity: [-73.3615504, 5.5324627],
+          marker: false // Manejamos el marcador manualmente
+        });
+
+        map.addControl(geocoder, 'top-left');
+
+        geocoder.on('result', function(e) {
+          const lng = e.result.center[0];
+          const lat = e.result.center[1];
+          const name = e.result.place_name;
           
-          console.log("Leaflet WebView: Dirección geocodificada seleccionada:", e.geocode.name, "en coordenadas:", lat, lng);
+          console.log("Mapbox WebView: Dirección geocodificada seleccionada:", name, "en coordenadas:", lat, lng);
 
           // Centrar el mapa
-          map.setView([lat, lng], 16);
+          map.easeTo({
+            center: [lng, lat],
+            zoom: 16
+          });
 
           // Colocar el marcador de llegada inmediatamente para feedback visual instantáneo
-          if (destinationMarker) map.removeLayer(destinationMarker);
-          destinationMarker = L.marker([lat, lng], {
-            icon: L.divIcon({
-              html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
-                      '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
-                        '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
-                      '</div>' +
-                      '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
-                    '</div>',
-              className: '',
-              iconSize: [120, 80],
-              iconAnchor: [60, 24]
-            })
-          }).addTo(map).bindPopup('<b>' + e.geocode.name + '</b>').openPopup();
+          setDestinationMarker(lat, lng, name);
 
           // Enviar coordenadas seleccionadas de vuelta a React Native
           const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
@@ -185,30 +209,25 @@ export const mapHtml = `
           } else {
             window.parent.postMessage(msg, '*');
           }
-        })
-        .addTo(map);
+        });
 
         // Click Handler para selección de destino en mapa
         map.on('click', function(e) {
-          const lat = e.latlng.lat;
-          const lng = e.latlng.lng;
-          console.log("Leaflet WebView: Click detectado en mapa en:", lat, lng);
+          // Comprobar si el clic fue en un tramo de ruta para priorizar la interacción de información de ruta
+          const features = map.queryRenderedFeatures(e.point, {
+            layers: ['route-layer']
+          });
+          if (features.length > 0) {
+            // El clic fue en una ruta, la interacción con la ruta se maneja de forma independiente
+            return;
+          }
+
+          const lat = e.lngLat.lat;
+          const lng = e.lngLat.lng;
+          console.log("Mapbox WebView: Click detectado en mapa en:", lat, lng);
           
           // Colocar marcador de llegada inmediatamente
-          if (destinationMarker) map.removeLayer(destinationMarker);
-          destinationMarker = L.marker([lat, lng], {
-            icon: L.divIcon({
-              html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
-                      '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
-                        '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
-                      '</div>' +
-                      '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
-                    '</div>',
-              className: '',
-              iconSize: [120, 80],
-              iconAnchor: [60, 24]
-            })
-          }).addTo(map).bindPopup('<b>Destino seleccionado</b>').openPopup();
+          setDestinationMarker(lat, lng, "Destino seleccionado");
 
           // Enviar evento de vuelta al contenedor de React Native o web
           const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
@@ -219,30 +238,21 @@ export const mapHtml = `
           }
         });
 
-        let shadowLine = null;
-        let routeLine = null;
-        let busMarker = null;
-        let originMarker = null;
-        let destinationMarker = null;
         let activePath = [];
         let isTripStarted = false;
         let animationFrameId = null;
         let subIndex = 0;
         const BUS_SPEED = 0.045;
 
-        // Click Handler for custom destination selection
-        map.on('click', function(e) {
-          const lat = e.latlng.lat;
-          const lng = e.latlng.lng;
-          
-          // Enviar evento de vuelta al contenedor de React Native o web
-          const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
-          if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(msg);
-          } else {
-            window.parent.postMessage(msg, '*');
-          }
-        });
+        let busMarker = null;
+        let originMarker = null;
+        let destinationMarker = null;
+
+        // Variables de sincronización para evitar condiciones de carrera antes de la carga del mapa
+        let isMapLoaded = false;
+        let pendingRouteData = null;
+        let pendingPointsData = null;
+        let pendingTripStarted = null;
 
         function getBusIconHtml(isMoving) {
           return '<div class="bus-marker-container">' +
@@ -256,25 +266,24 @@ export const mapHtml = `
           const content = isMoving ?
             '<div class="popup-title">🚌 Bus en movimiento</div><div class="popup-tag" style="background:#e4f3eb;color:#5f9b7f;">En viaje</div>' :
             '<div class="popup-title">🚌 Bus estacionado</div><div class="popup-desc">Presiona "Iniciar viaje" para comenzar</div>';
-          busMarker.bindPopup(content);
+          
+          busMarker.setPopup(new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 15 }).setHTML(content));
         }
 
-        let routePolylines = [];
-        let customRouteLine = null;
-        let customRouteShadow = null;
- 
-        function clearCustomRouteLayers() {
-          if (customRouteShadow) { map.removeLayer(customRouteShadow); customRouteShadow = null; }
-          if (customRouteLine) { map.removeLayer(customRouteLine); customRouteLine = null; }
-        }
- 
         function clearRouteLayers() {
-          if (shadowLine) { map.removeLayer(shadowLine); shadowLine = null; }
-          if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-          routePolylines.forEach(function(l) { map.removeLayer(l); });
-          routePolylines = [];
-          if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
-          clearCustomRouteLayers();
+          if (map.getSource('route-source')) {
+            map.getSource('route-source').setData({
+              type: 'FeatureCollection',
+              features: []
+            });
+          }
+          if (map.getSource('custom-route-source')) {
+            map.getSource('custom-route-source').setData({
+              type: 'FeatureCollection',
+              features: []
+            });
+          }
+          if (busMarker) { busMarker.remove(); busMarker = null; }
         }
 
         function drawRoute(pathPoints) {
@@ -283,23 +292,30 @@ export const mapHtml = `
 
           if (!activePath || activePath.length === 0) return;
 
-          shadowLine = L.polyline(activePath, {
-            color: '#0891b2',
-            weight: 9,
-            opacity: 0.25,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
+          const geojson = {
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: activePath
+              },
+              properties: {
+                color: '#ec4899',
+                originalColor: '#ec4899',
+                name: 'Ruta activa'
+              }
+            }]
+          };
 
-          routeLine = L.polyline(activePath, {
-            color: '#06b6d4',
-            weight: 5,
-            opacity: 0.9,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
+          if (map.getSource('route-source')) {
+            map.getSource('route-source').setData(geojson);
+          }
 
-          map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+          const bounds = new mapboxgl.LngLatBounds();
+          activePath.forEach(function(p) { bounds.extend(p); });
+          map.fitBounds(bounds, { padding: 40, duration: 1200 });
+
           setupBusMarker(activePath[0]);
         }
 
@@ -308,74 +324,134 @@ export const mapHtml = `
           if (!segments || segments.length === 0) return;
 
           activePath = [];
-          
+          const features = [];
+
           segments.forEach(function(seg) {
             if (!seg.path || seg.path.length === 0) return;
             
             activePath = activePath.concat(seg.path);
-            const color = seg.color || '#3f719b';
             
-            const shadow = L.polyline(seg.path, {
-              color: color,
-              weight: 9,
-              opacity: 0.2,
-              lineCap: 'round',
-              lineJoin: 'round'
-            }).addTo(map);
-            routePolylines.push(shadow);
-
-            const line = L.polyline(seg.path, {
-              color: color,
-              weight: 5,
-              opacity: 0.9,
-              lineCap: 'round',
-              lineJoin: 'round'
-            }).addTo(map);
-            routePolylines.push(line);
+            features.push({
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: seg.path
+              },
+              properties: {
+                color: seg.color || '#3f719b',
+                originalColor: seg.originalColor || seg.color || '#3f719b',
+                name: seg.name || 'Tramo de vía',
+                ...seg.properties
+              }
+            });
           });
 
-          if (routePolylines.length > 0) {
-            const group = L.featureGroup(routePolylines);
-            map.fitBounds(group.getBounds(), { padding: [40, 40] });
+          const geojson = {
+            type: 'FeatureCollection',
+            features: features
+          };
+
+          if (map.getSource('route-source')) {
+            map.getSource('route-source').setData(geojson);
           }
 
           if (activePath.length > 0) {
+            const bounds = new mapboxgl.LngLatBounds();
+            activePath.forEach(function(p) { bounds.extend(p); });
+            map.fitBounds(bounds, { padding: 40, duration: 1200 });
+            
             setupBusMarker(activePath[0]);
           }
         }
- 
-        function drawCustomRoute(pathPoints) {
-          clearCustomRouteLayers();
-          if (!pathPoints || pathPoints.length === 0) return;
- 
-          const formatted = pathPoints.map(function(c) { return [c[1], c[0]]; });
- 
-          customRouteShadow = L.polyline(formatted, {
-            color: '#0891b2',
-            weight: 6,
-            opacity: 0.15,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
- 
-          customRouteLine = L.polyline(formatted, {
-            color: '#06b6d4',
-            weight: 3,
-            opacity: 0.85,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
+
+        function drawCustomRoute(customRouteData) {
+          if (!customRouteData) {
+            if (map.getSource('custom-route-source')) {
+              map.getSource('custom-route-source').setData({
+                type: 'FeatureCollection',
+                features: []
+              });
+            }
+            return;
+          }
+
+          let geojson = {
+            type: 'FeatureCollection',
+            features: []
+          };
+
+          if (customRouteData.isMultimodal) {
+            if (customRouteData.tramoA && customRouteData.tramoA.length >= 2) {
+              geojson.features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'LineString',
+                  coordinates: customRouteData.tramoA
+                },
+                properties: {
+                  isWalking: true,
+                  name: 'Caminata de origen'
+                }
+              });
+            }
+            if (customRouteData.tramoB && customRouteData.tramoB.length >= 2) {
+              geojson.features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'LineString',
+                  coordinates: customRouteData.tramoB
+                },
+                properties: {
+                  isBus: true,
+                  name: 'Viaje en bus (Ruta 1)'
+                }
+              });
+            }
+            if (customRouteData.tramoC && customRouteData.tramoC.length >= 2) {
+              geojson.features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'LineString',
+                  coordinates: customRouteData.tramoC
+                },
+                properties: {
+                  isWalking: true,
+                  name: 'Caminata de destino'
+                }
+              });
+            }
+          } else {
+            const pathPoints = Array.isArray(customRouteData) ? customRouteData : (customRouteData.route || []);
+            if (pathPoints.length >= 2) {
+              geojson.features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'LineString',
+                  coordinates: pathPoints
+                },
+                properties: {
+                  isWalking: true,
+                  name: 'Ruta directa'
+                }
+              });
+            }
+          }
+
+          if (map.getSource('custom-route-source')) {
+            map.getSource('custom-route-source').setData(geojson);
+          }
         }
 
-        function setupBusMarker(startLatLng) {
-          const busIcon = L.divIcon({
-            html: getBusIconHtml(isTripStarted),
-            className: '',
-            iconSize: [44, 44],
-            iconAnchor: [22, 22]
-          });
+        function setupBusMarker(startLngLat) {
+          if (busMarker) { busMarker.remove(); busMarker = null; }
 
-          busMarker = L.marker(startLatLng, { icon: busIcon, zIndexOffset: 1000 }).addTo(map);
+          const el = document.createElement('div');
+          el.innerHTML = getBusIconHtml(isTripStarted);
+
+          busMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+            .setLngLat(startLngLat)
+            .addTo(map);
+
           updateBusPopup(isTripStarted);
 
           if (isTripStarted) {
@@ -384,48 +460,56 @@ export const mapHtml = `
         }
 
         function setPoints(origin, destination) {
-          if (originMarker) map.removeLayer(originMarker);
-          if (destinationMarker) map.removeLayer(destinationMarker);
+          if (originMarker) { originMarker.remove(); originMarker = null; }
+          if (destinationMarker) { destinationMarker.remove(); destinationMarker = null; }
 
           if (origin) {
-            originMarker = L.marker([origin.lat, origin.lng], {
-              icon: L.divIcon({
-                html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
-                        '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);margin-bottom:4px;border:1.5px solid #22c55e;text-align:center;white-space:nowrap;line-height:1;">Origen</div>' +
-                        '<div style="width:24px;height:24px;background:#22c55e;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);">' +
-                          '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
-                        '</div>' +
-                      '</div>',
-                className: '',
-                iconSize: [120, 80],
-                iconAnchor: [60, 52]
-              })
-            }).addTo(map).bindPopup('<b>Punto de Inicio</b>');
+            const el = document.createElement('div');
+            el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
+                             '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);margin-bottom:4px;border:1.5px solid #22c55e;text-align:center;white-space:nowrap;line-height:1;">Origen</div>' +
+                             '<div style="width:24px;height:24px;background:#22c55e;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);">' +
+                               '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
+                             '</div>' +
+                           '</div>';
+            
+            originMarker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+              .setLngLat([origin.lng, origin.lat])
+              .setPopup(new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 15 }).setHTML('<b>Punto de Inicio</b>'))
+              .addTo(map);
             
             if (!destination) {
-              map.setView([origin.lat, origin.lng], 15);
+              map.easeTo({ center: [origin.lng, origin.lat], zoom: 15 });
             }
           }
 
           if (destination) {
-            destinationMarker = L.marker([destination.lat, destination.lng], {
-              icon: L.divIcon({
-                html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
-                        '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
-                          '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
-                        '</div>' +
-                        '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
-                      '</div>',
-                className: '',
-                iconSize: [120, 80],
-                iconAnchor: [60, 24]
-              })
-            }).addTo(map).bindPopup('<b>Punto de Destino</b>');
+            setDestinationMarker(destination.lat, destination.lng, "Punto de Destino");
           }
 
           if (origin && destination) {
-            map.fitBounds([[origin.lat, origin.lng], [destination.lat, destination.lng]], { padding: [45, 45] });
+            const bounds = new mapboxgl.LngLatBounds();
+            bounds.extend([origin.lng, origin.lat]);
+            bounds.extend([destination.lng, destination.lat]);
+            map.fitBounds(bounds, { padding: 45, duration: 1200 });
           }
+        }
+
+        function setDestinationMarker(lat, lng, title) {
+          if (destinationMarker) { destinationMarker.remove(); destinationMarker = null; }
+          
+          const el = document.createElement('div');
+          el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
+                           '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
+                             '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
+                           '</div>' +
+                           '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
+                         '</div>';
+          
+          destinationMarker = new mapboxgl.Marker({ element: el, anchor: 'top' })
+            .setLngLat([lng, lat])
+            .setPopup(new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 15 }).setHTML('<b>' + title + '</b>'))
+            .addTo(map);
+          destinationMarker.togglePopup();
         }
 
         function stepAnimation() {
@@ -443,10 +527,12 @@ export const mapHtml = `
           const p1 = activePath[idx];
           const p2 = activePath[nextIdx];
 
-          const currentLat = p1[0] + (p2[0] - p1[0]) * progress;
-          const currentLng = p1[1] + (p2[1] - p1[1]) * progress;
+          const currentLng = p1[0] + (p2[0] - p1[0]) * progress;
+          const currentLat = p1[1] + (p2[1] - p1[1]) * progress;
 
-          busMarker.setLatLng([currentLat, currentLng]);
+          if (busMarker) {
+            busMarker.setLngLat([currentLng, currentLat]);
+          }
 
           animationFrameId = requestAnimationFrame(stepAnimation);
         }
@@ -460,13 +546,8 @@ export const mapHtml = `
           isTripStarted = !!started;
           
           if (busMarker) {
-            const busIcon = L.divIcon({
-              html: getBusIconHtml(isTripStarted),
-              className: '',
-              iconSize: [44, 44],
-              iconAnchor: [22, 22]
-            });
-            busMarker.setIcon(busIcon);
+            const el = busMarker.getElement();
+            el.innerHTML = getBusIconHtml(isTripStarted);
             updateBusPopup(isTripStarted);
           }
 
@@ -479,12 +560,205 @@ export const mapHtml = `
             startAnimation();
           } else if (busMarker && activePath.length) {
             subIndex = 0;
-            busMarker.setLatLng(activePath[0]);
+            busMarker.setLngLat(activePath[0]);
           }
         }
 
         window.setTripStarted = setTripStarted;
 
+        // Procesamiento unificado de rutas y puntos
+        function processUpdateRoute(data) {
+          if (!data) return;
+          
+          clearRouteLayers();
+
+          if (data.route) {
+            if (data.route.isMultimodal) {
+              drawCustomRoute(data.route);
+            } else if (Array.isArray(data.route)) {
+              if (data.route.length === 0) {
+                // already cleared
+              } else if (data.route[0] && typeof data.route[0].path !== 'undefined') {
+                drawRouteSegments(data.route);
+              } else {
+                drawRoute(data.route);
+              }
+            }
+          }
+
+          if (data.customRoute) {
+            if (data.customRoute.isMultimodal) {
+              drawCustomRoute(data.customRoute);
+            } else if (Array.isArray(data.customRoute) && data.customRoute.length > 0) {
+              drawCustomRoute(data.customRoute);
+            }
+          }
+
+          processUpdatePoints(data);
+        }
+
+        function processUpdatePoints(data) {
+          if (!data) return;
+          setPoints(data.origin, data.destination);
+        }
+
+        // Configuración de capas y eventos una vez cargado el estilo de Mapbox
+        map.on('load', function() {
+          console.log("Mapbox WebView: Estilo base cargado, registrando fuentes y capas vectoriales...");
+          
+          // Registrar fuente GeoJSON principal
+          map.addSource('route-source', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: []
+            }
+          });
+
+          // Capa de resplandor (glow)
+          map.addLayer({
+            id: 'route-shadow-layer',
+            type: 'line',
+            source: 'route-source',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': ['get', 'originalColor'],
+              'line-width': ['*', ['coalesce', ['get', 'stroke-width'], 5], 1.8],
+              'line-opacity': 0.22
+            }
+          });
+
+          // Capa principal del tramo de ruta
+          map.addLayer({
+            id: 'route-layer',
+            type: 'line',
+            source: 'route-source',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': ['get', 'originalColor'],
+              'line-width': ['coalesce', ['get', 'stroke-width'], 5],
+              'line-opacity': 0.88
+            }
+          });
+
+          // Registrar fuente GeoJSON de ruta personalizada (OSRM)
+          map.addSource('custom-route-source', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: []
+            }
+          });
+
+          // Capa resplandor custom (solo para el tramo de bus)
+          map.addLayer({
+            id: 'custom-route-shadow-layer',
+            type: 'line',
+            source: 'custom-route-source',
+            filter: ['==', ['get', 'isBus'], true],
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#db2777',
+              'line-width': 9,
+              'line-opacity': 0.22
+            }
+          });
+
+          // Capa caminata custom (dashed)
+          map.addLayer({
+            id: 'custom-route-walk-layer',
+            type: 'line',
+            source: 'custom-route-source',
+            filter: ['==', ['get', 'isWalking'], true],
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#64748b',
+              'line-width': 3.5,
+              'line-dasharray': [2, 2],
+              'line-opacity': 0.8
+            }
+          });
+
+          // Capa principal bus custom (solid)
+          map.addLayer({
+            id: 'custom-route-bus-layer',
+            type: 'line',
+            source: 'custom-route-source',
+            filter: ['==', ['get', 'isBus'], true],
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#ec4899',
+              'line-width': 5.5,
+              'line-opacity': 0.9
+            }
+          });
+
+          // Configurar interactividad sobre los tramos trazados
+          map.on('click', 'route-layer', function(e) {
+            if (!e.features.length) return;
+            
+            const coordinates = e.lngLat;
+            const properties = e.features[0].properties;
+            const name = properties.name || 'Calle sin nombre';
+            const originalColor = properties.originalColor || '#3f719b';
+            
+            new mapboxgl.Popup({ className: 'glassmorphic-popup' })
+              .setLngLat(coordinates)
+              .setHTML(
+                '<div class="popup-title">📍 ' + name + '</div>' +
+                '<div class="popup-desc">Tramo de transporte urbano</div>' +
+                '<div class="popup-tag" style="background:' + originalColor + '22; color:' + originalColor + '; border:1.5px solid ' + originalColor + '44;">' +
+                  'Vía Color: ' + originalColor.toUpperCase() +
+                '</div>'
+              )
+              .addTo(map);
+          });
+
+          // Cambiar el cursor a puntero al pasar sobre la ruta
+          map.on('mouseenter', 'route-layer', function() {
+            map.getCanvas().style.cursor = 'pointer';
+          });
+          map.on('mouseleave', 'route-layer', function() {
+            map.getCanvas().style.cursor = '';
+          });
+
+          // El mapa está listo, procesar todas las solicitudes diferidas
+          isMapLoaded = true;
+          console.log("Mapbox WebView: Mapa completamente inicializado. Procesando solicitudes pendientes...");
+
+          if (pendingRouteData) {
+            console.log("Mapbox WebView: Dibujando ruta pendiente...");
+            processUpdateRoute(pendingRouteData);
+            pendingRouteData = null;
+          } else if (pendingPointsData) {
+            console.log("Mapbox WebView: Dibujando puntos pendientes...");
+            processUpdatePoints(pendingPointsData);
+            pendingPointsData = null;
+          }
+
+          if (pendingTripStarted !== null) {
+            console.log("Mapbox WebView: Iniciando viaje pendiente...");
+            setTripStarted(pendingTripStarted);
+            pendingTripStarted = null;
+          }
+        });
+
+        // Escuchar mensajes provenientes de React Native
         window.addEventListener('message', function(event) {
           let data = event.data;
           if (typeof data === 'string') {
@@ -493,37 +767,32 @@ export const mapHtml = `
           if (!data) return;
 
           if (typeof data.isStarted !== 'undefined') {
-            console.log("Leaflet WebView: Actualizando estado del viaje (isTripStarted):", data.isStarted);
-            setTripStarted(data.isStarted);
-          }
-          if (data.type === 'UPDATE_ROUTE') {
-            console.log("Leaflet WebView: Recibida actualización de ruta en el mapa.");
-            if (!data.route || data.route.length === 0) {
-              clearRouteLayers();
-            } else if (data.route[0] && typeof data.route[0].path !== 'undefined') {
-              var formattedSegments = data.route.map(function(seg) {
-                return {
-                  path: seg.path.map(function(c) { return [c[1], c[0]]; }),
-                  color: seg.color
-                };
-              });
-              drawRouteSegments(formattedSegments);
+            console.log("Mapbox WebView: Recibido estado de viaje (isTripStarted):", data.isStarted);
+            if (!isMapLoaded) {
+              pendingTripStarted = data.isStarted;
             } else {
-              var formatted = data.route.map(function(c) { return [c[1], c[0]]; });
-              drawRoute(formatted);
+              setTripStarted(data.isStarted);
             }
-            if (typeof data.customRoute !== 'undefined') {
-              drawCustomRoute(data.customRoute);
-            }
-            setPoints(data.origin, data.destination);
           }
+          
+          if (data.type === 'UPDATE_ROUTE') {
+            console.log("Mapbox WebView: Recibida actualización de ruta.");
+            if (!isMapLoaded) {
+              pendingRouteData = data;
+            } else {
+              processUpdateRoute(data);
+            }
+          }
+          
           if (data.type === 'UPDATE_POINTS_ONLY') {
-            console.log("Leaflet WebView: Recibida actualización de puntos de inicio/fin.");
-            setPoints(data.origin, data.destination);
+            console.log("Mapbox WebView: Recibida actualización de puntos origen/destino.");
+            if (!isMapLoaded) {
+              pendingPointsData = data;
+            } else {
+              processUpdatePoints(data);
+            }
           }
         });
-
-      
       </script>
     </body>
   </html>

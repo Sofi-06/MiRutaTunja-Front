@@ -4,10 +4,13 @@ import { WebView } from 'react-native-webview';
 
 import { mapHtml } from './mapHtml';
 
+const mapboxToken = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN || '';
+const injectedMapHtml = mapHtml.replace('MAPBOX_TOKEN_PLACEHOLDER', mapboxToken);
+
 type MapViewProps = Readonly<{
   isTripStarted?: boolean;
-  route?: [number, number][] | any[];
-  customRoute?: [number, number][] | null;
+  route?: any;
+  customRoute?: any;
   origin?: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
@@ -72,7 +75,7 @@ export default function MapView({
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html: mapHtml }}
+        source={{ html: injectedMapHtml }}
         style={styles.map}
         javaScriptEnabled
         domStorageEnabled

@@ -25,7 +25,7 @@ import MobileHome from '@/components/mobile/MobileHome';
 import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
-import { geocodeLocation as serviceGeocodeLocation } from '@/services/placesService';
+import { geocodeLocation as serviceGeocodeLocation, reverseGeocode } from '@/services/placesService';
 
 export default function HomeScreen() {
   return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
@@ -47,7 +47,7 @@ function WebHomeScreen() {
   });
   const [originName, setOriginName] = useState('Plaza de Bolívar');
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [calculatedRoute, setCalculatedRoute] = useState<[number, number][] | undefined>(undefined);
+  const [calculatedRoute, setCalculatedRoute] = useState<any | undefined>(undefined);
   const [routeStats, setRouteStats] = useState({
     distanceText: '0 km',
     durationText: '0 min',
@@ -214,6 +214,9 @@ function WebHomeScreen() {
               segments.push({
                 path: feature.geometry.coordinates,
                 color: displayColor,
+                originalColor: feature.properties?.stroke || originalColor || displayColor,
+                name: feature.properties?.name || 'Vía',
+                properties: feature.properties || {},
               });
             }
           }
@@ -283,11 +286,9 @@ function WebHomeScreen() {
     return suggestions.sort((a, b) => a.dist - b.dist);
   })();
 
-  // Efecto para calcular ruta cuando cambie el origen o el destino
+  // Efecto para calcular ruta cuando cambie el origen, el destino o la ruta activa
   useEffect(() => {
     if (!originCoords || !destCoords) return;
-    // Si la ruta activa es una ruta cargada localmente desde JSON, no hacemos la consulta a OSRM
-    if (activeRouteKey && routesRegistry[activeRouteKey]) return;
 
     const fetchRoute = async () => {
       try {
@@ -299,6 +300,7 @@ function WebHomeScreen() {
           body: JSON.stringify({
             origin: originCoords,
             destination: destCoords,
+            routeCode: activeRouteKey || 'R1',
           }),
         });
 
@@ -309,8 +311,8 @@ function WebHomeScreen() {
         const data = await response.json();
         
         // El backend devuelve distance (m), duration (s) y route [[lng, lat], ...]
-        if (data.route) {
-          setCalculatedRoute(data.route);
+        if (data && data.route) {
+          setCalculatedRoute(data);
           
           const distanceKm = (data.distance / 1000).toFixed(2);
           const durationMin = Math.round(data.duration / 60);
@@ -326,7 +328,7 @@ function WebHomeScreen() {
     };
 
     fetchRoute();
-  }, [originCoords, destCoords]);
+  }, [originCoords, destCoords, activeRouteKey]);
 
   // Función para obtener la ubicación GPS actual del dispositivo
   const handleUseCurrentLocation = async () => {
@@ -393,17 +395,34 @@ function WebHomeScreen() {
   }, [destination]);
 
   // Manejador para el click en el mapa
-  const handleMapClick = (lat: number, lng: number) => {
-    // Establecer como destino y actualizar campo de texto con coordenadas para feedback visual
+  const handleMapClick = async (lat: number, lng: number) => {
+    // Establecer como destino y actualizar campo de texto con cargando para feedback visual
     setDestCoords({ lat, lng });
-    setDestination(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    setDestination('Obteniendo dirección...');
     setIsCustomSearchActive(true);
     setActiveRouteInfo({
       code: 'PERS',
       title: 'Ruta personalizada',
       originName: originName,
-      destinationName: `Destino (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+      destinationName: 'Obteniendo dirección...',
     });
+
+    try {
+      const address = await reverseGeocode(lat, lng);
+      setDestination(address);
+      setActiveRouteInfo(prev => ({
+        ...prev,
+        destinationName: address,
+      }));
+    } catch (error) {
+      console.error('Error reverse geocoding map click:', error);
+      const fallbackAddress = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      setDestination(fallbackAddress);
+      setActiveRouteInfo(prev => ({
+        ...prev,
+        destinationName: `Destino (${fallbackAddress})`,
+      }));
+    }
   };
 
   // Función de geocodificación individual para origen o destino
