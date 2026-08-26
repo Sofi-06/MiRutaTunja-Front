@@ -29,6 +29,14 @@ type SelectedRouteCardProps = Readonly<{
   routeName?: string;
   routeCategory?: string;
   routeMapLink?: string;
+  recommendedRoutes?: Array<{
+    code: string;
+    title: string;
+    dist: number;
+    originDist: number;
+    destDist: number;
+  }>;
+  onSelectRecommendedRoute?: (code: string) => void;
 }>;
 
 export default function SelectedRouteCard({
@@ -53,6 +61,8 @@ export default function SelectedRouteCard({
   routeName,
   routeCategory,
   routeMapLink,
+  recommendedRoutes = [],
+  onSelectRecommendedRoute,
 }: SelectedRouteCardProps) {
   const [internalTripStarted, setInternalTripStarted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -171,6 +181,54 @@ export default function SelectedRouteCard({
           <View style={{ marginTop: 2 }}>
             <Text style={{ fontSize: 12, fontWeight: '600', color: '#14532d' }}>🟡 {schedule.sundaysAndHolidays.label}</Text>
             <Text style={{ fontSize: 11, color: '#166534', marginLeft: 16 }}>{schedule.sundaysAndHolidays.hours} | cada {schedule.sundaysAndHolidays.frequency}</Text>
+          </View>
+        </View>
+      )}
+
+      {recommendedRoutes && recommendedRoutes.length > 0 && (
+        <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 14 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink, marginBottom: 8 }}>
+            🚌 Rutas sugeridas directas:
+          </Text>
+          <View style={{ gap: 8 }}>
+            {recommendedRoutes.slice(0, 3).map((route) => (
+              <Pressable
+                key={route.code}
+                onPress={() => onSelectRecommendedRoute?.(route.code)}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 10,
+                    backgroundColor: pressed ? '#edf2f7' : '#f8fafc',
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
+                    gap: 8,
+                  }
+                ]}
+              >
+                <View style={{
+                  backgroundColor: '#edf4f8',
+                  borderRadius: 8,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.blueDark }}>
+                    {route.code}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: colors.ink }}>
+                    {route.title}
+                  </Text>
+                  <Text style={{ fontSize: 10, color: colors.muted, marginTop: 2 }}>
+                    A {(route.originDist * 1000).toFixed(0)}m de origen · {(route.destDist * 1000).toFixed(0)}m de destino
+                  </Text>
+                </View>
+                <Icon name="chevron" color={colors.blueDark} size={14} />
+              </Pressable>
+            ))}
           </View>
         </View>
       )}

@@ -25,6 +25,7 @@ import MobileHome from '@/components/mobile/MobileHome';
 import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
+import { geocodeLocation as serviceGeocodeLocation } from '@/services/placesService';
 
 export default function HomeScreen() {
   return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
@@ -35,6 +36,7 @@ function WebHomeScreen() {
   const isCompact = width < 760;
   const [destination, setDestination] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isCustomSearchActive, setIsCustomSearchActive] = useState(false);
   const [isTripStarted, setIsTripStarted] = useState(false);
   const { routeCode } = useLocalSearchParams<{ routeCode?: string }>();
 
@@ -100,42 +102,66 @@ function WebHomeScreen() {
       }
     }
 
-    if (showIda && showVuelta) {
-      setOriginCoords(originLatLng);
-      setOriginName(originNameText);
-      setDestCoords(destLatLng);
-      setDestination(destNameText);
-      setRouteStats({
-        distanceText: activeRouteKey === 'R1' ? '8.4 km' : 'Aprox. 6-10 km',
-        durationText: activeRouteKey === 'R1' ? '25 min' : '30 min',
-      });
-    } else if (showIda) {
-      setOriginCoords(originLatLng);
-      setOriginName(originNameText);
-      setDestCoords(destLatLng);
-      setDestination(destNameText);
-      setRouteStats({
-        distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
-        durationText: activeRouteKey === 'R1' ? '13 min' : '15 min',
-      });
-    } else if (showVuelta) {
-      setOriginCoords(destLatLng || originLatLng);
-      setOriginName(destNameText);
-      setDestCoords(originLatLng);
-      setDestination(originNameText);
-      setRouteStats({
-        distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
-        durationText: activeRouteKey === 'R1' ? '12 min' : '15 min',
-      });
+    if (isCustomSearchActive) {
+      if (showIda && showVuelta) {
+        setRouteStats({
+          distanceText: activeRouteKey === 'R1' ? '8.4 km' : 'Aprox. 6-10 km',
+          durationText: activeRouteKey === 'R1' ? '25 min' : '30 min',
+        });
+      } else if (showIda) {
+        setRouteStats({
+          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
+          durationText: activeRouteKey === 'R1' ? '13 min' : '15 min',
+        });
+      } else if (showVuelta) {
+        setRouteStats({
+          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
+          durationText: activeRouteKey === 'R1' ? '12 min' : '15 min',
+        });
+      } else {
+        setRouteStats({
+          distanceText: '0 km',
+          durationText: '0 min',
+        });
+      }
     } else {
-      setOriginCoords(null as any);
-      setOriginName('Ninguno');
-      setDestCoords(null);
-      setDestination('Ninguno');
-      setRouteStats({
-        distanceText: '0 km',
-        durationText: '0 min',
-      });
+      if (showIda && showVuelta) {
+        setOriginCoords(originLatLng);
+        setOriginName(originNameText);
+        setDestCoords(destLatLng);
+        setDestination(destNameText);
+        setRouteStats({
+          distanceText: activeRouteKey === 'R1' ? '8.4 km' : 'Aprox. 6-10 km',
+          durationText: activeRouteKey === 'R1' ? '25 min' : '30 min',
+        });
+      } else if (showIda) {
+        setOriginCoords(originLatLng);
+        setOriginName(originNameText);
+        setDestCoords(destLatLng);
+        setDestination(destNameText);
+        setRouteStats({
+          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
+          durationText: activeRouteKey === 'R1' ? '13 min' : '15 min',
+        });
+      } else if (showVuelta) {
+        setOriginCoords(destLatLng || originLatLng);
+        setOriginName(destNameText);
+        setDestCoords(originLatLng);
+        setDestination(originNameText);
+        setRouteStats({
+          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
+          durationText: activeRouteKey === 'R1' ? '12 min' : '15 min',
+        });
+      } else {
+        setOriginCoords(null as any);
+        setOriginName('Ninguno');
+        setDestCoords(null);
+        setDestination('Ninguno');
+        setRouteStats({
+          distanceText: '0 km',
+          durationText: '0 min',
+        });
+      }
     }
   }, [showIda, showVuelta, activeRouteKey]);
 
@@ -358,11 +384,20 @@ function WebHomeScreen() {
     fetchCurrentLocationSilently();
   }, []);
 
+  // Limpiar coordenadas si se borra el destino
+  useEffect(() => {
+    if (!destination.trim()) {
+      setDestCoords(null);
+      setIsCustomSearchActive(false);
+    }
+  }, [destination]);
+
   // Manejador para el click en el mapa
   const handleMapClick = (lat: number, lng: number) => {
     // Establecer como destino y actualizar campo de texto con coordenadas para feedback visual
     setDestCoords({ lat, lng });
     setDestination(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    setIsCustomSearchActive(true);
     setActiveRouteInfo({
       code: 'PERS',
       title: 'Ruta personalizada',
@@ -373,54 +408,7 @@ function WebHomeScreen() {
 
   // Función de geocodificación individual para origen o destino
   const geocodeLocation = async (query: string): Promise<{ lat: number; lng: number; name: string } | null> => {
-    if (!query.trim()) return null;
-
-    const localPlaces: Record<string, { lat: number; lng: number; name: string }> = {
-      'uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
-      'universidad uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
-      'terminal': { lat: 5.530809, lng: -73.34496, name: 'Terminal de Transportes' },
-      'terminal de transportes': { lat: 5.530809, lng: -73.34496, name: 'Terminal de Transportes' },
-      'plaza de bolivar': { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' },
-      'plaza de bolívar': { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' },
-      'uniboyaca': { lat: 5.5682, lng: -73.3320, name: 'Universidad de Boyacá' },
-      'universidad de boyaca': { lat: 5.5682, lng: -73.3320, name: 'Universidad de Boyacá' },
-      'universidad de boyacá': { lat: 5.5682, lng: -73.3320, name: 'Universidad de Boyacá' },
-      'hospital san rafael': { lat: 5.5269, lng: -73.3578, name: 'Hospital San Rafael' },
-      'muiscas': { lat: 5.5724, lng: -73.3396, name: 'Barrio Los Muiscas' },
-      'los muiscas': { lat: 5.5724, lng: -73.3396, name: 'Barrio Los Muiscas' },
-      'arboleda': { lat: 5.575069, lng: -73.331541, name: 'Despacho Arboleda' },
-      'centro': { lat: 5.5332, lng: -73.3620, name: 'Centro Histórico' },
-      'viva': { lat: 5.5492, lng: -73.3490, name: 'C.C. Viva Tunja' },
-      'viva tunja': { lat: 5.5492, lng: -73.3490, name: 'C.C. Viva Tunja' },
-      'mi ubicacion': { lat: originCoords?.lat || 5.5324627, lng: originCoords?.lng || -73.3615504, name: originName || 'Mi ubicación' },
-      'mi ubicación': { lat: originCoords?.lat || 5.5324627, lng: originCoords?.lng || -73.3615504, name: originName || 'Mi ubicación' },
-      'mi ubicación actual': { lat: originCoords?.lat || 5.5324627, lng: originCoords?.lng || -73.3615504, name: originName || 'Mi ubicación actual' },
-    };
-
-    const cleanQuery = query.toLowerCase().trim();
-    if (localPlaces[cleanQuery]) {
-      return localPlaces[cleanQuery];
-    }
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Tunja, Boyacá, Colombia')}`
-      );
-      if (response.ok) {
-        const results = await response.json();
-        if (results && results.length > 0) {
-          const bestResult = results[0];
-          return {
-            lat: parseFloat(bestResult.lat),
-            lng: parseFloat(bestResult.lon),
-            name: bestResult.display_name.split(',')[0],
-          };
-        }
-      }
-    } catch (e) {
-      console.error('Error in single geocoding:', e);
-    }
-    return null;
+    return await serviceGeocodeLocation(query);
   };
 
   // Función para buscar ambos puntos e inyectar origen/destino en el mapa
@@ -448,6 +436,7 @@ function WebHomeScreen() {
     setOriginName(originPlace.name);
     setDestCoords({ lat: destPlace.lat, lng: destPlace.lng });
     setDestination(destPlace.name);
+    setIsCustomSearchActive(true);
 
     setActiveRouteInfo({
       code: 'PERS',
@@ -530,10 +519,12 @@ function WebHomeScreen() {
       const origin = { lat: startCoord[1], lng: startCoord[0] };
       const dest = { lat: endCoord[1], lng: endCoord[0] };
 
-      setOriginCoords(origin);
-      setOriginName(originNameText);
-      setDestCoords(dest);
-      setDestination(destNameText);
+      if (!isCustomSearchActive) {
+        setOriginCoords(origin);
+        setOriginName(originNameText);
+        setDestCoords(dest);
+        setDestination(destNameText);
+      }
 
       // Determinar nombre amigable
       const cleanTitle = metadata 
@@ -559,30 +550,71 @@ function WebHomeScreen() {
 
       if (originCoords && destCoords) {
         const isUserGoingNorth = destCoords.lat > originCoords.lat;
-        
-        // Extraer los sentidos de la ruta
-        const features = routeData.path.features.filter((f: any) => f.geometry && f.geometry.type === 'LineString');
-        if (features.length >= 2) {
-          const f1 = features[0];
-          const f2 = features[1];
-          
-          const f1Coords = f1.geometry.coordinates;
-          const f1StartLat = f1Coords[0][1];
-          const f1EndLat = f1Coords[f1Coords.length - 1][1];
-          const f1GoingNorth = f1EndLat > f1StartLat;
+        const userDir = isUserGoingNorth ? 'sur-norte' : 'norte-sur';
 
-          const f2Coords = f2.geometry.coordinates;
-          const f2StartLat = f2Coords[0][1];
-          const f2EndLat = f2Coords[f2Coords.length - 1][1];
-          const f2GoingNorth = f2EndLat > f2StartLat;
+        const metadataAny = metadata as any;
+        const metadataIda = metadataAny?.sentidoIda; // e.g. "sur-norte" o "norte-sur"
+        const metadataVuelta = metadataAny?.sentidoVuelta;
 
-          // Si uno va al norte y el otro al sur, seleccionamos el correspondiente
-          if (f1GoingNorth === isUserGoingNorth && f2GoingNorth !== isUserGoingNorth) {
+        if (metadataIda && metadataVuelta) {
+          // Si están definidos manualmente en el JSON, los usamos directamente comparando con la dirección del viaje
+          if (metadataIda.toLowerCase() === userDir && metadataVuelta.toLowerCase() !== userDir) {
             defaultShowIda = true;
             defaultShowVuelta = false;
-          } else if (f2GoingNorth === isUserGoingNorth && f1GoingNorth !== isUserGoingNorth) {
+            console.log(`index: Manual override used. Selected Ida (sentidoIda: ${metadataIda}) for user direction: ${userDir}`);
+          } else if (metadataVuelta.toLowerCase() === userDir && metadataIda.toLowerCase() !== userDir) {
             defaultShowIda = false;
             defaultShowVuelta = true;
+            console.log(`index: Manual override used. Selected Vuelta (sentidoVuelta: ${metadataVuelta}) for user direction: ${userDir}`);
+          } else {
+            console.log(`index: Manual override. Both or neither senses match ${userDir}, showing both.`);
+          }
+        } else {
+          // Si no están definidos en el JSON, usamos el fallback automático de proximidad por índice
+          const features = routeData.path.features.filter((f: any) => f.geometry && f.geometry.type === 'LineString');
+          if (features.length >= 2) {
+            const f1 = features[0];
+            const f2 = features[1];
+
+            // Función para encontrar el índice de la coordenada de la ruta más cercana a un punto dado
+            const getClosestIndex = (coords: [number, number][], point: { lat: number; lng: number }) => {
+              let minDistance = Infinity;
+              let closestIndex = -1;
+              for (let i = 0; i < coords.length; i++) {
+                const dLat = coords[i][1] - point.lat;
+                const dLng = coords[i][0] - point.lng;
+                const dist = dLat * dLat + dLng * dLng;
+                if (dist < minDistance) {
+                  minDistance = dist;
+                  closestIndex = i;
+                }
+              }
+              return closestIndex;
+            };
+
+            const f1Coords = f1.geometry.coordinates;
+            const f1OrigIdx = getClosestIndex(f1Coords, originCoords);
+            const f1DestIdx = getClosestIndex(f1Coords, destCoords);
+            // Sentido 1 es válido para el viaje del usuario si pasa por el origen antes que por el destino
+            const f1Valid = f1OrigIdx !== -1 && f1DestIdx !== -1 && f1DestIdx > f1OrigIdx;
+
+            const f2Coords = f2.geometry.coordinates;
+            const f2OrigIdx = getClosestIndex(f2Coords, originCoords);
+            const f2DestIdx = getClosestIndex(f2Coords, destCoords);
+            // Sentido 2 es válido para el viaje del usuario si pasa por el origen antes que por el destino
+            const f2Valid = f2OrigIdx !== -1 && f2DestIdx !== -1 && f2DestIdx > f2OrigIdx;
+
+            if (f1Valid && !f2Valid) {
+              defaultShowIda = true;
+              defaultShowVuelta = false;
+              console.log(`index: Auto-selected Ida (f1) because it goes from origin index ${f1OrigIdx} to destination index ${f1DestIdx}`);
+            } else if (f2Valid && !f1Valid) {
+              defaultShowIda = false;
+              defaultShowVuelta = true;
+              console.log(`index: Auto-selected Vuelta (f2) because it goes from origin index ${f2OrigIdx} to destination index ${f2DestIdx}`);
+            } else {
+              console.log(`index: Both (${f1Valid}, ${f2Valid}) or neither senses match index order, showing both.`);
+            }
           }
         }
       }
@@ -616,22 +648,39 @@ function WebHomeScreen() {
     let ida = 'Ida';
     let vuelta = 'Vuelta';
 
+    // Obtener los sentidos manuales si están configurados en el JSON
+    const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
+    const key = match ? `R${match[1]}` : activeRouteInfo.code;
+    const activeMetadata = routesMetadata[key as keyof typeof routesMetadata] as any;
+    const jsonIdaDir = activeMetadata?.sentidoIda; // e.g. "norte-sur" o "sur-norte"
+    const jsonVueltaDir = activeMetadata?.sentidoVuelta;
+
     if (features.length >= 1) {
       const f1 = features[0];
       const name = f1.properties?.name || 'Ida';
-      const coords = f1.geometry.coordinates;
-      const startLat = coords[0][1];
-      const endLat = coords[coords.length - 1][1];
-      const dir = endLat > startLat ? 'Sur a Norte' : 'Norte a Sur';
+      let dir = 'Ida';
+      if (jsonIdaDir) {
+        dir = jsonIdaDir.toLowerCase() === 'sur-norte' ? 'Sur a Norte' : 'Norte a Sur';
+      } else {
+        const coords = f1.geometry.coordinates;
+        const startLat = coords[0][1];
+        const endLat = coords[coords.length - 1][1];
+        dir = endLat > startLat ? 'Sur a Norte' : 'Norte a Sur';
+      }
       ida = `${dir} (${name})`;
     }
     if (features.length >= 2) {
       const f2 = features[1];
       const name = f2.properties?.name || 'Vuelta';
-      const coords = f2.geometry.coordinates;
-      const startLat = coords[0][1];
-      const endLat = coords[coords.length - 1][1];
-      const dir = endLat > startLat ? 'Sur a Norte' : 'Norte a Sur';
+      let dir = 'Vuelta';
+      if (jsonVueltaDir) {
+        dir = jsonVueltaDir.toLowerCase() === 'sur-norte' ? 'Sur a Norte' : 'Norte a Sur';
+      } else {
+        const coords = f2.geometry.coordinates;
+        const startLat = coords[0][1];
+        const endLat = coords[coords.length - 1][1];
+        dir = endLat > startLat ? 'Sur a Norte' : 'Norte a Sur';
+      }
       vuelta = `${dir} (${name})`;
     }
     return { ida, vuelta };
@@ -679,8 +728,18 @@ function WebHomeScreen() {
             <SearchBar
               origin={originName}
               onOriginChange={setOriginName}
+              onOriginSelect={(name, coords) => {
+                setOriginName(name);
+                setOriginCoords(coords);
+                setIsCustomSearchActive(true);
+              }}
               destination={destination}
               onDestinationChange={setDestination}
+              onDestinationSelect={(name, coords) => {
+                setDestination(name);
+                setDestCoords(coords);
+                setIsCustomSearchActive(true);
+              }}
               isCompact={isCompact}
               onUseCurrentLocation={handleUseCurrentLocation}
               onSearchBoth={handleSearchRoute}
@@ -705,6 +764,8 @@ function WebHomeScreen() {
               </View>
               <SelectedRouteCard
                 isCompact={isCompact}
+                recommendedRoutes={recommendedRoutesList}
+                onSelectRecommendedRoute={handleSelectRoute}
                 isTripStarted={isTripStarted}
                 onToggleTrip={() => setIsTripStarted((started) => !started)}
                 title={activeRouteInfo.title}
@@ -743,45 +804,6 @@ function WebHomeScreen() {
               />
             </View>
           </View>
-
-          {destCoords && (
-            <View style={{ marginTop: 24, marginBottom: 12 }}>
-              <Text style={styles.sectionEyebrow}>TRAYECTOS DETECTADOS</Text>
-              <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas recomendadas para tu viaje</Text>
-              <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone, { marginBottom: 16 }]}>
-                Rutas de bus que pasan a menos de 750 metros de tu origen y destino.
-              </Text>
-              
-              {recommendedRoutesList.length === 0 ? (
-                <View style={{ padding: 24, backgroundColor: '#f1f5f9', borderRadius: 16, alignItems: 'center' }}>
-                  <Text style={{ color: '#64748b', fontWeight: '600', textAlign: 'center' }}>No encontramos rutas de bus directo que cubran este trayecto exacto. Puedes usar la ruta personalizada en el mapa.</Text>
-                </View>
-              ) : (
-                <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
-                  {recommendedRoutesList.slice(0, 4).map((route) => {
-                    const numVal = parseInt(route.code.replace('R-', ''));
-                    const tones = ['blue', 'green', 'gold', 'coral'] as const;
-                    const tone = tones[numVal % tones.length];
-
-                    return (
-                      <RouteCard
-                        key={route.code}
-                        code={route.code}
-                        title={route.title}
-                        description={`Paso origen a ${(route.originDist * 1000).toFixed(0)}m · Paso destino a ${(route.destDist * 1000).toFixed(0)}m`}
-                        duration="Aprox. 20-30 min"
-                        frequency="Frecuencia normal"
-                        stops="Ver trayecto"
-                        tone={tone}
-                        isCompact={isCompact}
-                        onPress={() => handleSelectRoute(route.code)}
-                      />
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-          )}
 
           <View style={[styles.sectionHeaderRow, isCompact && styles.sectionHeaderRowPhone]}>
             <View style={styles.sectionHeaderCopy}>

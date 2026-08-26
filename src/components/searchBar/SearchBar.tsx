@@ -1,14 +1,18 @@
 import { useRouter } from 'expo-router';
+import { useState, useRef } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
+import { searchPlaces, PlaceResult } from '@/services/placesService';
 
 type SearchBarProps = Readonly<{
   origin: string;
   onOriginChange: (origin: string) => void;
+  onOriginSelect?: (name: string, coords: { lat: number; lng: number }) => void;
   destination: string;
   onDestinationChange: (destination: string) => void;
+  onDestinationSelect?: (name: string, coords: { lat: number; lng: number }) => void;
   isCompact: boolean;
   onUseCurrentLocation?: () => void;
   onSearchBoth?: (origin: string, destination: string) => void;
@@ -17,13 +21,62 @@ type SearchBarProps = Readonly<{
 export default function SearchBar({
   origin,
   onOriginChange,
+  onOriginSelect,
   destination,
   onDestinationChange,
+  onDestinationSelect,
   isCompact,
   onUseCurrentLocation,
   onSearchBoth,
 }: SearchBarProps) {
   const router = useRouter();
+
+  // Estados para autocompletado
+  const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
+  const [activeField, setActiveField] = useState<'origin' | 'destination' | null>(null);
+  const timeoutRef = useRef<any>(null);
+
+  const handleTextChange = (text: string, field: 'origin' | 'destination') => {
+    if (field === 'origin') {
+      onOriginChange(text);
+    } else {
+      onDestinationChange(text);
+    }
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (!text.trim()) {
+      setSuggestions([]);
+      setActiveField(null);
+      return;
+    }
+
+    setActiveField(field);
+
+    timeoutRef.current = setTimeout(async () => {
+      console.log(`SearchBar: Debounce triggered for ${field}: "${text}"`);
+      const results = await searchPlaces(text);
+      setSuggestions(results);
+    }, 400); // Debounce de 400ms
+  };
+
+  const handleSelectSuggestion = (place: PlaceResult) => {
+    if (activeField === 'origin') {
+      onOriginChange(place.name);
+      if (onOriginSelect) {
+        onOriginSelect(place.name, { lat: place.lat, lng: place.lng });
+      }
+    } else if (activeField === 'destination') {
+      onDestinationChange(place.name);
+      if (onDestinationSelect) {
+        onDestinationSelect(place.name, { lat: place.lat, lng: place.lng });
+      }
+    }
+    setSuggestions([]);
+    setActiveField(null);
+  };
 
   return (
     <View style={[styles.searchRow, isCompact && styles.searchRowCompact, isCompact && styles.searchRowPhone, { width: '100%' }]}>
@@ -34,7 +87,7 @@ export default function SearchBar({
           <Icon name="pin" color={colors.blue} size={20} />
           <TextInput
             value={origin}
-            onChangeText={onOriginChange}
+            onChangeText={(txt) => handleTextChange(txt, 'origin')}
             placeholder="¿De dónde sales? (ej: UPTC, Plaza de Bolívar...)"
             placeholderTextColor={colors.muted}
             style={{ 
@@ -49,12 +102,34 @@ export default function SearchBar({
           />
         </View>
 
+        {/* Sugerencias de Origen */}
+        {activeField === 'origin' && suggestions.length > 0 && (
+          <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 8, padding: 4, borderLeftWidth: 3, borderLeftColor: colors.blue, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+            {suggestions.map((item, index) => (
+              <Pressable
+                key={index}
+                onPress={() => handleSelectSuggestion(item)}
+                style={({ pressed }) => ({
+                  padding: 10,
+                  backgroundColor: pressed ? '#f8fafc' : 'transparent',
+                  borderRadius: 6,
+                  borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
+                  borderBottomColor: '#f1f5f9'
+                })}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink }}>{item.name}</Text>
+                {item.address && <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>}
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         {/* Fila del Destino */}
         <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', gap: 8 }}>
           <Icon name="target" color={colors.coral} size={20} />
           <TextInput
             value={destination}
-            onChangeText={onDestinationChange}
+            onChangeText={(txt) => handleTextChange(txt, 'destination')}
             placeholder="¿A dónde quieres ir? (ej: Terminal, Hospital...)"
             placeholderTextColor={colors.muted}
             style={{ 
@@ -68,6 +143,28 @@ export default function SearchBar({
             }}
           />
         </View>
+
+        {/* Sugerencias de Destino */}
+        {activeField === 'destination' && suggestions.length > 0 && (
+          <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 8, padding: 4, borderLeftWidth: 3, borderLeftColor: colors.coral, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+            {suggestions.map((item, index) => (
+              <Pressable
+                key={index}
+                onPress={() => handleSelectSuggestion(item)}
+                style={({ pressed }) => ({
+                  padding: 10,
+                  backgroundColor: pressed ? '#f8fafc' : 'transparent',
+                  borderRadius: 6,
+                  borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
+                  borderBottomColor: '#f1f5f9'
+                })}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink }}>{item.name}</Text>
+                {item.address && <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>}
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         {/* Acciones */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: 4 }}>

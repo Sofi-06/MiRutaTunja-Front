@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Alert, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import MapView from '@/components/Map/MapView';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import Icon from '@/components/ui/Icon';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
+import { searchPlaces, geocodeLocation, PlaceResult } from '@/services/placesService';
 
 const routeChoices = [
   { key: 'R1', code: 'R-01', title: 'Arboleda – Terminal', time: '25 min', color: '#3f719b' },
@@ -34,6 +35,50 @@ export default function MobileHome() {
   const [isTripStarted, setIsTripStarted] = useState(false);
   const [isRouteInfoOpen, setIsRouteInfoOpen] = useState(false);
   const [isMapFocused, setIsMapFocused] = useState(false);
+
+  // Estados para autocompletado en Mobile
+  const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
+  const [activeField, setActiveField] = useState<'origin' | 'destination' | null>(null);
+  const timeoutRef = useRef<any>(null);
+
+  const handleInputChange = (text: string, field: 'origin' | 'destination') => {
+    if (field === 'origin') {
+      setOrigin(text);
+    } else {
+      setDestination(text);
+    }
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (!text.trim()) {
+      setSuggestions([]);
+      setActiveField(null);
+      return;
+    }
+
+    setActiveField(field);
+
+    timeoutRef.current = setTimeout(async () => {
+      console.log(`MobileHome: Debounce triggered for ${field}: "${text}"`);
+      const results = await searchPlaces(text);
+      setSuggestions(results);
+    }, 400); // Debounce de 400ms
+  };
+
+  const handleSelectSuggestion = (place: PlaceResult) => {
+    if (activeField === 'origin') {
+      setOrigin(place.name);
+      setOriginCoords({ lat: place.lat, lng: place.lng });
+    } else if (activeField === 'destination') {
+      setDestination(place.name);
+      setDestinationCoords({ lat: place.lat, lng: place.lng });
+    }
+    setSuggestions([]);
+    setActiveField(null);
+  };
+
   const routeSegments = useMemo(() => getRouteSegments(selectedKey), [selectedKey]);
   const selectedRoute = routeChoices.find((route) => route.key === selectedKey) ?? routeChoices[0];
   const selectedMetadata = routesMetadata[selectedKey as keyof typeof routesMetadata];
@@ -61,40 +106,8 @@ export default function MobileHome() {
     fetchRoute();
   }, [originCoords, destinationCoords]);
 
-  const findPlace = (query: string) => {
-    const places: Record<string, { lat: number; lng: number; name: string }> = {
-      'plaza de bolivar': { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' },
-      'plaza de bolívar': { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' },
-      terminal: { lat: 5.530809, lng: -73.34496, name: 'Terminal de Transportes' },
-      'terminal de transportes': { lat: 5.530809, lng: -73.34496, name: 'Terminal de Transportes' },
-      uptc: { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
-      'universidad uptc': { lat: 5.5562, lng: -73.3516, name: 'Universidad UPTC' },
-      'hospital san rafael': { lat: 5.5269, lng: -73.3578, name: 'Hospital San Rafael' },
-      centro: { lat: 5.5332, lng: -73.362, name: 'Centro Histórico' },
-    };
-    return places[query.trim().toLowerCase()] ?? null;
-  };
-
   const geocodePlace = async (query: string) => {
-    const localPlace = findPlace(query);
-    if (localPlace) return localPlace;
-    if (!query.trim()) return null;
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(`${query}, Tunja, Boyacá, Colombia`)}`,
-        { headers: { Accept: 'application/json' } },
-      );
-      const results = await response.json();
-      if (!results?.[0]) return null;
-      return {
-        lat: Number.parseFloat(results[0].lat),
-        lng: Number.parseFloat(results[0].lon),
-        name: results[0].display_name.split(',')[0],
-      };
-    } catch {
-      return null;
-    }
+    return await geocodeLocation(query);
   };
 
   const handleUseCurrentLocation = async () => {
@@ -161,12 +174,34 @@ export default function MobileHome() {
             <Text style={styles.welcomeTitle}>¿A dónde quieres ir?</Text>
             <View style={styles.searchBox}>
               <View style={styles.searchFields}>
-                <View style={styles.searchField}><Icon name="pin" color="#3f719b" size={19} /><TextInput value={origin} onChangeText={setOrigin} placeholder="¿Desde dónde sales?" placeholderTextColor="#788798" style={styles.searchInput} /></View>
+                <View style={styles.searchField}><Icon name="pin" color="#3f719b" size={19} /><TextInput value={origin} onChangeText={(txt) => handleInputChange(txt, 'origin')} placeholder="¿Desde dónde sales?" placeholderTextColor="#788798" style={styles.searchInput} /></View>
                 <View style={styles.fieldDivider} />
-                <View style={styles.searchField}><Icon name="target" color="#d8957d" size={19} /><TextInput value={destination} onChangeText={setDestination} onSubmitEditing={handleSearch} placeholder="¿A dónde vas?" placeholderTextColor="#788798" returnKeyType="search" style={styles.searchInput} /><Pressable onPress={handleSearch} hitSlop={8} accessibilityLabel="Buscar destino"><Icon name="arrow" color="#3f719b" size={18} /></Pressable></View>
+                <View style={styles.searchField}><Icon name="target" color="#d8957d" size={19} /><TextInput value={destination} onChangeText={(txt) => handleInputChange(txt, 'destination')} onSubmitEditing={handleSearch} placeholder="¿A dónde vas?" placeholderTextColor="#788798" returnKeyType="search" style={styles.searchInput} /><Pressable onPress={handleSearch} hitSlop={8} accessibilityLabel="Buscar destino"><Icon name="arrow" color="#3f719b" size={18} /></Pressable></View>
               </View>
               <Pressable onPress={handleUseCurrentLocation} style={styles.locationButton} accessibilityLabel="Usar mi ubicación"><Icon name="gps" color="#ffffff" size={20} /></Pressable>
             </View>
+
+            {/* Sugerencias de autocompletado en pantalla principal */}
+            {!isMapFocused && activeField && suggestions.length > 0 && (
+              <View style={{ marginTop: 8, backgroundColor: '#fff', borderRadius: 16, padding: 6, shadowColor: '#17324b', shadowOpacity: 0.1, shadowRadius: 8, elevation: 3, borderLeftWidth: 4, borderLeftColor: activeField === 'origin' ? '#3f719b' : '#d8957d' }}>
+                {suggestions.map((item, index) => (
+                  <Pressable
+                    key={index}
+                    onPress={() => handleSelectSuggestion(item)}
+                    style={({ pressed }) => ({
+                      padding: 12,
+                      backgroundColor: pressed ? '#f0f5f9' : 'transparent',
+                      borderRadius: 10,
+                      borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
+                      borderBottomColor: '#edf2f6'
+                    })}
+                  >
+                    <Text style={{ fontWeight: '700', color: '#17283b', fontSize: 13 }}>{item.name}</Text>
+                    {item.address && <Text style={{ color: '#687789', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>}
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
         </ImageBackground>
 
@@ -200,8 +235,31 @@ export default function MobileHome() {
         <View style={styles.mapFocusHeader}>
           <Pressable onPress={() => setIsMapFocused(false)} style={styles.mapFocusBack}><Icon name="back" color="#17283b" size={22} /></Pressable>
           <View style={styles.mapFocusFields}>
-            <View style={styles.mapFocusInputRow}><Text style={styles.mapFocusBullet}>●</Text><TextInput value={origin} onChangeText={setOrigin} placeholder="Mi ubicación actual" placeholderTextColor="#728092" returnKeyType="next" style={styles.mapFocusInput} /></View>
-            <View style={styles.mapFocusInputRow}><Text style={[styles.mapFocusBullet, styles.mapFocusBulletEnd]}>●</Text><TextInput value={destination} onChangeText={setDestination} onSubmitEditing={handleSearch} placeholder="¿A dónde vas?" placeholderTextColor="#728092" returnKeyType="search" style={styles.mapFocusInput} /><Pressable onPress={handleSearch} hitSlop={8}><Icon name="arrow" color="#3f719b" size={17} /></Pressable></View>
+            <View style={styles.mapFocusInputRow}><Text style={styles.mapFocusBullet}>●</Text><TextInput value={origin} onChangeText={(txt) => handleInputChange(txt, 'origin')} placeholder="Mi ubicación actual" placeholderTextColor="#728092" returnKeyType="next" style={styles.mapFocusInput} /></View>
+            <View style={styles.mapFocusInputRow}><Text style={[styles.mapFocusBullet, styles.mapFocusBulletEnd]}>●</Text><TextInput value={destination} onChangeText={(txt) => handleInputChange(txt, 'destination')} onSubmitEditing={handleSearch} placeholder="¿A dónde vas?" placeholderTextColor="#728092" returnKeyType="search" style={styles.mapFocusInput} /><Pressable onPress={handleSearch} hitSlop={8}><Icon name="arrow" color="#3f719b" size={17} /></Pressable></View>
+            
+            {/* Sugerencias de autocompletado en el mapa enfocado */}
+            {activeField && suggestions.length > 0 && (
+              <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: '#edf1f4', paddingTop: 4 }}>
+                {suggestions.map((item, index) => (
+                  <Pressable
+                    key={index}
+                    onPress={() => handleSelectSuggestion(item)}
+                    style={({ pressed }) => ({
+                      paddingVertical: 10,
+                      paddingHorizontal: 4,
+                      backgroundColor: pressed ? '#f0f5f9' : 'transparent',
+                      borderRadius: 8,
+                      borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
+                      borderBottomColor: '#edf1f4'
+                    })}
+                  >
+                    <Text style={{ fontWeight: '700', color: '#17283b', fontSize: 13 }}>{item.name}</Text>
+                    {item.address && <Text style={{ color: '#687789', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>}
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
         </View>
         <MapView isTripStarted={isTripStarted} route={showSelectedRoute ? routeSegments : calculatedRoute} origin={originCoords} destination={destinationCoords} onMapClick={handleMapClick} />
