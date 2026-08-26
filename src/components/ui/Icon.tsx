@@ -22,6 +22,7 @@ const iconMap = {
   account: 'account-circle-outline',
   route: 'map-marker-path',
   chatbot: 'robot-outline',
+  trash: 'trash-can-outline',
 } as const satisfies Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']>;
 
 type IconName = keyof typeof iconMap;

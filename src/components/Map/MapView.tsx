@@ -7,6 +7,7 @@ import { mapHtml } from './mapHtml';
 type MapViewProps = Readonly<{
   isTripStarted?: boolean;
   route?: [number, number][] | any[];
+  customRoute?: [number, number][] | null;
   origin?: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
@@ -15,6 +16,7 @@ type MapViewProps = Readonly<{
 export default function MapView({
   isTripStarted = false,
   route,
+  customRoute,
   origin,
   destination,
   onMapClick,
@@ -30,12 +32,13 @@ export default function MapView({
     const data = {
       type: 'UPDATE_ROUTE',
       route: route ?? [],
+      customRoute: customRoute ?? [],
       origin,
       destination,
     };
     const script = `window.postMessage(${JSON.stringify(data)}, '*');`;
     webViewRef.current?.injectJavaScript(script);
-  }, [route, origin, destination]);
+  }, [route, customRoute, origin, destination]);
 
   useEffect(() => {
     if (origin || destination) {
@@ -83,6 +86,7 @@ export default function MapView({
           const data = {
             type: 'UPDATE_ROUTE',
             route: route ?? [],
+            customRoute: customRoute ?? [],
             origin,
             destination,
           };

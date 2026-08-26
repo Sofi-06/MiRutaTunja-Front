@@ -166,13 +166,15 @@ export const mapHtml = `
           if (destinationMarker) map.removeLayer(destinationMarker);
           destinationMarker = L.marker([lat, lng], {
             icon: L.divIcon({
-              html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
-                      '<div style="background:#d8957d;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">FIN</div>' +
-                      '<div style="background:#d8957d;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+              html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
+                      '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
+                        '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
+                      '</div>' +
+                      '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
                     '</div>',
               className: '',
-              iconSize: [50, 40],
-              iconAnchor: [25, 35]
+              iconSize: [120, 80],
+              iconAnchor: [60, 24]
             })
           }).addTo(map).bindPopup('<b>' + e.geocode.name + '</b>').openPopup();
 
@@ -196,13 +198,15 @@ export const mapHtml = `
           if (destinationMarker) map.removeLayer(destinationMarker);
           destinationMarker = L.marker([lat, lng], {
             icon: L.divIcon({
-              html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
-                      '<div style="background:#d8957d;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">FIN</div>' +
-                      '<div style="background:#d8957d;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+              html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
+                      '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
+                        '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
+                      '</div>' +
+                      '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
                     '</div>',
               className: '',
-              iconSize: [50, 40],
-              iconAnchor: [25, 35]
+              iconSize: [120, 80],
+              iconAnchor: [60, 24]
             })
           }).addTo(map).bindPopup('<b>Destino seleccionado</b>').openPopup();
 
@@ -256,13 +260,21 @@ export const mapHtml = `
         }
 
         let routePolylines = [];
-
+        let customRouteLine = null;
+        let customRouteShadow = null;
+ 
+        function clearCustomRouteLayers() {
+          if (customRouteShadow) { map.removeLayer(customRouteShadow); customRouteShadow = null; }
+          if (customRouteLine) { map.removeLayer(customRouteLine); customRouteLine = null; }
+        }
+ 
         function clearRouteLayers() {
           if (shadowLine) { map.removeLayer(shadowLine); shadowLine = null; }
           if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
           routePolylines.forEach(function(l) { map.removeLayer(l); });
           routePolylines = [];
           if (busMarker) { map.removeLayer(busMarker); busMarker = null; }
+          clearCustomRouteLayers();
         }
 
         function drawRoute(pathPoints) {
@@ -272,7 +284,7 @@ export const mapHtml = `
           if (!activePath || activePath.length === 0) return;
 
           shadowLine = L.polyline(activePath, {
-            color: '#2b5479',
+            color: '#0891b2',
             weight: 9,
             opacity: 0.25,
             lineCap: 'round',
@@ -280,7 +292,7 @@ export const mapHtml = `
           }).addTo(map);
 
           routeLine = L.polyline(activePath, {
-            color: '#3f719b',
+            color: '#06b6d4',
             weight: 5,
             opacity: 0.9,
             lineCap: 'round',
@@ -331,6 +343,29 @@ export const mapHtml = `
             setupBusMarker(activePath[0]);
           }
         }
+ 
+        function drawCustomRoute(pathPoints) {
+          clearCustomRouteLayers();
+          if (!pathPoints || pathPoints.length === 0) return;
+ 
+          const formatted = pathPoints.map(function(c) { return [c[1], c[0]]; });
+ 
+          customRouteShadow = L.polyline(formatted, {
+            color: '#0891b2',
+            weight: 6,
+            opacity: 0.15,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
+ 
+          customRouteLine = L.polyline(formatted, {
+            color: '#06b6d4',
+            weight: 3,
+            opacity: 0.85,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
+        }
 
         function setupBusMarker(startLatLng) {
           const busIcon = L.divIcon({
@@ -355,13 +390,15 @@ export const mapHtml = `
           if (origin) {
             originMarker = L.marker([origin.lat, origin.lng], {
               icon: L.divIcon({
-                html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
-                        '<div style="background:#2b5479;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">INICIO</div>' +
-                        '<div style="background:#4e9b78;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+                html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
+                        '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);margin-bottom:4px;border:1.5px solid #22c55e;text-align:center;white-space:nowrap;line-height:1;">Origen</div>' +
+                        '<div style="width:24px;height:24px;background:#22c55e;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);">' +
+                          '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
+                        '</div>' +
                       '</div>',
                 className: '',
-                iconSize: [50, 40],
-                iconAnchor: [25, 35]
+                iconSize: [120, 80],
+                iconAnchor: [60, 52]
               })
             }).addTo(map).bindPopup('<b>Punto de Inicio</b>');
             
@@ -373,13 +410,15 @@ export const mapHtml = `
           if (destination) {
             destinationMarker = L.marker([destination.lat, destination.lng], {
               icon: L.divIcon({
-                html: '<div style="display:flex;flex-direction:column;align-items:center;">' +
-                        '<div style="background:#d8957d;color:white;font-size:9px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.2);white-space:nowrap;">FIN</div>' +
-                        '<div style="background:#d8957d;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>' +
+                html: '<div style="display:flex;flex-direction:column;align-items:center;width:120px;height:80px;position:relative;">' +
+                        '<div style="width:24px;height:24px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:-2px 2px 5px rgba(0,0,0,0.25);margin-bottom:4px;">' +
+                          '<div style="width:6px;height:6px;background:white;border-radius:50%;"></div>' +
+                        '</div>' +
+                        '<div style="background:white;color:#1e293b;font-size:12px;font-weight:bold;padding:5px 12px;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:1.5px solid #ef4444;text-align:center;white-space:nowrap;line-height:1;">Destino</div>' +
                       '</div>',
                 className: '',
-                iconSize: [50, 40],
-                iconAnchor: [25, 35]
+                iconSize: [120, 80],
+                iconAnchor: [60, 24]
               })
             }).addTo(map).bindPopup('<b>Punto de Destino</b>');
           }
@@ -459,7 +498,9 @@ export const mapHtml = `
           }
           if (data.type === 'UPDATE_ROUTE') {
             console.log("Leaflet WebView: Recibida actualización de ruta en el mapa.");
-            if (data.route && data.route[0] && typeof data.route[0].path !== 'undefined') {
+            if (!data.route || data.route.length === 0) {
+              clearRouteLayers();
+            } else if (data.route[0] && typeof data.route[0].path !== 'undefined') {
               var formattedSegments = data.route.map(function(seg) {
                 return {
                   path: seg.path.map(function(c) { return [c[1], c[0]]; }),
@@ -470,6 +511,9 @@ export const mapHtml = `
             } else {
               var formatted = data.route.map(function(c) { return [c[1], c[0]]; });
               drawRoute(formatted);
+            }
+            if (typeof data.customRoute !== 'undefined') {
+              drawCustomRoute(data.customRoute);
             }
             setPoints(data.origin, data.destination);
           }

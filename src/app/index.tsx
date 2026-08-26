@@ -41,7 +41,7 @@ function WebHomeScreen() {
   const { routeCode } = useLocalSearchParams<{ routeCode?: string }>();
 
   // Estados para cálculo de rutas dinámicas
-  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number }>({
+  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>({
     lat: 5.5324627, // Plaza de Bolívar por defecto
     lng: -73.3615504,
   });
@@ -191,23 +191,23 @@ function WebHomeScreen() {
             const originalColor = feature.properties?.stroke?.toLowerCase();
             
             let shouldShow = true;
-            let displayColor = '#3f719b'; // Color por defecto (azul)
+            let displayColor = '#8b5cf6'; // Morado por defecto
 
             if (hasMultipleDirections && originalColor) {
               const colorIndex = uniqueColors.indexOf(originalColor);
               if (colorIndex === 0) {
-                // Sentido 1 (Ida) - verde
+                // Sentido 1 (Ida) - morado
                 shouldShow = showIda;
-                displayColor = '#4e9b78';
+                displayColor = '#8b5cf6';
               } else {
-                // Sentido 2 (Vuelta) - amarillo/dorado
+                // Sentido 2 (Vuelta) - rosado
                 shouldShow = showVuelta;
-                displayColor = '#f5c242';
+                displayColor = '#ec4899';
               }
             } else {
               // Si tiene un único trazo, se rige por si está activo alguno de los sentidos
               shouldShow = showIda || showVuelta;
-              displayColor = feature.properties?.stroke || '#3f719b';
+              displayColor = '#8b5cf6';
             }
 
             if (shouldShow) {
@@ -451,6 +451,29 @@ function WebHomeScreen() {
     );
   };
 
+  // Función para restablecer todos los puntos y rutas del mapa
+  const handleClearMap = () => {
+    setDestCoords(null);
+    setDestination('');
+    setOriginCoords(null);
+    setOriginName('');
+    setCalculatedRoute(undefined);
+    setIsCustomSearchActive(false);
+    setIsTripStarted(false);
+    setActiveRouteInfo({
+      code: 'PERS',
+      title: 'Selecciona una ruta o destino',
+      originName: 'Ninguno',
+      destinationName: 'Ninguno',
+    });
+    setRouteStats({
+      distanceText: '0 km',
+      durationText: '0 min',
+    });
+    setShowIda(true);
+    setShowVuelta(true);
+  };
+
   // Función para cargar e inyectar cualquier ruta en el mapa desde el archivo JSON
   const handleSelectRoute = (routeCode: string) => {
     try {
@@ -470,14 +493,14 @@ function WebHomeScreen() {
       // Extraemos las coordenadas y colores de todas las líneas en el feature collection
       routeData.path.features.forEach((feature: any) => {
         if (feature.geometry && feature.geometry.type === 'LineString') {
-          let color = '#3f719b'; // Azul por defecto
+          let color = '#8b5cf6'; // Morado por defecto
           const originalColor = feature.properties?.stroke?.toLowerCase();
 
-          // Mapeamos los colores originales del JSON a tonos más vivos y legibles
+          // Mapeamos los colores originales del JSON a tonos morados y rosados
           if (originalColor === '#7cb342' || originalColor === '#0288d1') {
-            color = '#4e9b78'; // Verde (Ida/Vuelta diferenciado)
+            color = '#8b5cf6'; // Morado (Ida/Vuelta diferenciado)
           } else if (originalColor === '#fada80' || originalColor === '#ffcc80' || originalColor === '#e65100') {
-            color = '#f5c242'; // Amarillo / Dorado (Ida/Vuelta diferenciado)
+            color = '#ec4899'; // Rosado (Ida/Vuelta diferenciado)
           } else if (originalColor) {
             color = originalColor;
           }
@@ -622,9 +645,8 @@ function WebHomeScreen() {
       setShowIda(defaultShowIda);
       setShowVuelta(defaultShowVuelta);
 
-      // Pasar segmentos con color al componente del mapa
-      setCalculatedRoute(segments as any);
-      setIsTripStarted(false); // Reiniciar el viaje al cambiar de ruta
+      // Reiniciar el viaje al cambiar de ruta
+      setIsTripStarted(false);
       
       Alert.alert(`Ruta ${routeCode} Seleccionada`, `Se ha cargado el trayecto de la Ruta ${routeCode} en el mapa.`);
     } catch (error) {
@@ -757,6 +779,7 @@ function WebHomeScreen() {
                 <MapView
                   isTripStarted={isTripStarted}
                   route={filteredRoute}
+                  customRoute={localRouteData ? calculatedRoute : undefined}
                   origin={originCoords}
                   destination={destCoords}
                   onMapClick={handleMapClick}
@@ -766,14 +789,15 @@ function WebHomeScreen() {
                 isCompact={isCompact}
                 recommendedRoutes={recommendedRoutesList}
                 onSelectRecommendedRoute={handleSelectRoute}
+                onClearMap={handleClearMap}
                 isTripStarted={isTripStarted}
                 onToggleTrip={() => setIsTripStarted((started) => !started)}
                 title={activeRouteInfo.title}
                 code={activeRouteInfo.code}
                 duration={routeStats.durationText}
                 distanceText={routeStats.distanceText}
-                originName={activeRouteInfo.originName}
-                destinationName={activeRouteInfo.destinationName}
+                originName={originName || 'Ninguno'}
+                destinationName={destination || 'Ninguno'}
                 showRoute1Directions={hasMultipleDirections}
                 showIda={showIda}
                 showVuelta={showVuelta}

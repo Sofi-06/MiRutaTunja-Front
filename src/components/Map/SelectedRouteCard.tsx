@@ -37,6 +37,7 @@ type SelectedRouteCardProps = Readonly<{
     destDist: number;
   }>;
   onSelectRecommendedRoute?: (code: string) => void;
+  onClearMap?: () => void;
 }>;
 
 export default function SelectedRouteCard({
@@ -63,6 +64,7 @@ export default function SelectedRouteCard({
   routeMapLink,
   recommendedRoutes = [],
   onSelectRecommendedRoute,
+  onClearMap,
 }: SelectedRouteCardProps) {
   const [internalTripStarted, setInternalTripStarted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -78,10 +80,6 @@ export default function SelectedRouteCard({
     }
   };
 
-  const itineraryStops = [
-    [originName, 'Punto de partida', 'Inicio'],
-    [destinationName, 'Punto de llegada', 'Fin'],
-  ] as const;
   const signDestinations = Array.from(new Set((routeName || title)
     .split(/\s*(?:-|–|—)\s*/)
     .map((place) => place.trim())
@@ -103,6 +101,15 @@ export default function SelectedRouteCard({
           >
             <Icon name="star" color={isSaved ? colors.coral : colors.muted} size={18} />
           </Pressable>
+          {onClearMap && (
+            <Pressable
+              accessibilityLabel="Borrar mapa"
+              onPress={onClearMap}
+              style={[styles.saveRouteHeaderButton, { borderColor: '#fecaca', backgroundColor: '#fef2f2' }]}
+            >
+              <Icon name="trash" color="#ef4444" size={17} />
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -134,8 +141,8 @@ export default function SelectedRouteCard({
               height: 18, 
               borderRadius: 4, 
               borderWidth: 2, 
-              borderColor: '#4e9b78', 
-              backgroundColor: showIda ? '#4e9b78' : 'transparent',
+              borderColor: '#8b5cf6', 
+              backgroundColor: showIda ? '#8b5cf6' : 'transparent',
               alignItems: 'center',
               justifyContent: 'center',
               marginRight: 10
@@ -143,10 +150,10 @@ export default function SelectedRouteCard({
               {showIda && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
             </View>
             <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              🟢 {idaLabel}
+              🟣 {idaLabel}
             </Text>
           </Pressable>
-
+ 
           <Pressable 
             onPress={onToggleVuelta}
             style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
@@ -156,8 +163,8 @@ export default function SelectedRouteCard({
               height: 18, 
               borderRadius: 4, 
               borderWidth: 2, 
-              borderColor: '#f5c242', 
-              backgroundColor: showVuelta ? '#f5c242' : 'transparent',
+              borderColor: '#ec4899', 
+              backgroundColor: showVuelta ? '#ec4899' : 'transparent',
               alignItems: 'center',
               justifyContent: 'center',
               marginRight: 10
@@ -165,22 +172,22 @@ export default function SelectedRouteCard({
               {showVuelta && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
             </View>
             <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              🟡 {vueltaLabel}
+              💗 {vueltaLabel}
             </Text>
           </Pressable>
         </View>
       )}
 
       {schedule && (
-        <View style={{ marginTop: 12, padding: 12, backgroundColor: '#f0fdf4', borderRadius: 12, borderWidth: 1, borderColor: '#bbf7d0', gap: 6 }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: '#166534', marginBottom: 2 }}>🕒 Horarios y Frecuencias:</Text>
+        <View style={{ marginTop: 12, padding: 12, backgroundColor: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', gap: 6 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink, marginBottom: 2 }}>🕒 Horarios y Frecuencias:</Text>
           <View>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#14532d' }}>🟢 {schedule.weekdays.label}</Text>
-            <Text style={{ fontSize: 11, color: '#166534', marginLeft: 16 }}>{schedule.weekdays.hours} | cada {schedule.weekdays.frequency}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#8b5cf6' }}>🟣 {schedule.weekdays.label}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 16 }}>{schedule.weekdays.hours} | cada {schedule.weekdays.frequency}</Text>
           </View>
           <View style={{ marginTop: 2 }}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#14532d' }}>🟡 {schedule.sundaysAndHolidays.label}</Text>
-            <Text style={{ fontSize: 11, color: '#166534', marginLeft: 16 }}>{schedule.sundaysAndHolidays.hours} | cada {schedule.sundaysAndHolidays.frequency}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#ec4899' }}>💗 {schedule.sundaysAndHolidays.label}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 16 }}>{schedule.sundaysAndHolidays.hours} | cada {schedule.sundaysAndHolidays.frequency}</Text>
           </View>
         </View>
       )}
@@ -233,21 +240,28 @@ export default function SelectedRouteCard({
         </View>
       )}
 
-      <Text style={styles.itineraryTitle}>Itinerario</Text>
-      <View style={styles.itineraryList}>
-        {itineraryStops.map(([name, detail, time], index) => (
-          <View key={name + index} style={styles.itineraryRow}>
-            <View style={styles.itineraryRail}>
-              <View style={[styles.itineraryDot, index === itineraryStops.length - 1 && styles.itineraryDotFinal]} />
-              {index < itineraryStops.length - 1 && <View style={styles.itineraryLine} />}
-            </View>
-            <View style={styles.itineraryCopy}>
-              <Text numberOfLines={1} style={styles.itineraryName}>{name}</Text>
-              <Text style={styles.itineraryDetail}>{detail}</Text>
-            </View>
-            <Text style={styles.itineraryTime}>{time}</Text>
+      <View style={{ marginTop: 20, padding: 16, backgroundColor: '#f8fafc', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#22c55e' }} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.muted }}>ORIGEN</Text>
+            <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: colors.ink, marginTop: 2 }}>
+              {originName}
+            </Text>
           </View>
-        ))}
+        </View>
+        
+        <View style={{ height: 1, backgroundColor: '#e2e8f0', marginLeft: 20 }} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#ef4444' }} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.muted }}>DESTINO</Text>
+            <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: colors.ink, marginTop: 2 }}>
+              {destinationName}
+            </Text>
+          </View>
+        </View>
       </View>
 
       <Pressable
