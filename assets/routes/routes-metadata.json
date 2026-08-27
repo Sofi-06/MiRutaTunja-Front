@@ -23,8 +23,8 @@
     "code": "R2",
     "name": "Pinos de oriente - San Francisco - Viaducto — Avenida Universitaria - Arboleda-Viaducto - San Francisco - Pinos de oriente",
     "category": "RUTAS Y RAMALES",
-    "sentidoIda": "norte-sur",
-    "sentidoVuelta": "sur-norte",
+    "sentidoIda": "sur-norte",
+    "sentidoVuelta": "norte-sur",
     "schedule": {
       "weekdays": {
         "label": "Lunes a Sábado",
@@ -403,8 +403,8 @@
     "code": "R21",
     "name": "Pirgua - Terminal de Transporte - Estadio - Retén sur-Estadio - Terminal de Transporte - Pirgua",
     "category": "RUTAS Y RAMALES",
-    "sentidoIda": "sur-norte",
-    "sentidoVuelta": "norte-sur",
+    "sentidoIda": "norte-sur",
+    "sentidoVuelta": "sur-norte",
     "schedule": {
       "weekdays": {
         "label": "Lunes a Sábado",
@@ -463,8 +463,8 @@
     "code": "R24",
     "name": "Runta - La Fuente - Ramal Florencia-La Fuente - Runta",
     "category": "RUTAS Y RAMALES",
-    "sentidoIda": "norte-sur",
-    "sentidoVuelta": "sur-norte",
+    "sentidoIda": "sur-norte",
+    "sentidoVuelta": "norte-sur",
     "schedule": {
       "weekdays": {
         "label": "Lunes a Sábado",
@@ -483,8 +483,8 @@
     "code": "R25",
     "name": "Runta-La Fuente-Runta",
     "category": "RUTAS Y RAMALES",
-    "sentidoIda": "norte-sur",
-    "sentidoVuelta": "sur-norte",
+    "sentidoIda": "sur-norte",
+    "sentidoVuelta": "norte-sur",
     "schedule": {
       "weekdays": {
         "label": "Lunes a Sábado",

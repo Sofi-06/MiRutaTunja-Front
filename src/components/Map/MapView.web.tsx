@@ -104,10 +104,6 @@ export default function MapView({
           top: 20,
         }}
       >
-        <div style={{ color: '#d8957d', fontSize: 10, fontWeight: 800, letterSpacing: '1.2px' }}>
-          MAPA INTERACTIVO
-        </div>
-        <div style={{ color: '#17283b', fontSize: 18, fontWeight: 800, marginTop: 3 }}>Tunja, Boyacá</div>
       </div>
     </div>
   );

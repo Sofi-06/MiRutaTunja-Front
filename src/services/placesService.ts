@@ -58,7 +58,7 @@ export async function searchPlaces(query: string): Promise<PlaceResult[]> {
 
   // 2. Try Nominatim (OpenStreetMap)
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(`${trimmed}, Tunja, Boyacá, Colombia`)}`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(`${trimmed} Tunja`)}&email=danim.u.ponencia@gmail.com`;
     console.log(`placesService: Searching Nominatim for "${trimmed}"...`);
     const response = await fetch(url, {
       headers: {
