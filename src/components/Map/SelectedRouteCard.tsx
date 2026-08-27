@@ -163,8 +163,8 @@ export default function SelectedRouteCard({
               height: 18, 
               borderRadius: 4, 
               borderWidth: 2, 
-              borderColor: '#ec4899', 
-              backgroundColor: showVuelta ? '#ec4899' : 'transparent',
+              borderColor: '#10b981', 
+              backgroundColor: showVuelta ? '#10b981' : 'transparent',
               alignItems: 'center',
               justifyContent: 'center',
               marginRight: 10
@@ -172,7 +172,7 @@ export default function SelectedRouteCard({
               {showVuelta && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
             </View>
             <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              💗 {vueltaLabel}
+              💚 {vueltaLabel}
             </Text>
           </Pressable>
         </View>
@@ -186,7 +186,7 @@ export default function SelectedRouteCard({
             <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 16 }}>{schedule.weekdays.hours} | cada {schedule.weekdays.frequency}</Text>
           </View>
           <View style={{ marginTop: 2 }}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#ec4899' }}>💗 {schedule.sundaysAndHolidays.label}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#10b981' }}>💚 {schedule.sundaysAndHolidays.label}</Text>
             <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 16 }}>{schedule.sundaysAndHolidays.hours} | cada {schedule.sundaysAndHolidays.frequency}</Text>
           </View>
         </View>

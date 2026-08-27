@@ -263,9 +263,9 @@ function WebHomeScreen() {
                 shouldShow = showIda;
                 displayColor = '#8b5cf6';
               } else {
-                // Sentido 2 (Vuelta) - rosado
+                // Sentido 2 (Vuelta) - verde
                 shouldShow = showVuelta;
-                displayColor = '#ec4899';
+                displayColor = '#10b981';
               }
             } else {
               // Si tiene un único trazo, se rige por si está activo alguno de los sentidos
@@ -552,7 +552,7 @@ function WebHomeScreen() {
           if (originalColor === '#7cb342' || originalColor === '#0288d1') {
             color = '#8b5cf6'; // Morado (Ida/Vuelta diferenciado)
           } else if (originalColor === '#fada80' || originalColor === '#ffcc80' || originalColor === '#e65100') {
-            color = '#ec4899'; // Rosado (Ida/Vuelta diferenciado)
+            color = '#10b981'; // Verde (Ida/Vuelta diferenciado)
           } else if (originalColor) {
             color = originalColor;
           }

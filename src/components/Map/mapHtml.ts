@@ -301,8 +301,8 @@ export const mapHtml = `
                 coordinates: activePath
               },
               properties: {
-                color: '#ec4899',
-                originalColor: '#ec4899',
+                color: '#10b981',
+                originalColor: '#10b981',
                 name: 'Ruta activa'
               }
             }]
@@ -702,7 +702,7 @@ export const mapHtml = `
               'line-cap': 'round'
             },
             paint: {
-              'line-color': '#ec4899',
+              'line-color': '#10b981',
               'line-width': 5.5,
               'line-opacity': 0.9
             }

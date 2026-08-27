@@ -63,8 +63,8 @@
     "code": "R4",
     "name": "Arboleda - Muiscas - San Francisco - Ramal Pinos de Oriente-San Francisco - Muiscas - Arboleda",
     "category": "RUTAS Y RAMALES",
-    "sentidoIda": "norte-sur",
-    "sentidoVuelta": "sur-norte",
+    "sentidoIda": "sur-norte",
+    "sentidoVuelta": "norte-sur",
     "schedule": {
       "weekdays": {
         "label": "Lunes a Sábado",
