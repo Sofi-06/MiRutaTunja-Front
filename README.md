@@ -27,8 +27,14 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-
+   npm start
    ```
+
+Para abrirla con Expo Go en el celular, usa el mismo Wi-Fi y escanea el QR que muestra Metro. Si la red bloquea la conexión local, inicia un túnel:
+
+```bash
+npm run start:tunnel
+```
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 
 import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
+import { isFavorite, toggleFavorite } from '@/services/localData';
 
 type SelectedRouteCardProps = Readonly<{
   isCompact?: boolean;
@@ -72,6 +73,10 @@ export default function SelectedRouteCard({
 
   const isTripStarted = controlledTripStarted ?? internalTripStarted;
 
+  useEffect(() => {
+    void isFavorite(`route:${code}`).then(setIsSaved);
+  }, [code]);
+
   const handleTripPress = () => {
     if (onToggleTrip) {
       onToggleTrip();
@@ -96,20 +101,19 @@ export default function SelectedRouteCard({
           <Text style={styles.selectedRouteCode}>{code}</Text>
           <Pressable
             accessibilityLabel="Guardar ruta"
-            onPress={() => setIsSaved((saved) => !saved)}
+            onPress={async () => {
+              const favorites = await toggleFavorite({
+                id: `route:${code}`,
+                type: 'route',
+                title: code,
+                subtitle: routeName || title,
+              });
+              setIsSaved(favorites.some((favorite) => favorite.id === `route:${code}`));
+            }}
             style={[styles.saveRouteHeaderButton, isSaved && styles.saveRouteButtonActive]}
           >
-            <Icon name="star" color={isSaved ? colors.coral : colors.muted} size={18} />
+            <Icon name="heart" color={isSaved ? colors.coral : colors.muted} size={19} />
           </Pressable>
-          {onClearMap && (
-            <Pressable
-              accessibilityLabel="Borrar mapa"
-              onPress={onClearMap}
-              style={[styles.saveRouteHeaderButton, { borderColor: '#fecaca', backgroundColor: '#fef2f2' }]}
-            >
-              <Icon name="trash" color="#ef4444" size={17} />
-            </Pressable>
-          )}
         </View>
       </View>
 

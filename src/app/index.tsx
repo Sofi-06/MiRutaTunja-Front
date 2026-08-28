@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ImageBackground,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
@@ -10,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import MapView from '@/components/Map/MapView';
 import SelectedRouteCard from '@/components/Map/SelectedRouteCard';
@@ -26,6 +27,7 @@ import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 import { geocodeLocation as serviceGeocodeLocation, reverseGeocode } from '@/services/placesService';
+import { addRecentSearch, getRecentSearches, RecentSearch } from '@/services/localData';
 
 export default function HomeScreen() {
   return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
@@ -97,11 +99,20 @@ const getRecommendedRoutes = (
 function WebHomeScreen() {
   const { width } = useWindowDimensions();
   const isCompact = width < 760;
+  const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+  const [exploreOffset, setExploreOffset] = useState(0);
+  const [insightsOffset, setInsightsOffset] = useState(0);
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [destination, setDestination] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isCustomSearchActive, setIsCustomSearchActive] = useState(false);
   const [isTripStarted, setIsTripStarted] = useState(false);
   const { routeCode } = useLocalSearchParams<{ routeCode?: string }>();
+
+  useEffect(() => {
+    void getRecentSearches().then(setRecentSearches);
+  }, []);
 
   // Estados para cálculo de rutas dinámicas
   const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>({
@@ -473,6 +484,7 @@ function WebHomeScreen() {
     setDestCoords(dCoords);
     setDestination(destPlace.name);
     setIsCustomSearchActive(true);
+    setRecentSearches(await addRecentSearch(originPlace.name, destPlace.name));
 
     // Calcular rutas sugeridas para ver si hay una directa en bus
     const recs = getRecommendedRoutes(oCoords, dCoords);
@@ -773,6 +785,7 @@ function WebHomeScreen() {
       </SafeAreaView>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         onScroll={(event) => setIsScrolled(event.nativeEvent.contentOffset.y > 36)}
@@ -802,45 +815,62 @@ function WebHomeScreen() {
               tu viaje con información clara y en tiempo real.
             </Text>
 
-            <SearchBar
-              origin={originName}
-              onOriginChange={setOriginName}
-              onOriginSelect={(name, coords) => {
-                setOriginName(name);
-                setOriginCoords(coords);
-                setIsCustomSearchActive(true);
-                if (destCoords) {
-                  const recs = getRecommendedRoutes(coords, destCoords);
-                  if (recs.length > 0) {
-                    handleSelectRoute(recs[0].code, coords, destCoords, true);
-                  }
-                }
-              }}
-              destination={destination}
-              onDestinationChange={setDestination}
-              onDestinationSelect={(name, coords) => {
-                setDestination(name);
-                setDestCoords(coords);
-                setIsCustomSearchActive(true);
-                if (originCoords) {
-                  const recs = getRecommendedRoutes(originCoords, coords);
-                  if (recs.length > 0) {
-                    handleSelectRoute(recs[0].code, originCoords, coords, true);
-                  }
-                }
-              }}
-              isCompact={isCompact}
-              onUseCurrentLocation={handleUseCurrentLocation}
-              onSearchBoth={handleSearchRoute}
-            />
+            <View style={[styles.homeQuickActions, isCompact && styles.homeQuickActionsPhone]}>
+              <Pressable onPress={() => router.push('/favorites')} style={[styles.quickPill, styles.quickPillActive, isCompact && styles.quickPillPhone]}>
+                <Icon name="heart" color={colors.blue} size={isCompact ? 18 : 19} />
+                <Text style={[styles.quickTextActive, isCompact && styles.quickTextPhone]}>Favoritos</Text>
+              </Pressable>
+              <Pressable onPress={() => scrollRef.current?.scrollTo({ y: exploreOffset + insightsOffset, animated: true })} style={[styles.quickPill, isCompact && styles.quickPillPhone]}>
+                <Icon name="history" color={colors.muted} size={isCompact ? 17 : 18} />
+                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Recientes</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/routes' as never)} style={[styles.quickPill, isCompact && styles.quickPillPhone]}>
+                <Icon name="bus" color={colors.muted} size={isCompact ? 18 : 19} />
+                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Todas las rutas</Text>
+              </Pressable>
+            </View>
           </View>
         </ImageBackground>
 
-        <View style={[styles.exploreSection, isCompact && styles.exploreSectionPhone]}>
+        <View onLayout={(event) => setExploreOffset(event.nativeEvent.layout.y)} style={[styles.exploreSection, isCompact && styles.exploreSectionPhone]}>
           <View style={styles.mapSection}>
             <Text style={styles.sectionEyebrow}>DESCUBRE LA CIUDAD</Text>
             <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Planifica tu recorrido</Text>
             <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el trayecto, haz clic en el mapa para fijar tu destino.</Text>
+            <View style={[styles.mapSearchBarWrap, isCompact && styles.mapSearchBarWrapPhone]}>
+              <SearchBar
+                origin={originName}
+                onOriginChange={setOriginName}
+                onOriginSelect={(name, coords) => {
+                  setOriginName(name);
+                  setOriginCoords(coords);
+                  setIsCustomSearchActive(true);
+                  if (destCoords) {
+                    const recs = getRecommendedRoutes(coords, destCoords);
+                    if (recs.length > 0) {
+                      handleSelectRoute(recs[0].code, coords, destCoords, true);
+                    }
+                  }
+                }}
+                destination={destination}
+                onDestinationChange={setDestination}
+                onDestinationSelect={(name, coords) => {
+                  setDestination(name);
+                  setDestCoords(coords);
+                  setIsCustomSearchActive(true);
+                  if (originCoords) {
+                    const recs = getRecommendedRoutes(originCoords, coords);
+                    if (recs.length > 0) {
+                      handleSelectRoute(recs[0].code, originCoords, coords, true);
+                    }
+                  }
+                }}
+                isCompact={isCompact}
+                showQuickActions={false}
+                onUseCurrentLocation={handleUseCurrentLocation}
+                onSearchBoth={handleSearchRoute}
+              />
+            </View>
             <View style={[styles.mapRouteLayout, isCompact && styles.mapRouteLayoutCompact]}>
               <View style={[styles.mapContainer, isCompact && styles.mapContainerPhone]}>
                 <MapView
@@ -904,7 +934,7 @@ function WebHomeScreen() {
               <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas más utilizadas</Text>
               <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Las líneas con mayor demanda en Tunja durante esta semana.</Text>
             </View>
-            {!isCompact && <Text style={styles.sectionLink}>Ver todas  ›</Text>}
+            {!isCompact && <Pressable onPress={() => router.push('/routes' as never)}><Text style={styles.sectionLink}>Ver todas  ›</Text></Pressable>}
           </View>
 
           <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
@@ -954,9 +984,16 @@ function WebHomeScreen() {
             />
           </View>
 
-          {isCompact && <Text style={[styles.sectionLink, styles.sectionLinkBelowPhone]}>Ver todas las rutas  ›</Text>}
+          {isCompact && <Pressable onPress={() => router.push('/routes' as never)}><Text style={[styles.sectionLink, styles.sectionLinkBelowPhone]}>Ver todas las rutas  ›</Text></Pressable>}
 
-          <RouteInsights isCompact={isCompact} />
+          <View onLayout={(event) => setInsightsOffset(event.nativeEvent.layout.y)}>
+            <RouteInsights
+              isCompact={isCompact}
+              recentSearches={recentSearches}
+              onSelectRoute={(code) => handleSelectRoute(`R-${code.replace('R', '').padStart(2, '0')}`)}
+              onSelectRecent={handleSearchRoute}
+            />
+          </View>
         </View>
 
         <Footer isCompact={isCompact} />

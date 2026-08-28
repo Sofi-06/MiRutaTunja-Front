@@ -19,16 +19,16 @@ type LinkSection = {
 
 const FOOTER_SECTIONS: LinkSection[] = [
   {
-    title: 'PRODUCTO',
+    title: 'NAVEGA',
     links: [
-      { label: 'Rutas', route: '/' },
-      { label: 'Paraderos', route: '/explore' },
-      { label: 'Planificador', route: '/routes/search' },
-      { label: 'Reportes', route: '/explore' },
+      { label: 'Inicio', route: '/' },
+      { label: 'Rutas', route: '/routes' },
+      { label: 'Turismo', route: '/explore' },
+      { label: 'Favoritos', route: '/favorites' },
     ],
   },
   {
-    title: 'CIUDAD',
+    title: 'TURISMO',
     links: [
       { label: 'Centro histórico' },
       { label: 'Zona norte' },
@@ -37,7 +37,7 @@ const FOOTER_SECTIONS: LinkSection[] = [
     ],
   },
   {
-    title: 'SOPORTE',
+    title: 'RUTASTUNJA',
     links: [
       { label: 'Ayuda' },
       { label: 'Contacto' },

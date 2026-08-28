@@ -14,6 +14,7 @@ type SearchBarProps = Readonly<{
   onDestinationChange: (destination: string) => void;
   onDestinationSelect?: (name: string, coords: { lat: number; lng: number }) => void;
   isCompact: boolean;
+  showQuickActions?: boolean;
   onUseCurrentLocation?: () => void;
   onSearchBoth?: (origin: string, destination: string) => void;
 }>;
@@ -26,6 +27,7 @@ export default function SearchBar({
   onDestinationChange,
   onDestinationSelect,
   isCompact,
+  showQuickActions = true,
   onUseCurrentLocation,
   onSearchBoth,
 }: SearchBarProps) {
@@ -58,7 +60,7 @@ export default function SearchBar({
     timeoutRef.current = setTimeout(async () => {
       console.log(`SearchBar: Debounce triggered for ${field}: "${text}"`);
       const results = await searchPlaces(text);
-      setSuggestions(results);
+      setSuggestions(results.filter((place): place is PlaceResult => Boolean(place?.name && Number.isFinite(place.lat) && Number.isFinite(place.lng))));
     }, 400); // Debounce de 400ms
   };
 
@@ -80,10 +82,10 @@ export default function SearchBar({
 
   return (
     <View style={[styles.searchRow, isCompact && styles.searchRowCompact, isCompact && styles.searchRowPhone, { width: '100%' }]}>
-      <View style={[styles.searchBox, { flexDirection: 'column', gap: 10, padding: 14, width: '100%', borderRadius: 16 }, isCompact && styles.searchBoxCompact, isCompact && styles.searchBoxPhone]}>
-        
+      <View style={[styles.searchBox, { flexDirection: 'column', gap: 10, padding: 14, width: '100%', borderRadius: 16, marginTop: showQuickActions && !isCompact ? 66 : 0 }, isCompact && styles.searchBoxCompact, isCompact && styles.searchBoxPhone]}>
+        <View style={[styles.searchFields, !isCompact && styles.searchFieldsInline]}>
         {/* Fila del Origen */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', gap: 8 }}>
+        <View style={[styles.searchFieldRow, !isCompact && styles.searchFieldRowInline]}>
           <Icon name="pin" color={colors.blue} size={20} />
           <TextInput
             value={origin}
@@ -105,7 +107,7 @@ export default function SearchBar({
         {/* Sugerencias de Origen */}
         {activeField === 'origin' && suggestions.length > 0 && (
           <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 8, padding: 4, borderLeftWidth: 3, borderLeftColor: colors.blue, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-            {suggestions.map((item, index) => (
+            {suggestions.filter(Boolean).map((item, index) => (
               <Pressable
                 key={index}
                 onPress={() => handleSelectSuggestion(item)}
@@ -125,7 +127,7 @@ export default function SearchBar({
         )}
 
         {/* Fila del Destino */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', gap: 8 }}>
+        <View style={[styles.searchFieldRow, !isCompact && styles.searchFieldRowInline]}>
           <Icon name="target" color={colors.coral} size={20} />
           <TextInput
             value={destination}
@@ -147,7 +149,7 @@ export default function SearchBar({
         {/* Sugerencias de Destino */}
         {activeField === 'destination' && suggestions.length > 0 && (
           <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 8, padding: 4, borderLeftWidth: 3, borderLeftColor: colors.coral, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-            {suggestions.map((item, index) => (
+            {suggestions.filter(Boolean).map((item, index) => (
               <Pressable
                 key={index}
                 onPress={() => handleSelectSuggestion(item)}
@@ -165,19 +167,17 @@ export default function SearchBar({
             ))}
           </View>
         )}
+        </View>
 
         {/* Acciones */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: 4 }}>
-          <Pressable 
-            onPress={onUseCurrentLocation} 
-            style={({ hovered }) => [
-              { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: hovered ? '#eff6ff' : 'transparent' }
-            ]}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: 2 }}>
+          <Pressable
+            onPress={onUseCurrentLocation}
+            style={styles.searchLocationAction}
           >
             <Icon name="gps" color={colors.blue} size={17} />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.blue }}>Usar mi ubicación</Text>
+            <Text style={styles.searchLocationActionText}>Usar mi ubicación</Text>
           </Pressable>
-
           <Pressable 
             onPress={() => onSearchBoth && onSearchBoth(origin, destination)} 
             style={[styles.searchButton, { position: 'relative', right: 0, height: 38, paddingHorizontal: 14 }]}
@@ -188,7 +188,7 @@ export default function SearchBar({
         </View>
       </View>
 
-      {!isCompact && (
+      {showQuickActions && !isCompact && (
         <View style={styles.quickActions}>
           <Pressable onPress={() => router.push('/favorites')} style={[styles.quickPill, styles.quickPillActive]}>
             <Icon name="heart" color={colors.blue} size={19} />
@@ -198,13 +198,13 @@ export default function SearchBar({
             <Icon name="history" color={colors.muted} size={18} />
             <Text style={styles.quickText}>Recientes</Text>
           </Pressable>
-          <Pressable onPress={() => router.push('/explore')} style={styles.quickPill}>
+          <Pressable onPress={() => router.push('/routes' as never)} style={styles.quickPill}>
             <Icon name="bus" color={colors.muted} size={19} />
             <Text style={styles.quickText}>Todas las rutas</Text>
           </Pressable>
         </View>
       )}
-      {isCompact && (
+      {showQuickActions && isCompact && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -218,7 +218,7 @@ export default function SearchBar({
             <Icon name="gps" color={colors.ink} size={17} />
             <Text style={[styles.quickText, styles.quickTextPhone]}>Mi ubicación</Text>
           </Pressable>
-          <Pressable onPress={() => router.push('/explore')} style={[styles.quickPill, styles.quickPillPhone]}>
+          <Pressable onPress={() => router.push('/routes' as never)} style={[styles.quickPill, styles.quickPillPhone]}>
             <Icon name="bus" color={colors.ink} size={18} />
             <Text style={[styles.quickText, styles.quickTextPhone]}>Rutas</Text>
           </Pressable>

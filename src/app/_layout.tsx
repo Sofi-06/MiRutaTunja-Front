@@ -4,6 +4,7 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" options={{ title: 'Inicio' }} />
+      <Stack.Screen name="routes/index" options={{ title: 'Rutas' }} />
       <Stack.Screen name="explore/index" options={{ title: 'Explorar' }} />
       <Stack.Screen name="favorites/index" options={{ title: 'Favoritos' }} />
       <Stack.Screen name="profile/index" options={{ title: 'Perfil' }} />

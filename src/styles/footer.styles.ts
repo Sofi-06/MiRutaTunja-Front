@@ -13,8 +13,8 @@ export const footerStyles = StyleSheet.create({
     maxWidth: 1820,
     alignSelf: 'center',
     paddingHorizontal: 44,
-    paddingTop: 56,
-    paddingBottom: 36,
+    paddingTop: 40,
+    paddingBottom: 28,
   },
   footerInnerPhone: {
     paddingHorizontal: 20,
@@ -24,7 +24,7 @@ export const footerStyles = StyleSheet.create({
   footerMain: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 48,
+    gap: 36,
   },
   footerMainPhone: {
     flexDirection: 'column',
@@ -101,7 +101,7 @@ export const footerStyles = StyleSheet.create({
   },
   linksGroup: {
     flexDirection: 'row',
-    gap: 72,
+    gap: 48,
     flexWrap: 'wrap',
   },
   linksGroupPhone: {
@@ -150,8 +150,8 @@ export const footerStyles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#e6eef4',
-    marginTop: 44,
-    marginBottom: 28,
+    marginTop: 32,
+    marginBottom: 22,
   },
   dividerPhone: {
     marginTop: 32,

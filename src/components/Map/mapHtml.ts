@@ -184,8 +184,6 @@ export const mapHtml = `
           marker: false // Manejamos el marcador manualmente
         });
 
-        map.addControl(geocoder, 'top-left');
-
         geocoder.on('result', function(e) {
           const lng = e.result.center[0];
           const lat = e.result.center[1];

@@ -23,6 +23,7 @@ const iconMap = {
   route: 'map-marker-path',
   chatbot: 'robot-outline',
   trash: 'trash-can-outline',
+  menu: 'menu',
 } as const satisfies Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']>;
 
 type IconName = keyof typeof iconMap;
