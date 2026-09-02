@@ -37,6 +37,14 @@ export default function SearchBar({
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
   const [activeField, setActiveField] = useState<'origin' | 'destination' | null>(null);
   const timeoutRef = useRef<any>(null);
+  const originInputRef = useRef<TextInput>(null);
+  const destinationInputRef = useRef<TextInput>(null);
+
+  const blurSearchInputs = () => {
+    // On web, a focused input can make the browser scroll back to the map section.
+    originInputRef.current?.blur();
+    destinationInputRef.current?.blur();
+  };
 
   const handleTextChange = (text: string, field: 'origin' | 'destination') => {
     if (field === 'origin') {
@@ -65,6 +73,8 @@ export default function SearchBar({
   };
 
   const handleSelectSuggestion = (place: PlaceResult) => {
+    blurSearchInputs();
+
     if (activeField === 'origin') {
       onOriginChange(place.name);
       if (onOriginSelect) {
@@ -88,6 +98,7 @@ export default function SearchBar({
         <View style={[styles.searchFieldRow, !isCompact && styles.searchFieldRowInline]}>
           <Icon name="pin" color={colors.blue} size={20} />
           <TextInput
+            ref={originInputRef}
             value={origin}
             onChangeText={(txt) => handleTextChange(txt, 'origin')}
             placeholder="¿De dónde sales? (ej: UPTC, Plaza de Bolívar...)"
@@ -130,6 +141,7 @@ export default function SearchBar({
         <View style={[styles.searchFieldRow, !isCompact && styles.searchFieldRowInline]}>
           <Icon name="target" color={colors.coral} size={20} />
           <TextInput
+            ref={destinationInputRef}
             value={destination}
             onChangeText={(txt) => handleTextChange(txt, 'destination')}
             placeholder="¿A dónde quieres ir? (ej: Terminal, Hospital...)"
@@ -179,7 +191,10 @@ export default function SearchBar({
             <Text style={styles.searchLocationActionText}>Usar mi ubicación</Text>
           </Pressable>
           <Pressable 
-            onPress={() => onSearchBoth && onSearchBoth(origin, destination)} 
+            onPress={() => {
+              blurSearchInputs();
+              onSearchBoth?.(origin, destination);
+            }} 
             style={[styles.searchButton, { position: 'relative', right: 0, height: 38, paddingHorizontal: 14 }]}
           >
             <Text style={styles.searchButtonText}>Calcular Ruta</Text>

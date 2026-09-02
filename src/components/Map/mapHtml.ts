@@ -167,7 +167,9 @@ export const mapHtml = `
           style: 'mapbox://styles/mapbox/streets-v12',
           center: [-73.3615504, 5.5324627], // Formato [lng, lat] para Mapbox
           zoom: 14,
-          projection: 'globe' // Efecto globo 3D premium
+          projection: 'globe', // Efecto globo 3D premium
+          // Let the page scroll normally while the cursor is over the map.
+          scrollZoom: false
         });
 
         // Controles de navegación de Mapbox

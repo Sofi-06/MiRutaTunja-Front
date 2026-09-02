@@ -6,6 +6,8 @@ import { mapHtml } from './mapHtml';
 
 const mapboxToken = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN || '';
 const injectedMapHtml = mapHtml.replace('MAPBOX_TOKEN_PLACEHOLDER', mapboxToken);
+// Keep the WebView source stable across parent renders (such as navbar scroll state).
+const mapSource = { html: injectedMapHtml };
 
 type MapViewProps = Readonly<{
   isTripStarted?: boolean;
@@ -75,7 +77,7 @@ export default function MapView({
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html: injectedMapHtml }}
+        source={mapSource}
         style={styles.map}
         javaScriptEnabled
         domStorageEnabled

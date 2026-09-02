@@ -22,7 +22,7 @@ import RouteCard from '@/components/routeCard/RouteCard';
 import RouteInsights from '@/components/routeCard/RouteInsights';
 import SearchBar from '@/components/searchBar/SearchBar';
 import Icon from '@/components/ui/Icon';
-import MobileHome from '@/components/mobile/MobileHome';
+import MobileHome from '../components/mobile/MobileHome';
 import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
@@ -105,7 +105,6 @@ function WebHomeScreen() {
   const [insightsOffset, setInsightsOffset] = useState(0);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [destination, setDestination] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isCustomSearchActive, setIsCustomSearchActive] = useState(false);
   const [isTripStarted, setIsTripStarted] = useState(false);
   const { routeCode } = useLocalSearchParams<{ routeCode?: string }>();
@@ -779,7 +778,7 @@ function WebHomeScreen() {
     <View style={styles.page}>
       <SafeAreaView
         edges={['top']}
-        style={[styles.header, styles.headerOverlay, isScrolled && styles.headerScrolled]}
+        style={[styles.header, styles.headerOverlay, styles.headerScrolled]}
       >
         <Header isCompact={isCompact} />
       </SafeAreaView>
@@ -788,8 +787,6 @@ function WebHomeScreen() {
         ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        onScroll={(event) => setIsScrolled(event.nativeEvent.contentOffset.y > 36)}
-        scrollEventThrottle={16}
       >
         <ImageBackground
           source={require('@/assets/images/tunja.jpg')}
