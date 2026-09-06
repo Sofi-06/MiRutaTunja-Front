@@ -13,7 +13,10 @@ type MapViewProps = Readonly<{
   customRoute?: any;
   origin?: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
+  pickMode?: 'ORIGIN' | 'DEST' | null;
   onMapClick?: (lat: number, lng: number) => void;
+  onSelectOrigin?: (lat: number, lng: number) => void;
+  onSelectDestination?: (lat: number, lng: number) => void;
 }>;
 
 export default function MapView({
@@ -22,7 +25,10 @@ export default function MapView({
   customRoute,
   origin,
   destination,
+  pickMode,
   onMapClick,
+  onSelectOrigin,
+  onSelectDestination,
 }: MapViewProps) {
   const webViewRef = useRef<WebView>(null);
 
@@ -55,15 +61,35 @@ export default function MapView({
     }
   }, [origin, destination]);
 
+  useEffect(() => {
+    if (pickMode) {
+      const data = { type: 'START_PICK_MODE', target: pickMode };
+      const script = `window.postMessage(${JSON.stringify(data)}, '*'); if (window.startPickMode) window.startPickMode('${pickMode}');`;
+      webViewRef.current?.injectJavaScript(script);
+    } else {
+      const data = { type: 'CANCEL_PICK_MODE' };
+      const script = `window.postMessage(${JSON.stringify(data)}, '*'); if (window.cancelPickMode) window.cancelPickMode();`;
+      webViewRef.current?.injectJavaScript(script);
+    }
+  }, [pickMode]);
+
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'CONSOLE_LOG') {
-        console.log('[Leaflet Map WebView]:', data.message);
+        console.log('[Mapbox Map WebView]:', data.message);
         return;
       }
-      if (data.type === 'MAP_CLICK' && onMapClick) {
-        onMapClick(data.lat, data.lng);
+      if (data.type === 'SET_ORIGIN') {
+        if (onSelectOrigin) {
+          onSelectOrigin(data.lat, data.lng);
+        }
+      } else if (data.type === 'SET_DESTINATION' || data.type === 'MAP_CLICK') {
+        if (onSelectDestination) {
+          onSelectDestination(data.lat, data.lng);
+        } else if (onMapClick) {
+          onMapClick(data.lat, data.lng);
+        }
       }
     } catch (e) {
       console.error('Error parsing map message:', e);

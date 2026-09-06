@@ -4,6 +4,7 @@ import { Modal, Pressable, Text, View } from 'react-native';
 import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
 import { isFavorite, toggleFavorite } from '@/services/localData';
+import { getCurrentBusFare } from '@/services/fareService';
 
 type SelectedRouteCardProps = Readonly<{
   isCompact?: boolean;
@@ -16,13 +17,6 @@ type SelectedRouteCardProps = Readonly<{
   stopsCount?: number;
   originName?: string;
   destinationName?: string;
-  showRoute1Directions?: boolean;
-  showIda?: boolean;
-  showVuelta?: boolean;
-  onToggleIda?: () => void;
-  onToggleVuelta?: () => void;
-  idaLabel?: string;
-  vueltaLabel?: string;
   schedule?: {
     weekdays: { label: string; hours: string; frequency: string };
     sundaysAndHolidays: { label: string; hours: string; frequency: string };
@@ -49,16 +43,8 @@ export default function SelectedRouteCard({
   code = 'WALK',
   duration = '22 min',
   distanceText = '1.2 km',
-  stopsCount = 4,
   originName = 'Mi ubicación',
   destinationName = 'Destino seleccionado',
-  showRoute1Directions = false,
-  showIda = true,
-  showVuelta = true,
-  onToggleIda,
-  onToggleVuelta,
-  idaLabel = 'Ida',
-  vueltaLabel = 'Vuelta',
   schedule,
   routeName,
   routeCategory,
@@ -70,6 +56,17 @@ export default function SelectedRouteCard({
   const [internalTripStarted, setInternalTripStarted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  // Tarifa dinámica calculada según la hora y festivos en Colombia
+  const [fareInfo, setFareInfo] = useState(getCurrentBusFare());
+
+  useEffect(() => {
+    setFareInfo(getCurrentBusFare());
+    const interval = setInterval(() => {
+      setFareInfo(getCurrentBusFare());
+    }, 60000); // Actualizar cada minuto
+    return () => clearInterval(interval);
+  }, []);
 
   const isTripStarted = controlledTripStarted ?? internalTripStarted;
 
@@ -127,60 +124,12 @@ export default function SelectedRouteCard({
           <Text style={styles.routeStatLabel}>Distancia</Text>
         </View>
         <View style={styles.routeStat}>
-          <Text style={styles.routeStatValue}>$0</Text>
-          <Text style={styles.routeStatLabel}>Costo</Text>
+          <Text style={[styles.routeStatValue, { color: fareInfo.isFestiveOrNight ? colors.coral : colors.ink }]}>
+            {fareInfo.fareText}
+          </Text>
+          <Text style={styles.routeStatLabel}>{fareInfo.label}</Text>
         </View>
       </View>
-
-      {showRoute1Directions && (
-        <View style={{ marginTop: 12, padding: 12, backgroundColor: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', gap: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.ink, marginBottom: 2 }}>Sentidos habilitados:</Text>
-          
-          <Pressable 
-            onPress={onToggleIda}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
-          >
-            <View style={{ 
-              width: 18, 
-              height: 18, 
-              borderRadius: 4, 
-              borderWidth: 2, 
-              borderColor: '#8b5cf6', 
-              backgroundColor: showIda ? '#8b5cf6' : 'transparent',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 10
-            }}>
-              {showIda && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
-            </View>
-            <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              🟣 {idaLabel}
-            </Text>
-          </Pressable>
- 
-          <Pressable 
-            onPress={onToggleVuelta}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
-          >
-            <View style={{ 
-              width: 18, 
-              height: 18, 
-              borderRadius: 4, 
-              borderWidth: 2, 
-              borderColor: '#10b981', 
-              backgroundColor: showVuelta ? '#10b981' : 'transparent',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 10
-            }}>
-              {showVuelta && <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>✓</Text>}
-            </View>
-            <Text style={{ fontSize: 13, color: '#1e293b', fontWeight: '600' }}>
-              💚 {vueltaLabel}
-            </Text>
-          </Pressable>
-        </View>
-      )}
 
       {schedule && (
         <View style={{ marginTop: 12, padding: 12, backgroundColor: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', gap: 6 }}>
@@ -199,10 +148,10 @@ export default function SelectedRouteCard({
       {recommendedRoutes && recommendedRoutes.length > 0 && (
         <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 14 }}>
           <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink, marginBottom: 8 }}>
-            🚌 Rutas sugeridas directas:
+            🚌 Rutas alternativas disponibles:
           </Text>
           <View style={{ gap: 8 }}>
-            {recommendedRoutes.slice(0, 3).map((route) => (
+            {recommendedRoutes.slice(0, 4).map((route) => (
               <Pressable
                 key={route.code}
                 onPress={() => onSelectRecommendedRoute?.(route.code)}
@@ -295,7 +244,14 @@ export default function SelectedRouteCard({
               <View style={[styles.routeModalColumns, isCompact && styles.routeModalColumnsPhone]}>
                 <View style={styles.routeModalInfoColumn}>
                   {schedule && <View style={styles.routeModalSchedule}><Text style={styles.routeModalScheduleTitle}>Horarios</Text><Text style={styles.routeModalText}>{schedule.weekdays.label}: {schedule.weekdays.hours}</Text><Text style={styles.routeModalText}>Frecuencia: cada {schedule.weekdays.frequency}</Text><Text style={[styles.routeModalText, { marginTop: 7 }]}>{schedule.sundaysAndHolidays.label}: {schedule.sundaysAndHolidays.hours}</Text><Text style={styles.routeModalText}>Frecuencia: cada {schedule.sundaysAndHolidays.frequency}</Text></View>}
-                  <View style={styles.farePanel}><Text style={styles.farePanelTitle}>Tarifas</Text><Text style={styles.farePanelText}>Diurna: por confirmar</Text><Text style={styles.farePanelText}>Nocturna: por confirmar</Text></View>
+                  <View style={styles.farePanel}>
+                    <Text style={styles.farePanelTitle}>Tarifas Oficiales</Text>
+                    <Text style={styles.farePanelText}>☀️ Diurna (Lun - Sáb, 5:00 AM - 6:00 PM): $2.600</Text>
+                    <Text style={styles.farePanelText}>🌙 Nocturna (después de 6:00 PM), Domingos y Festivos: $2.700</Text>
+                    <Text style={[styles.farePanelText, { marginTop: 4, fontWeight: '700', color: colors.blueDark }]}>
+                      📌 Tarifa actual: {fareInfo.fareText} ({fareInfo.label})
+                    </Text>
+                  </View>
                 </View>
                 <View style={styles.routeModalSignColumn}>
                   <Text style={styles.routeModalHint}>El número identifica la ruta y los nombres indican sus sectores principales.</Text>

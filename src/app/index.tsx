@@ -45,7 +45,7 @@ const getRecommendedRoutes = (
 ) => {
   if (!origin || !dest) return [];
 
-  const suggestions: { code: string; title: string; dist: number; originDist: number; destDist: number }[] = [];
+  const suggestions: { code: string; title: string; dist: number; originDist: number; destDist: number; score: number }[] = [];
 
   Object.keys(routesRegistry).forEach((key) => {
     const route = routesRegistry[key];
@@ -73,8 +73,8 @@ const getRecommendedRoutes = (
       }
     });
 
-    // Si el trayecto de la ruta pasa a menos de 750 metros (0.75 km) de ambos puntos
-    if (minOriginDist <= 0.75 && minDestDist <= 0.75) {
+    // Permitir rutas que pasen dentro de una distancia caminable razonable (hasta 1.35 km)
+    if (minOriginDist <= 1.35 && minDestDist <= 1.35) {
       const metadata = routesMetadata[key as keyof typeof routesMetadata];
       const num = key.replace('R', '');
       const formattedCode = `R-${num.padStart(2, '0')}`;
@@ -82,18 +82,22 @@ const getRecommendedRoutes = (
         ? `${metadata.name.split(' - ')[0]} – ${metadata.name.split(' - ').slice(-1)[0]}`
         : `Ruta ${key}`;
 
+      // Score de conveniencia global: prioriza llegar lo más cerca posible del destino (1.4x) y origen (1.0x)
+      const score = (minOriginDist * 1.0) + (minDestDist * 1.4);
+
       suggestions.push({
         code: formattedCode,
         title,
         dist: minOriginDist + minDestDist,
         originDist: minOriginDist,
         destDist: minDestDist,
+        score,
       });
     }
   });
 
-  // Ordenar por cercanía acumulada
-  return suggestions.sort((a, b) => a.dist - b.dist);
+  // Ordenar por el score de conveniencia del viaje
+  return suggestions.sort((a, b) => a.score - b.score);
 };
 
 function WebHomeScreen() {
@@ -121,6 +125,7 @@ function WebHomeScreen() {
   });
   const [originName, setOriginName] = useState('Plaza de Bolívar');
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [pickMode, setPickMode] = useState<'ORIGIN' | 'DEST' | null>(null);
   const [calculatedRoute, setCalculatedRoute] = useState<any | undefined>(undefined);
   const [routeStats, setRouteStats] = useState({
     distanceText: '0 km',
@@ -150,92 +155,30 @@ function WebHomeScreen() {
     return match ? `R${match[1]}` : null;
   })();
 
-  // Efecto para sincronizar puntos y estadísticas de la ruta activa según los sentidos activos
+  // Efecto para sincronizar estadísticas de la ruta activa según los sentidos visibles sin mutar origen/destino
   useEffect(() => {
     if (!activeRouteKey || !routesRegistry[activeRouteKey]) return;
 
-    const routeData = routesRegistry[activeRouteKey];
-    const pointsData = routeData.points;
-
-    let originLatLng = { lat: 5.5324627, lng: -73.3615504 };
-    let destLatLng: { lat: number; lng: number } | null = null;
-    let originNameText = 'Inicio';
-    let destNameText = 'Destino';
-
-    if (pointsData && pointsData.features) {
-      const pointFeatures = pointsData.features.filter((f: any) => f.geometry && f.geometry.type === 'Point');
-      if (pointFeatures.length > 0) {
-        const orig = pointFeatures[0];
-        originNameText = orig.properties?.name || 'Inicio';
-        originLatLng = { lat: orig.geometry.coordinates[1], lng: orig.geometry.coordinates[0] };
-      }
-      if (pointFeatures.length > 1) {
-        const dest = pointFeatures[pointFeatures.length - 1]; // Usar último punto como destino
-        destNameText = dest.properties?.name || 'Destino';
-        destLatLng = { lat: dest.geometry.coordinates[1], lng: dest.geometry.coordinates[0] };
-      }
-    }
-
-    if (isCustomSearchActive) {
-      if (showIda && showVuelta) {
-        setRouteStats({
-          distanceText: activeRouteKey === 'R1' ? '8.4 km' : 'Aprox. 6-10 km',
-          durationText: activeRouteKey === 'R1' ? '25 min' : '30 min',
-        });
-      } else if (showIda) {
-        setRouteStats({
-          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
-          durationText: activeRouteKey === 'R1' ? '13 min' : '15 min',
-        });
-      } else if (showVuelta) {
-        setRouteStats({
-          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
-          durationText: activeRouteKey === 'R1' ? '12 min' : '15 min',
-        });
-      } else {
-        setRouteStats({
-          distanceText: '0 km',
-          durationText: '0 min',
-        });
-      }
+    if (showIda && showVuelta) {
+      setRouteStats({
+        distanceText: activeRouteKey === 'R1' ? '8.4 km' : 'Aprox. 6-10 km',
+        durationText: activeRouteKey === 'R1' ? '25 min' : '30 min',
+      });
+    } else if (showIda) {
+      setRouteStats({
+        distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
+        durationText: activeRouteKey === 'R1' ? '13 min' : '15 min',
+      });
+    } else if (showVuelta) {
+      setRouteStats({
+        distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
+        durationText: activeRouteKey === 'R1' ? '12 min' : '15 min',
+      });
     } else {
-      if (showIda && showVuelta) {
-        setOriginCoords(originLatLng);
-        setOriginName(originNameText);
-        setDestCoords(destLatLng);
-        setDestination(destNameText);
-        setRouteStats({
-          distanceText: activeRouteKey === 'R1' ? '8.4 km' : 'Aprox. 6-10 km',
-          durationText: activeRouteKey === 'R1' ? '25 min' : '30 min',
-        });
-      } else if (showIda) {
-        setOriginCoords(originLatLng);
-        setOriginName(originNameText);
-        setDestCoords(destLatLng);
-        setDestination(destNameText);
-        setRouteStats({
-          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
-          durationText: activeRouteKey === 'R1' ? '13 min' : '15 min',
-        });
-      } else if (showVuelta) {
-        setOriginCoords(destLatLng || originLatLng);
-        setOriginName(destNameText);
-        setDestCoords(originLatLng);
-        setDestination(originNameText);
-        setRouteStats({
-          distanceText: activeRouteKey === 'R1' ? '4.2 km' : 'Aprox. 3-5 km',
-          durationText: activeRouteKey === 'R1' ? '12 min' : '15 min',
-        });
-      } else {
-        setOriginCoords(null as any);
-        setOriginName('Ninguno');
-        setDestCoords(null);
-        setDestination('Ninguno');
-        setRouteStats({
-          distanceText: '0 km',
-          durationText: '0 min',
-        });
-      }
+      setRouteStats({
+        distanceText: '0 km',
+        durationText: '0 min',
+      });
     }
   }, [showIda, showVuelta, activeRouteKey]);
 
@@ -316,7 +259,7 @@ function WebHomeScreen() {
           body: JSON.stringify({
             origin: originCoords,
             destination: destCoords,
-            routeCode: activeRouteKey || 'R1',
+            routeCode: activeRouteKey || 'AUTO',
           }),
         });
 
@@ -337,6 +280,23 @@ function WebHomeScreen() {
             distanceText: `${distanceKm} km`,
             durationText: `${durationMin} min`,
           });
+
+          // Si el backend autoseleccionó una ruta óptima y no teníamos una ruta fijada
+          if (data.selectedRouteKey && (!activeRouteKey || activeRouteInfo.code === 'PERS')) {
+            const num = data.selectedRouteKey.replace('R', '');
+            const formattedCode = `R-${num.padStart(2, '0')}`;
+            const metadata = routesMetadata[data.selectedRouteKey as keyof typeof routesMetadata];
+            const cleanTitle = metadata 
+              ? `${formattedCode}: ${metadata.name.split(' - ')[0]} – ${metadata.name.split(' - ').slice(-1)[0]}`
+              : `Ruta ${formattedCode}`;
+
+            setActiveRouteInfo({
+              code: formattedCode,
+              title: cleanTitle,
+              originName: originName || 'Mi ubicación',
+              destinationName: destination || 'Destino seleccionado',
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching route from backend:', error);
@@ -402,16 +362,50 @@ function WebHomeScreen() {
     fetchCurrentLocationSilently();
   }, []);
 
-  // Limpiar coordenadas si se borra el destino
-  useEffect(() => {
-    if (!destination.trim()) {
-      setDestCoords(null);
-      setIsCustomSearchActive(false);
-    }
-  }, [destination]);
+  // Manejador para fijar el origen desde el mapa
+  const handleSelectOriginFromMap = async (lat: number, lng: number) => {
+    setPickMode(null);
+    const clickOriginCoords = { lat, lng };
+    setOriginCoords(clickOriginCoords);
+    setOriginName('Obteniendo dirección...');
+    setIsCustomSearchActive(true);
 
-  // Manejador para el click en el mapa
+    let address = 'Obteniendo dirección...';
+    try {
+      address = await reverseGeocode(lat, lng);
+      setOriginName(address);
+    } catch (error) {
+      console.error('Error reverse geocoding origin map click:', error);
+      address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      setOriginName(address);
+    }
+
+    if (destCoords) {
+      const recs = getRecommendedRoutes(clickOriginCoords, destCoords);
+      if (recs.length > 0) {
+        const bestRoute = recs[0];
+        handleSelectRoute(bestRoute.code, clickOriginCoords, destCoords, true);
+      } else {
+        setActiveRouteInfo({
+          code: 'PERS',
+          title: 'Ruta personalizada',
+          originName: address,
+          destinationName: destination || 'Ninguno',
+        });
+      }
+    } else {
+      setActiveRouteInfo({
+        code: 'PERS',
+        title: 'Ruta personalizada',
+        originName: address,
+        destinationName: destination || 'Ninguno',
+      });
+    }
+  };
+
+  // Manejador para el click de destino en el mapa
   const handleMapClick = async (lat: number, lng: number) => {
+    setPickMode(null);
     const clickDestCoords = { lat, lng };
     setDestCoords(clickDestCoords);
     setDestination('Obteniendo dirección...');
@@ -491,10 +485,6 @@ function WebHomeScreen() {
     if (recs.length > 0) {
       const bestRoute = recs[0];
       handleSelectRoute(bestRoute.code, oCoords, dCoords, true);
-      Alert.alert(
-        'Ruta recomendada sugerida',
-        `Se ha seleccionado automáticamente la mejor ruta de bus para tu viaje: ${bestRoute.title}.`
-      );
     } else {
       setActiveRouteInfo({
         code: 'PERS',
@@ -502,11 +492,6 @@ function WebHomeScreen() {
         originName: originPlace.name,
         destinationName: destPlace.name,
       });
-
-      Alert.alert(
-        'Ruta configurada',
-        `No se encontraron rutas de bus directas. Se ha trazado una ruta de caminata de "${originPlace.name}" a "${destPlace.name}".`
-      );
     }
   };
 
@@ -606,6 +591,9 @@ function WebHomeScreen() {
       const origin = { lat: startCoord[1], lng: startCoord[0] };
       const dest = { lat: endCoord[1], lng: endCoord[0] };
 
+      const displayOriginName = (isCustomSearchActive || preventCoordsOverride) ? (originName || originNameText) : originNameText;
+      const displayDestName = (isCustomSearchActive || preventCoordsOverride) ? (destination || destNameText) : destNameText;
+
       if (!isCustomSearchActive && !preventCoordsOverride) {
         setOriginCoords(origin);
         setOriginName(originNameText);
@@ -622,8 +610,8 @@ function WebHomeScreen() {
       setActiveRouteInfo({
         code: routeCode,
         title: cleanTitle,
-        originName: originNameText,
-        destinationName: destNameText,
+        originName: displayOriginName,
+        destinationName: displayDestName,
       });
 
       setRouteStats({
@@ -714,11 +702,8 @@ function WebHomeScreen() {
 
       // Reiniciar el viaje al cambiar de ruta
       setIsTripStarted(false);
-      
-      Alert.alert(`Ruta ${routeCode} Seleccionada`, `Se ha cargado el trayecto de la Ruta ${routeCode} en el mapa.`);
     } catch (error) {
       console.error(`Error loading Ruta ${routeCode}:`, error);
-      Alert.alert('Error', `Hubo un error cargando los datos de la Ruta ${routeCode}.`);
     }
   };
 
@@ -836,7 +821,7 @@ function WebHomeScreen() {
           <View style={styles.mapSection}>
             <Text style={styles.sectionEyebrow}>DESCUBRE LA CIUDAD</Text>
             <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Planifica tu recorrido</Text>
-            <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el trayecto, haz clic en el mapa para fijar tu destino.</Text>
+            <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el trayecto, haz clic en el mapa para fijar tu origen o destino.</Text>
             <View style={[styles.mapSearchBarWrap, isCompact && styles.mapSearchBarWrapPhone]}>
               <SearchBar
                 origin={originName}
@@ -869,6 +854,8 @@ function WebHomeScreen() {
                 showQuickActions={false}
                 onUseCurrentLocation={handleUseCurrentLocation}
                 onSearchBoth={handleSearchRoute}
+                onStartPickOrigin={() => setPickMode('ORIGIN')}
+                onStartPickDestination={() => setPickMode('DEST')}
               />
             </View>
             <View style={[styles.mapRouteLayout, isCompact && styles.mapRouteLayoutCompact]}>
@@ -879,7 +866,10 @@ function WebHomeScreen() {
                   customRoute={localRouteData ? calculatedRoute : undefined}
                   origin={originCoords}
                   destination={destCoords}
+                  pickMode={pickMode}
                   onMapClick={handleMapClick}
+                  onSelectOrigin={handleSelectOriginFromMap}
+                  onSelectDestination={handleMapClick}
                 />
               </View>
               <SelectedRouteCard
@@ -897,13 +887,6 @@ function WebHomeScreen() {
                 distanceText={routeStats.distanceText}
                 originName={originName || 'Ninguno'}
                 destinationName={destination || 'Ninguno'}
-                showRoute1Directions={hasMultipleDirections}
-                showIda={showIda}
-                showVuelta={showVuelta}
-                onToggleIda={() => setShowIda(prev => !prev)}
-                onToggleVuelta={() => setShowVuelta(prev => !prev)}
-                idaLabel={directionLabels.ida}
-                vueltaLabel={directionLabels.vuelta}
                 schedule={(() => {
                   const match = activeRouteInfo.code.match(/R-?0*(\d+)/i);
                   const key = match ? `R${match[1]}` : activeRouteInfo.code;

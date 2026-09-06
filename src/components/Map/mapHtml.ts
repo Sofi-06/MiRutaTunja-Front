@@ -106,11 +106,79 @@ export const mapHtml = `
           background: linear-gradient(135deg, #3f719b 0%, #4e9b78 100%);
         }
 
-        /* Glassmorphic Popups */
-        .mapboxgl-popup-content {
-          background: rgba(255, 255, 255, 0.95) !important;
+        /* Walking (Muñequito) Markers */
+        .walk-marker-container-horizontal {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          cursor: pointer;
+          user-select: none;
+          white-space: nowrap;
+          pointer-events: auto;
+        }
+        .walk-label-pill {
+          background: rgba(255, 255, 255, 0.96);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 800;
+          color: #17283b;
+          border: 1.5px solid #10b981;
+          box-shadow: 0 4px 12px rgba(23, 40, 59, 0.18);
+          white-space: nowrap;
+          pointer-events: none;
+        }
+        .walk-label-dropoff {
+          border-color: #f59e0b;
+          color: #92400e;
+        }
+        .walk-badge-wrapper {
+          position: relative;
+          width: 34px;
+          height: 34px;
+          min-width: 34px;
+          min-height: 34px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .walk-pulse-ring {
+          position: absolute;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: rgba(16, 185, 129, 0.45);
+          animation: pulseRing 1.8s infinite ease-out;
+          pointer-events: none;
+        }
+        .walk-pulse-ring-dropoff {
+          background: rgba(245, 158, 11, 0.45);
+        }
+        .walk-badge {
+          position: relative;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          border: 2px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(23, 40, 59, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          line-height: 1;
+        }
+        .walk-badge-dropoff {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        /* Glassmorphic Popups */
+        .mapboxgl-popup-content {
+          background: rgba(255, 255, 255, 0.96) !important;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
           border-radius: 14px !important;
           padding: 12px 14px !important;
           box-shadow: 0 8px 24px rgba(23, 40, 59, 0.18) !important;
@@ -143,9 +211,132 @@ export const mapHtml = `
           border-radius: 10px;
           margin-top: 6px;
         }
+
+        /* Interactive Pin Action Popup */
+        .map-action-popup {
+          padding: 4px 2px 2px 2px;
+          min-width: 190px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .action-popup-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .action-popup-title {
+          font-size: 13px;
+          font-weight: 800;
+          color: #17283b;
+        }
+        .action-popup-coords {
+          font-size: 11px;
+          color: #728092;
+          font-weight: 500;
+        }
+        .action-popup-buttons {
+          display: flex;
+          gap: 8px;
+          margin-top: 4px;
+        }
+        .btn-action-point {
+          flex: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          padding: 7px 10px;
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          border: 1px solid transparent;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          font-family: inherit;
+        }
+        .btn-action-origin {
+          background: #eef9f2;
+          color: #166534;
+          border-color: #bbf7d0;
+        }
+        .btn-action-origin:hover {
+          background: #dcfce7;
+          border-color: #86efac;
+          transform: translateY(-1px);
+        }
+        .btn-action-dest {
+          background: #fef2f2;
+          color: #991b1b;
+          border-color: #fecaca;
+        }
+        .btn-action-dest:hover {
+          background: #fee2e2;
+          border-color: #fca5a5;
+          transform: translateY(-1px);
+        }
+        .dot-origin {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #22c55e;
+          display: inline-block;
+        }
+        .dot-dest {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #ef4444;
+          display: inline-block;
+        }
+
+        /* Floating Pick Mode Banner */
+        #pick-mode-banner {
+          display: none;
+          position: fixed;
+          top: 14px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 9999;
+          background: rgba(23, 40, 59, 0.95);
+          color: #ffffff;
+          padding: 8px 16px;
+          border-radius: 30px;
+          font-size: 12px;
+          font-weight: 700;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          align-items: center;
+          gap: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          animation: bannerSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes bannerSlideDown {
+          0% { transform: translate(-50%, -20px); opacity: 0; }
+          100% { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .btn-cancel-pick {
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: #ffffff;
+          border-radius: 12px;
+          padding: 3px 9px;
+          font-size: 11px;
+          font-weight: 800;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+        .btn-cancel-pick:hover {
+          background: rgba(255, 255, 255, 0.35);
+        }
       </style>
     </head>
     <body>
+      <div id="pick-mode-banner">
+        <span id="pick-mode-text">📍 Toca en el mapa para fijar ubicación</span>
+        <button type="button" class="btn-cancel-pick" onclick="window.cancelPickMode()">✕ Cancelar</button>
+      </div>
       <div id="map"></div>
       <script>
         // Redirigir console.log a React Native para verlos en la terminal de la computadora
@@ -201,7 +392,7 @@ export const mapHtml = `
           setDestinationMarker(lat, lng, name);
 
           // Enviar coordenadas seleccionadas de vuelta a React Native
-          const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
+          const msg = JSON.stringify({ type: 'SET_DESTINATION', lat: lat, lng: lng, name: name });
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(msg);
           } else {
@@ -209,31 +400,128 @@ export const mapHtml = `
           }
         });
 
-        // Click Handler para selección de destino en mapa
+        // Variables para control de arrastre, popup y modo de captura de mapa
+        let isDragging = false;
+        let dragTimer = null;
+        let actionPopup = null;
+        let pickTarget = null; // 'ORIGIN' | 'DEST' | null
+
+        map.on('dragstart', function() {
+          isDragging = true;
+          if (dragTimer) clearTimeout(dragTimer);
+        });
+
+        map.on('dragend', function() {
+          if (dragTimer) clearTimeout(dragTimer);
+          dragTimer = setTimeout(function() {
+            isDragging = false;
+          }, 150);
+        });
+
+        // Modo de captura interactiva en mapa
+        window.startPickMode = function(target) {
+          pickTarget = target;
+          const banner = document.getElementById('pick-mode-banner');
+          const text = document.getElementById('pick-mode-text');
+          if (banner && text) {
+            text.innerText = target === 'ORIGIN'
+              ? '📍 Modo activo: Toca en el mapa para fijar tu ORIGEN'
+              : '🎯 Modo activo: Toca en el mapa para fijar tu DESTINO';
+            banner.style.display = 'flex';
+          }
+          map.getCanvas().style.cursor = 'crosshair';
+          if (actionPopup) {
+            actionPopup.remove();
+            actionPopup = null;
+          }
+        };
+
+        window.cancelPickMode = function() {
+          pickTarget = null;
+          const banner = document.getElementById('pick-mode-banner');
+          if (banner) {
+            banner.style.display = 'none';
+          }
+          map.getCanvas().style.cursor = '';
+        };
+
+        // Función global para confirmar selección de origen o destino
+        window.confirmSetPoint = function(lat, lng, type) {
+          if (actionPopup) {
+            actionPopup.remove();
+            actionPopup = null;
+          }
+
+          if (type === 'ORIGIN') {
+            console.log("Mapbox WebView: Origen confirmado en:", lat, lng);
+            const msg = JSON.stringify({ type: 'SET_ORIGIN', lat: lat, lng: lng });
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(msg);
+            } else {
+              window.parent.postMessage(msg, '*');
+            }
+          } else if (type === 'DEST') {
+            console.log("Mapbox WebView: Destino confirmado en:", lat, lng);
+            setDestinationMarker(lat, lng, "Destino seleccionado");
+            const msg = JSON.stringify({ type: 'SET_DESTINATION', lat: lat, lng: lng });
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(msg);
+            } else {
+              window.parent.postMessage(msg, '*');
+            }
+          }
+        };
+
+        // Click Handler para interacción limpia con el mapa
         map.on('click', function(e) {
-          // Comprobar si el clic fue en un tramo de ruta para priorizar la interacción de información de ruta
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ['route-layer']
-          });
-          if (features.length > 0) {
-            // El clic fue en una ruta, la interacción con la ruta se maneja de forma independiente
+          if (isDragging) {
             return;
           }
 
           const lat = e.lngLat.lat;
           const lng = e.lngLat.lng;
-          console.log("Mapbox WebView: Click detectado en mapa en:", lat, lng);
-          
-          // Colocar marcador de llegada inmediatamente
-          setDestinationMarker(lat, lng, "Destino seleccionado");
 
-          // Enviar evento de vuelta al contenedor de React Native o web
-          const msg = JSON.stringify({ type: 'MAP_CLICK', lat: lat, lng: lng });
-          if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(msg);
-          } else {
-            window.parent.postMessage(msg, '*');
+          // Si el modo de selección rápida está activo, asignar directamente
+          if (pickTarget) {
+            const target = pickTarget;
+            window.cancelPickMode();
+            window.confirmSetPoint(lat, lng, target);
+            return;
           }
+
+          // Comprobar si el clic fue en un tramo de ruta para priorizar la interactividad de la ruta
+          const features = map.queryRenderedFeatures(e.point, {
+            layers: ['route-layer']
+          });
+          if (features.length > 0) {
+            return;
+          }
+
+          console.log("Mapbox WebView: Click detectado en mapa en:", lat, lng);
+
+          if (actionPopup) {
+            actionPopup.remove();
+          }
+
+          const popupHtml = '<div class="map-action-popup">' +
+            '<div class="action-popup-header">' +
+              '<span class="action-popup-title">📍 Punto en el mapa</span>' +
+            '</div>' +
+            '<div class="action-popup-coords">' + lat.toFixed(4) + ', ' + lng.toFixed(4) + '</div>' +
+            '<div class="action-popup-buttons">' +
+              '<button type="button" class="btn-action-point btn-action-origin" onclick="window.confirmSetPoint(' + lat + ', ' + lng + ', \\\'ORIGIN\\\')">' +
+                '<span class="dot-origin"></span> Origen' +
+              '</button>' +
+              '<button type="button" class="btn-action-point btn-action-dest" onclick="window.confirmSetPoint(' + lat + ', ' + lng + ', \\\'DEST\\\')">' +
+                '<span class="dot-dest"></span> Destino' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+
+          actionPopup = new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 12, closeButton: true })
+            .setLngLat([lng, lat])
+            .setHTML(popupHtml)
+            .addTo(map);
         });
 
         let activePath = [];
@@ -245,6 +533,8 @@ export const mapHtml = `
         let busMarker = null;
         let originMarker = null;
         let destinationMarker = null;
+        let boardingMarker = null;
+        let dropoffMarker = null;
 
         // Variables de sincronización para evitar condiciones de carrera antes de la carga del mapa
         let isMapLoaded = false;
@@ -263,9 +553,45 @@ export const mapHtml = `
           if (!busMarker) return;
           const content = isMoving ?
             '<div class="popup-title">🚌 Bus en movimiento</div><div class="popup-tag" style="background:#e4f3eb;color:#5f9b7f;">En viaje</div>' :
-            '<div class="popup-title">🚌 Bus estacionado</div><div class="popup-desc">Presiona "Iniciar viaje" para comenzar</div>';
+            '<div class="popup-title">🚌 Bus disponible</div><div class="popup-desc">Presiona "Iniciar viaje" para simular el recorrido</div>';
           
           busMarker.setPopup(new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 15 }).setHTML(content));
+        }
+
+        function setupBoardingMarker(coords) {
+          if (boardingMarker) { boardingMarker.remove(); boardingMarker = null; }
+          if (!coords || coords.length < 2) return;
+
+          const el = document.createElement('div');
+          el.className = 'walk-marker-container-horizontal';
+          el.innerHTML = '<div class="walk-badge-wrapper">' +
+                           '<div class="walk-pulse-ring"></div>' +
+                           '<div class="walk-badge">🚶‍♂️</div>' +
+                         '</div>' +
+                         '<div class="walk-label-pill" style="margin-left: 6px;">Sube aquí</div>';
+
+          boardingMarker = new mapboxgl.Marker({ element: el, anchor: 'left', offset: [-17, 0] })
+            .setLngLat(coords)
+            .setPopup(new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 15 }).setHTML('<b>🚶‍♂️ Punto de Abordaje</b><br><span style="font-size:11px;color:#64748b;">Camina hasta este punto para tomar el bus.</span>'))
+            .addTo(map);
+        }
+
+        function setupDropoffMarker(coords) {
+          if (dropoffMarker) { dropoffMarker.remove(); dropoffMarker = null; }
+          if (!coords || coords.length < 2) return;
+
+          const el = document.createElement('div');
+          el.className = 'walk-marker-container-horizontal';
+          el.innerHTML = '<div class="walk-badge-wrapper">' +
+                           '<div class="walk-pulse-ring walk-pulse-ring-dropoff"></div>' +
+                           '<div class="walk-badge walk-badge-dropoff">🚶‍♂️</div>' +
+                         '</div>' +
+                         '<div class="walk-label-pill walk-label-dropoff" style="margin-left: 6px;">Bájate aquí</div>';
+
+          dropoffMarker = new mapboxgl.Marker({ element: el, anchor: 'left', offset: [-17, 0] })
+            .setLngLat(coords)
+            .setPopup(new mapboxgl.Popup({ className: 'glassmorphic-popup', offset: 15 }).setHTML('<b>🚶‍♂️ Punto de Bajada</b><br><span style="font-size:11px;color:#64748b;">Bájate del bus aquí y camina hacia tu destino final.</span>'))
+            .addTo(map);
         }
 
         function clearRouteLayers() {
@@ -282,6 +608,8 @@ export const mapHtml = `
             });
           }
           if (busMarker) { busMarker.remove(); busMarker = null; }
+          if (boardingMarker) { boardingMarker.remove(); boardingMarker = null; }
+          if (dropoffMarker) { dropoffMarker.remove(); dropoffMarker = null; }
         }
 
         function drawRoute(pathPoints) {
@@ -370,6 +698,8 @@ export const mapHtml = `
                 features: []
               });
             }
+            if (boardingMarker) { boardingMarker.remove(); boardingMarker = null; }
+            if (dropoffMarker) { dropoffMarker.remove(); dropoffMarker = null; }
             return;
           }
 
@@ -388,7 +718,7 @@ export const mapHtml = `
                 },
                 properties: {
                   isWalking: true,
-                  name: 'Caminata de origen'
+                  name: 'Caminata hacia el bus'
                 }
               });
             }
@@ -401,9 +731,11 @@ export const mapHtml = `
                 },
                 properties: {
                   isBus: true,
-                  name: 'Viaje en bus (Ruta 1)'
+                  name: 'Trayecto en bus'
                 }
               });
+              activePath = customRouteData.tramoB;
+              setupBusMarker(activePath[0]);
             }
             if (customRouteData.tramoC && customRouteData.tramoC.length >= 2) {
               geojson.features.push({
@@ -414,10 +746,33 @@ export const mapHtml = `
                 },
                 properties: {
                   isWalking: true,
-                  name: 'Caminata de destino'
+                  name: 'Caminata hacia el destino'
                 }
               });
             }
+
+            // Colocar marcadores visuales del muñequito caminando en subida y bajada
+            const bp = customRouteData.boardingPoint || (customRouteData.tramoB && customRouteData.tramoB[0]);
+            if (bp) {
+              setupBoardingMarker(bp);
+            }
+            const dp = customRouteData.dropoffPoint || (customRouteData.tramoB && customRouteData.tramoB[customRouteData.tramoB.length - 1]);
+            if (dp) {
+              setupDropoffMarker(dp);
+            }
+
+            // Enfocar la vista del mapa exactamente en el viaje del usuario
+            const allTripCoords = [
+              ...(customRouteData.tramoA || []),
+              ...(customRouteData.tramoB || []),
+              ...(customRouteData.tramoC || [])
+            ];
+            if (allTripCoords.length > 0) {
+              const bounds = new mapboxgl.LngLatBounds();
+              allTripCoords.forEach(function(p) { bounds.extend(p); });
+              map.fitBounds(bounds, { padding: 50, duration: 1000 });
+            }
+
           } else {
             const pathPoints = Array.isArray(customRouteData) ? customRouteData : (customRouteData.route || []);
             if (pathPoints.length >= 2) {
@@ -432,7 +787,13 @@ export const mapHtml = `
                   name: 'Ruta directa'
                 }
               });
+              activePath = pathPoints;
+              const bounds = new mapboxgl.LngLatBounds();
+              activePath.forEach(function(p) { bounds.extend(p); });
+              map.fitBounds(bounds, { padding: 50, duration: 1000 });
             }
+            if (boardingMarker) { boardingMarker.remove(); boardingMarker = null; }
+            if (dropoffMarker) { dropoffMarker.remove(); dropoffMarker = null; }
           }
 
           if (map.getSource('custom-route-source')) {
@@ -570,25 +931,27 @@ export const mapHtml = `
           
           clearRouteLayers();
 
-          if (data.route) {
-            if (data.route.isMultimodal) {
-              drawCustomRoute(data.route);
-            } else if (Array.isArray(data.route)) {
-              if (data.route.length === 0) {
-                // already cleared
-              } else if (data.route[0] && typeof data.route[0].path !== 'undefined') {
-                drawRouteSegments(data.route);
-              } else {
-                drawRoute(data.route);
-              }
-            }
-          }
+          const hasCustomTrip = (data.customRoute && (data.customRoute.isMultimodal || (Array.isArray(data.customRoute) && data.customRoute.length > 0))) ||
+                                (data.route && data.route.isMultimodal);
 
-          if (data.customRoute) {
-            if (data.customRoute.isMultimodal) {
-              drawCustomRoute(data.customRoute);
-            } else if (Array.isArray(data.customRoute) && data.customRoute.length > 0) {
-              drawCustomRoute(data.customRoute);
+          if (hasCustomTrip) {
+            // Cuando hay un trayecto calculado para el usuario, SOLO dibujamos lo que le sirve
+            const customData = (data.customRoute && (data.customRoute.isMultimodal || (Array.isArray(data.customRoute) && data.customRoute.length > 0)))
+              ? data.customRoute
+              : data.route;
+            drawCustomRoute(customData);
+          } else {
+            // Si solo se está consultando una ruta sin viaje calculado, mostramos el trazado de referencia
+            if (data.route) {
+              if (Array.isArray(data.route)) {
+                if (data.route.length === 0) {
+                  // already cleared
+                } else if (data.route[0] && typeof data.route[0].path !== 'undefined') {
+                  drawRouteSegments(data.route);
+                } else {
+                  drawRoute(data.route);
+                }
+              }
             }
           }
 
@@ -645,7 +1008,7 @@ export const mapHtml = `
             }
           });
 
-          // Registrar fuente GeoJSON de ruta personalizada (OSRM)
+          // Registrar fuente GeoJSON de ruta multimodal / personalizada
           map.addSource('custom-route-source', {
             type: 'geojson',
             data: {
@@ -665,9 +1028,9 @@ export const mapHtml = `
               'line-cap': 'round'
             },
             paint: {
-              'line-color': '#db2777',
+              'line-color': '#10b981',
               'line-width': 9,
-              'line-opacity': 0.22
+              'line-opacity': 0.25
             }
           });
 
@@ -685,7 +1048,7 @@ export const mapHtml = `
               'line-color': '#64748b',
               'line-width': 3.5,
               'line-dasharray': [2, 2],
-              'line-opacity': 0.8
+              'line-opacity': 0.85
             }
           });
 
@@ -702,7 +1065,7 @@ export const mapHtml = `
             paint: {
               'line-color': '#10b981',
               'line-width': 5.5,
-              'line-opacity': 0.9
+              'line-opacity': 0.92
             }
           });
 
@@ -729,10 +1092,10 @@ export const mapHtml = `
 
           // Cambiar el cursor a puntero al pasar sobre la ruta
           map.on('mouseenter', 'route-layer', function() {
-            map.getCanvas().style.cursor = 'pointer';
+            if (!pickTarget) map.getCanvas().style.cursor = 'pointer';
           });
           map.on('mouseleave', 'route-layer', function() {
-            map.getCanvas().style.cursor = '';
+            if (!pickTarget) map.getCanvas().style.cursor = '';
           });
 
           // El mapa está listo, procesar todas las solicitudes diferidas
@@ -773,6 +1136,16 @@ export const mapHtml = `
             }
           }
           
+          if (data.type === 'START_PICK_MODE') {
+            console.log("Mapbox WebView: Activando modo captura de mapa para:", data.target);
+            window.startPickMode(data.target);
+          }
+
+          if (data.type === 'CANCEL_PICK_MODE') {
+            console.log("Mapbox WebView: Cancelando modo captura de mapa");
+            window.cancelPickMode();
+          }
+
           if (data.type === 'UPDATE_ROUTE') {
             console.log("Mapbox WebView: Recibida actualización de ruta.");
             if (!isMapLoaded) {

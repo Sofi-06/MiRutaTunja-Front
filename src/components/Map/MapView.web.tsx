@@ -12,6 +12,8 @@ type MapViewProps = Readonly<{
   origin?: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
+  onSelectOrigin?: (lat: number, lng: number) => void;
+  onSelectDestination?: (lat: number, lng: number) => void;
 }>;
 
 export default function MapView({
@@ -21,6 +23,8 @@ export default function MapView({
   origin,
   destination,
   onMapClick,
+  onSelectOrigin,
+  onSelectDestination,
 }: MapViewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -60,8 +64,18 @@ export default function MapView({
       if (typeof data === 'string') {
         try { data = JSON.parse(data); } catch(e) {}
       }
-      if (data && data.type === 'MAP_CLICK' && onMapClick) {
-        onMapClick(data.lat, data.lng);
+      if (data) {
+        if (data.type === 'SET_ORIGIN') {
+          if (onSelectOrigin) {
+            onSelectOrigin(data.lat, data.lng);
+          }
+        } else if (data.type === 'SET_DESTINATION' || data.type === 'MAP_CLICK') {
+          if (onSelectDestination) {
+            onSelectDestination(data.lat, data.lng);
+          } else if (onMapClick) {
+            onMapClick(data.lat, data.lng);
+          }
+        }
       }
     };
 
@@ -69,7 +83,7 @@ export default function MapView({
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [onMapClick]);
+  }, [onMapClick, onSelectOrigin, onSelectDestination]);
 
   return (
     <div style={{ height: '100%', minHeight: 620, position: 'relative', width: '100%' }}>

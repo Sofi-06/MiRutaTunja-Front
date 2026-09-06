@@ -154,6 +154,14 @@ export default function MobileHome() {
     setIsMapFocused(true);
   };
 
+  const handleSelectOriginFromMap = (lat: number, lng: number) => {
+    setOrigin(`Origen (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+    setOriginCoords({ lat, lng });
+    setShowSelectedRoute(false);
+    setIsTripStarted(false);
+    setIsMapFocused(true);
+  };
+
   const handleMapClick = (lat: number, lng: number) => {
     setDestination(`Destino (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
     setDestinationCoords({ lat, lng });
@@ -192,7 +200,17 @@ export default function MobileHome() {
         </ImageBackground>
 
         <View style={styles.mapSection}>
-          <View style={styles.mapFrame}><MapView isTripStarted={isTripStarted} route={showSelectedRoute ? routeSegments : calculatedRoute} origin={originCoords} destination={destinationCoords} onMapClick={handleMapClick} /></View>
+          <View style={styles.mapFrame}>
+            <MapView
+              isTripStarted={isTripStarted}
+              route={showSelectedRoute ? routeSegments : calculatedRoute}
+              origin={originCoords}
+              destination={destinationCoords}
+              onMapClick={handleMapClick}
+              onSelectOrigin={handleSelectOriginFromMap}
+              onSelectDestination={handleMapClick}
+            />
+          </View>
           {!isMapFocused && activeField && suggestions.length > 0 && (
             <View style={[styles.suggestionsOverlay, activeField === 'origin' ? styles.suggestionsOrigin : styles.suggestionsDestination]}>
               {suggestions.slice(0, 3).map((item, index) => (
@@ -258,7 +276,15 @@ export default function MobileHome() {
             )}
           </View>
         </View>
-        <MapView isTripStarted={isTripStarted} route={showSelectedRoute ? routeSegments : calculatedRoute} origin={originCoords} destination={destinationCoords} onMapClick={handleMapClick} />
+        <MapView
+          isTripStarted={isTripStarted}
+          route={showSelectedRoute ? routeSegments : calculatedRoute}
+          origin={originCoords}
+          destination={destinationCoords}
+          onMapClick={handleMapClick}
+          onSelectOrigin={handleSelectOriginFromMap}
+          onSelectDestination={handleMapClick}
+        />
         <View style={styles.mapFocusRecommendations}>
           <Text style={styles.mapFocusLabel}>RUTAS RECOMENDADAS</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mapFocusChips}>{routeChoices.map((route) => <Pressable key={route.key} onPress={() => { setSelectedKey(route.key); setShowSelectedRoute(true); }} style={styles.mapFocusChip}><Text style={styles.mapFocusChipCode}>{route.code}</Text><Text style={styles.mapFocusChipText} numberOfLines={2}>{route.title}</Text><View style={styles.mapFocusChipMeta}><Icon name="clock" color="#728092" size={13} /><Text style={styles.mapFocusChipMetaText}>{route.time}</Text></View></Pressable>)}</ScrollView>
