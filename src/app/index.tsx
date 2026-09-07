@@ -27,10 +27,29 @@ import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 import { geocodeLocation as serviceGeocodeLocation, reverseGeocode } from '@/services/placesService';
+import Constants from 'expo-constants';
 import { addRecentSearch, getRecentSearches, RecentSearch } from '@/services/localData';
 
+const getBackendUrl = () => {
+  if (process.env.EXPO_PUBLIC_BACKEND_URL) {
+    return process.env.EXPO_PUBLIC_BACKEND_URL;
+  }
+  if (Platform.OS === 'web') {
+    return 'http://localhost:3000';
+  }
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any).manifest2?.extra?.expoClient?.hostUri ||
+    (Constants as any).manifest?.debuggerHost;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    return `http://${host}:3000`;
+  }
+  return 'http://localhost:3000';
+};
+
 export default function HomeScreen() {
-  return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
+  return <WebHomeScreen />;
 }
 
 const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -251,7 +270,8 @@ function WebHomeScreen() {
 
     const fetchRoute = async () => {
       try {
-        const response = await fetch('http://localhost:3000/routes', {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/routes`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
