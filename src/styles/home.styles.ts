@@ -209,26 +209,26 @@ export const styles = StyleSheet.create({
     transform: [{ scale: 1.04 }],
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(43, 84, 121, 0.10)",
   },
   heroFadeLayerOne: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: 72,
     backgroundColor: "rgba(255, 255, 255, 0.30)",
   },
   heroFadeLayerTwo: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: 124,
     backgroundColor: "rgba(255, 255, 255, 0.20)",
   },
   heroFadeLayerThree: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: 176,
     backgroundColor: "rgba(255, 255, 255, 0.12)",
   },
   heroFadeLayerFour: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: 232,
     backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
