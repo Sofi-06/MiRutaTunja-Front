@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Alert, Image, ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  ImageBackground,
+  Modal,
+  PanResponder,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import Constants from 'expo-constants';
@@ -44,8 +59,207 @@ function getRouteSegments(key: string) {
     }));
 }
 
+function RouteBottomSheet({
+  selectedRoute,
+  selectedKey,
+  calculatedRouteData,
+  routeStats,
+  fareInfo,
+  origin,
+  destination,
+  isTripStarted,
+  onToggleTripStarted,
+  onOpenRouteInfo,
+  recommendedRoutes,
+  onSelectRoute,
+}: {
+  selectedRoute: any;
+  selectedKey: string;
+  calculatedRouteData: any;
+  routeStats: { distanceText: string; durationText: string };
+  fareInfo: { fareText: string; label: string; isFestiveOrNight: boolean };
+  origin: string;
+  destination: string;
+  isTripStarted: boolean;
+  onToggleTripStarted: () => void;
+  onOpenRouteInfo: () => void;
+  recommendedRoutes: any[];
+  onSelectRoute: (key: string) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const screenHeight = Dimensions.get('window').height;
+  const collapsedHeight = Math.min(275, screenHeight * 0.37);
+  const expandedHeight = Math.min(540, screenHeight * 0.72);
+
+  const heightAnim = useRef(new Animated.Value(collapsedHeight)).current;
+
+  const toggleExpand = (expand?: boolean) => {
+    const nextState = expand !== undefined ? expand : !isExpanded;
+    setIsExpanded(nextState);
+    Animated.spring(heightAnim, {
+      toValue: nextState ? expandedHeight : collapsedHeight,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 6,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy < -25) {
+          toggleExpand(true);
+        } else if (gestureState.dy > 25) {
+          toggleExpand(false);
+        } else {
+          toggleExpand();
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <Animated.View style={[styles.bottomSheetContainer, { height: heightAnim }]}>
+      <View {...panResponder.panHandlers} style={styles.sheetHandleTouchArea}>
+        <View style={styles.sheetHandle} />
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+        contentContainerStyle={styles.sheetScrollContent}
+      >
+        <View style={styles.sheetSelectedCard}>
+          <View style={styles.sheetHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sheetEyebrow}>RUTA SELECCIONADA</Text>
+              <Text numberOfLines={1} style={styles.sheetTitle}>
+                {calculatedRouteData?.details?.routeCode
+                  ? `Ruta ${calculatedRouteData.details.routeCode}`
+                  : selectedRoute.title}
+              </Text>
+            </View>
+            <View style={[styles.sheetBadge, { backgroundColor: `${selectedRoute.color || '#3f719b'}20` }]}>
+              <Text style={[styles.sheetBadgeText, { color: selectedRoute.color || '#3f719b' }]}>
+                {calculatedRouteData?.details?.routeCode || selectedRoute.code}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.sheetStatsRow}>
+            <View style={styles.sheetStatItem}>
+              <Text style={styles.sheetStatValue}>{routeStats.durationText}</Text>
+              <Text style={styles.sheetStatLabel}>Duración</Text>
+            </View>
+            <View style={styles.sheetStatDivider} />
+            <View style={styles.sheetStatItem}>
+              <Text style={styles.sheetStatValue}>{routeStats.distanceText}</Text>
+              <Text style={styles.sheetStatLabel}>Distancia</Text>
+            </View>
+            <View style={styles.sheetStatDivider} />
+            <View style={styles.sheetStatItem}>
+              <Text style={[styles.sheetStatValue, { color: fareInfo.isFestiveOrNight ? '#d8957d' : '#3f719b' }]}>
+                {fareInfo.fareText}
+              </Text>
+              <Text style={styles.sheetStatLabel}>{fareInfo.label}</Text>
+            </View>
+          </View>
+
+          <View style={styles.sheetPoints}>
+            <Text numberOfLines={1} style={styles.sheetPointText}>
+              <Text style={styles.startDot}>● </Text>
+              {origin || 'Mi ubicación actual'}
+            </Text>
+            <Icon name="arrow" color="#728092" size={13} />
+            <Text numberOfLines={1} style={styles.sheetPointText}>
+              <Text style={styles.endDot}>● </Text>
+              {destination || selectedRoute.title}
+            </Text>
+          </View>
+
+          <View style={styles.sheetActionButtons}>
+            <Pressable
+              onPress={onToggleTripStarted}
+              style={[styles.sheetStartBtn, isTripStarted && styles.sheetStartBtnActive]}
+            >
+              <Text style={styles.sheetStartBtnText}>
+                {isTripStarted ? '✓ En viaje' : 'Iniciar viaje'}
+              </Text>
+            </Pressable>
+            <Pressable onPress={onOpenRouteInfo} style={styles.sheetMoreBtn}>
+              <Text style={styles.sheetMoreBtnText}>Saber más</Text>
+            </Pressable>
+            <Pressable onPress={() => toggleExpand()} style={styles.sheetToggleBtn}>
+              <Text style={styles.sheetToggleBtnText}>
+                {isExpanded ? 'Ver menos ▴' : 'Cambiar ruta ▾'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.sheetAlternativesSection}>
+          <View style={styles.sheetAlternativesHeader}>
+            <View>
+              <Text style={styles.sheetAlternativesEyebrow}>RUTAS DISPONIBLES</Text>
+              <Text style={styles.sheetAlternativesTitle}>Otras rutas recomendadas</Text>
+            </View>
+            <Text style={styles.sheetAlternativesHint}>Toca para cambiar</Text>
+          </View>
+
+          <View style={styles.sheetAlternativesList}>
+            {recommendedRoutes.map((route) => {
+              const isCurrent = route.key === selectedKey;
+              return (
+                <Pressable
+                  key={route.key}
+                  onPress={() => onSelectRoute(route.key)}
+                  style={({ pressed }) => [
+                    styles.sheetAlternativeCard,
+                    isCurrent && styles.sheetAlternativeCardActive,
+                    pressed && styles.sheetAlternativeCardPressed,
+                  ]}
+                >
+                  <View style={[styles.sheetAltBadge, { backgroundColor: `${route.color}1a` }]}>
+                    <Text style={[styles.sheetAltBadgeText, { color: route.color }]}>
+                      {route.code}
+                    </Text>
+                  </View>
+                  <View style={styles.sheetAltInfo}>
+                    <Text numberOfLines={1} style={styles.sheetAltTitle}>
+                      {route.title}
+                    </Text>
+                    <View style={styles.sheetAltMeta}>
+                      <Icon name="clock" color="#728092" size={13} />
+                      <Text style={styles.sheetAltMetaText}>{route.time}</Text>
+                      <Text style={styles.sheetAltMetaText}>• Cada 8 min</Text>
+                    </View>
+                  </View>
+                  <View style={styles.sheetAltAction}>
+                    {isCurrent ? (
+                      <View style={styles.sheetActivePill}>
+                        <Text style={styles.sheetActivePillText}>✓ En mapa</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.sheetSelectPill}>
+                        <Text style={styles.sheetSelectPillText}>Elegir</Text>
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
+    </Animated.View>
+  );
+}
+
 export default function MobileHome() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [selectedKey, setSelectedKey] = useState('R1');
@@ -63,7 +277,6 @@ export default function MobileHome() {
   const [isMapFocused, setIsMapFocused] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  // Tarifa dinámica calculada según la hora y festivos en Colombia
   const [fareInfo, setFareInfo] = useState(getCurrentBusFare());
 
   useEffect(() => {
@@ -74,7 +287,6 @@ export default function MobileHome() {
     return () => clearInterval(interval);
   }, []);
 
-  // Estados para autocompletado en Mobile
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
   const [activeField, setActiveField] = useState<'origin' | 'destination' | null>(null);
   const timeoutRef = useRef<any>(null);
@@ -119,7 +331,6 @@ export default function MobileHome() {
     setActiveField(null);
   };
 
-  // Rutas recomendadas calculadas dinámicamente según origen y destino
   const recommendedRoutes = useMemo(() => {
     if (!originCoords || !destinationCoords) {
       return [
@@ -163,8 +374,8 @@ export default function MobileHome() {
           key,
           code: formattedCode,
           title,
-          time: 'Aprox. 25 min',
-          color: key === 'R1' ? '#3f719b' : key === 'R22' ? '#8b5cf6' : '#4e9b78',
+          time: `${Math.round(18 + score * 8)} min`,
+          color: key === 'R1' ? '#3f719b' : key === 'R22' ? '#8b5cf6' : key === 'R8' ? '#e67e22' : key === 'R9' ? '#27ae60' : '#4e9b78',
           score,
           minOriginDist,
           minDestDist,
@@ -195,7 +406,6 @@ export default function MobileHome() {
     )
   ).slice(0, 3);
 
-  // Efecto para calcular el itinerario multimodal con el backend de Tunja
   useEffect(() => {
     if (!originCoords || !destinationCoords) {
       setCalculatedRouteData(null);
@@ -283,7 +493,6 @@ export default function MobileHome() {
     try {
       address = await reverseGeocode(lat, lng);
     } catch {
-      // fallback
     }
     setOrigin(address);
     setOriginCoords({ lat, lng });
@@ -298,7 +507,6 @@ export default function MobileHome() {
     try {
       address = await reverseGeocode(lat, lng);
     } catch {
-      // fallback
     }
     setDestination(address);
     setDestinationCoords({ lat, lng });
@@ -306,6 +514,11 @@ export default function MobileHome() {
     setShowSelectedRoute(false);
     setIsTripStarted(false);
     setIsMapFocused(true);
+  };
+
+  const handleSelectRouteFromSheet = (routeKey: string) => {
+    setSelectedKey(routeKey);
+    setShowSelectedRoute(true);
   };
 
   return (
@@ -362,51 +575,6 @@ export default function MobileHome() {
           )}
         </View>
 
-        {(showSelectedRoute || (originCoords && destinationCoords)) && (
-          <View style={styles.tripCard}>
-            <View style={styles.tripCardTop}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.tripEyebrow}>RECORRIDO SELECCIONADO</Text>
-                <Text numberOfLines={1} style={styles.tripTitle}>{showSelectedRoute ? selectedRoute.title : (calculatedRouteData?.details?.routeCode ? `Ruta ${calculatedRouteData.details.routeCode}` : 'Ruta recomendada')}</Text>
-              </View>
-              <View style={styles.tripBadge}>
-                <Text style={styles.tripBadgeText}>{showSelectedRoute ? selectedRoute.code : (calculatedRouteData?.details?.routeCode || 'BUS')}</Text>
-              </View>
-            </View>
-
-            {calculatedRouteData && (
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#f0f6fa', borderRadius: 12 }}>
-                <View>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#17283b' }}>{routeStats.durationText}</Text>
-                  <Text style={{ fontSize: 10, color: '#728092' }}>Duración total</Text>
-                </View>
-                <View>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#17283b' }}>{routeStats.distanceText}</Text>
-                  <Text style={{ fontSize: 10, color: '#728092' }}>Distancia</Text>
-                </View>
-                <View>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: fareInfo.isFestiveOrNight ? '#d8957d' : '#3f719b' }}>{fareInfo.fareText}</Text>
-                  <Text style={{ fontSize: 10, color: '#728092' }}>{fareInfo.label}</Text>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.tripPoints}>
-              <Text numberOfLines={1} style={styles.tripPoint}><Text style={styles.startDot}>● </Text>{origin || 'Mi ubicación actual'}</Text>
-              <Icon name="arrow" color="#728092" size={15} />
-              <Text numberOfLines={1} style={styles.tripPoint}><Text style={styles.endDot}>● </Text>{destination || selectedRoute.title}</Text>
-            </View>
-            <View style={styles.tripActions}>
-              <Pressable onPress={() => setIsTripStarted((started) => !started)} style={[styles.startButton, isTripStarted && styles.startButtonActive]}>
-                <Text style={styles.startButtonText}>{isTripStarted ? '✓ Viaje en curso' : 'Iniciar viaje'}</Text>
-              </Pressable>
-              <Pressable onPress={() => setIsRouteInfoOpen(true)} style={styles.moreButton}>
-                <Text style={styles.moreButtonText}>Saber más</Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
-
         <View style={styles.routesSection}>
           <View style={styles.sectionHeading}>
             <View><Text style={styles.eyebrow}>RUTAS PARA TI</Text><Text style={styles.sectionTitle}>Rutas recomendadas</Text></View>
@@ -416,7 +584,7 @@ export default function MobileHome() {
             {recommendedRoutes.map((route) => {
               const selected = route.key === selectedKey;
               return (
-                <Pressable key={route.key} onPress={() => { setSelectedKey(route.key); setShowSelectedRoute(true); }} style={[styles.routeCard, selected && styles.routeCardSelected]}>
+                <Pressable key={route.key} onPress={() => { setSelectedKey(route.key); setShowSelectedRoute(true); setIsMapFocused(true); }} style={[styles.routeCard, selected && styles.routeCardSelected]}>
                   <View style={[styles.routeBadge, { backgroundColor: `${route.color}1a` }]}><Text style={[styles.routeBadgeText, { color: route.color }]}>{route.code}</Text></View>
                   <Text numberOfLines={1} style={styles.routeTitle}>{route.title}</Text>
                   <View style={styles.routeMeta}><Icon name="clock" color="#728092" size={16} /><Text style={styles.routeMetaText}>{route.time}</Text><Text style={styles.routeMetaText}>• Cada 8 min</Text></View>
@@ -430,35 +598,15 @@ export default function MobileHome() {
 
       {isMapFocused && (
         <View style={styles.mapFocusOverlay}>
-          <View style={styles.mapFocusHeader}>
-            <Pressable onPress={() => setIsMapFocused(false)} style={styles.mapFocusBack}><Icon name="back" color="#17283b" size={22} /></Pressable>
-            <View style={styles.mapFocusFields}>
-              <View style={styles.mapFocusInputRow}><Text style={styles.mapFocusBullet}>●</Text><TextInput value={origin} onChangeText={(txt) => handleInputChange(txt, 'origin')} placeholder="Mi ubicación actual" placeholderTextColor="#728092" returnKeyType="next" style={styles.mapFocusInput} /></View>
-              <View style={styles.mapFocusInputRow}><Text style={[styles.mapFocusBullet, styles.mapFocusBulletEnd]}>●</Text><TextInput value={destination} onChangeText={(txt) => handleInputChange(txt, 'destination')} onSubmitEditing={handleSearch} placeholder="¿A dónde vas?" placeholderTextColor="#728092" returnKeyType="search" style={styles.mapFocusInput} /><Pressable onPress={handleSearch} hitSlop={8}><Icon name="arrow" color="#3f719b" size={17} /></Pressable></View>
-              
-              {activeField && suggestions.length > 0 && (
-                <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: '#edf1f4', paddingTop: 4 }}>
-                  {suggestions.map((item, index) => (
-                    <Pressable
-                      key={index}
-                      onPress={() => handleSelectSuggestion(item)}
-                      style={({ pressed }) => ({
-                        paddingVertical: 10,
-                        paddingHorizontal: 4,
-                        backgroundColor: pressed ? '#f0f5f9' : 'transparent',
-                        borderRadius: 8,
-                        borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
-                        borderBottomColor: '#edf1f4'
-                      })}
-                    >
-                      <Text style={{ fontWeight: '700', color: '#17283b', fontSize: 13 }}>{item.name}</Text>
-                      {item.address && <Text style={{ color: '#687789', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{item.address}</Text>}
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
+          {/* Botón flotante para volver atrás y buscar una nueva ruta */}
+          <Pressable
+            onPress={() => setIsMapFocused(false)}
+            style={[styles.floatingBackButton, { top: Math.max(insets.top + 8, 48) }]}
+            accessibilityLabel="Volver atrás para ver nueva ruta"
+          >
+            <Icon name="back" color="#17283b" size={18} />
+            <Text style={styles.floatingBackText}>Nueva ruta</Text>
+          </Pressable>
           <MapView
             isTripStarted={isTripStarted}
             route={showSelectedRoute ? routeSegments : undefined}
@@ -469,18 +617,20 @@ export default function MobileHome() {
             onSelectOrigin={handleSelectOriginFromMap}
             onSelectDestination={handleMapClick}
           />
-          <View style={styles.mapFocusRecommendations}>
-            <Text style={styles.mapFocusLabel}>RUTAS RECOMENDADAS</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mapFocusChips}>
-              {recommendedRoutes.map((route) => (
-                <Pressable key={route.key} onPress={() => { setSelectedKey(route.key); setShowSelectedRoute(true); }} style={styles.mapFocusChip}>
-                  <Text style={styles.mapFocusChipCode}>{route.code}</Text>
-                  <Text style={styles.mapFocusChipText} numberOfLines={2}>{route.title}</Text>
-                  <View style={styles.mapFocusChipMeta}><Icon name="clock" color="#728092" size={13} /><Text style={styles.mapFocusChipMetaText}>{route.time}</Text></View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
+          <RouteBottomSheet
+            selectedRoute={selectedRoute}
+            selectedKey={selectedKey}
+            calculatedRouteData={calculatedRouteData}
+            routeStats={routeStats}
+            fareInfo={fareInfo}
+            origin={origin}
+            destination={destination}
+            isTripStarted={isTripStarted}
+            onToggleTripStarted={() => setIsTripStarted((started) => !started)}
+            onOpenRouteInfo={() => setIsRouteInfoOpen(true)}
+            recommendedRoutes={recommendedRoutes}
+            onSelectRoute={handleSelectRouteFromSheet}
+          />
         </View>
       )}
 
@@ -554,22 +704,6 @@ const styles = StyleSheet.create({
   suggestionCopy: { flex: 1, minWidth: 0 },
   suggestionTitle: { color: '#17283b', fontSize: 14, fontWeight: '800' },
   suggestionAddress: { color: '#728092', fontSize: 11, marginTop: 2 },
-  tripCard: { marginHorizontal: 20, marginTop: 18, padding: 18, borderRadius: 22, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#dce8ef' },
-  tripCardTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  tripEyebrow: { color: '#728092', fontSize: 10, fontWeight: '800', letterSpacing: 1.1 },
-  tripTitle: { color: '#17283b', fontSize: 18, fontWeight: '800', marginTop: 5 },
-  tripBadge: { alignSelf: 'flex-start', backgroundColor: '#e8f2f8', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 6 },
-  tripBadgeText: { color: '#3f719b', fontSize: 10, fontWeight: '800' },
-  tripPoints: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 15 },
-  tripPoint: { flex: 1, color: '#516273', fontSize: 12, fontWeight: '600' },
-  startDot: { color: '#4e9b78' },
-  endDot: { color: '#d8957d' },
-  tripActions: { flexDirection: 'row', gap: 10, marginTop: 17 },
-  startButton: { flex: 1, height: 46, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#3f719b' },
-  startButtonActive: { backgroundColor: '#4e9b78' },
-  startButtonText: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  moreButton: { height: 46, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 15, borderWidth: 1, borderColor: '#bfd6e5' },
-  moreButtonText: { color: '#3f719b', fontSize: 13, fontWeight: '800' },
   routesSection: { paddingHorizontal: 20, paddingTop: 27 },
   seeAll: { color: '#3f719b', fontSize: 13, fontWeight: '700' },
   cards: { gap: 12, paddingRight: 20 },
@@ -585,6 +719,7 @@ const styles = StyleSheet.create({
   modalBackdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(23,40,59,0.45)' },
   modalCard: { maxHeight: '90%', borderRadius: 24, padding: 22, backgroundColor: '#fff', overflow: 'hidden' },
   modalScrollContent: { flexGrow: 1, paddingBottom: 2 },
+  tripEyebrow: { color: '#728092', fontSize: 10, fontWeight: '800', letterSpacing: 1.1 },
   modalTitle: { color: '#17283b', fontSize: 22, fontWeight: '800', marginTop: 7 },
   modalText: { color: '#5f6f80', fontSize: 14, lineHeight: 21, marginTop: 14 },
   modalClose: { height: 46, alignItems: 'center', justifyContent: 'center', marginTop: 22, borderRadius: 14, backgroundColor: '#3f719b' },
@@ -602,26 +737,80 @@ const styles = StyleSheet.create({
   mobileFarePanel: { marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: '#f4f7fa', borderWidth: 1, borderColor: '#e0e9ef' },
   mobileFareTitle: { color: '#17283b', fontSize: 13, fontWeight: '800', marginBottom: 4 },
   mobileFareText: { color: '#728092', fontSize: 11, lineHeight: 17 },
-  mapFocusOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 70, backgroundColor: '#fff', zIndex: 30 },
-  mapFocusHeader: { position: 'absolute', zIndex: 2, top: 12, left: 16, right: 16, flexDirection: 'row', gap: 10 },
-  mapFocusBack: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', elevation: 5 },
-  mapFocusFields: { flex: 1, paddingHorizontal: 13, paddingVertical: 5, borderRadius: 15, backgroundColor: '#fff', elevation: 5 },
-  mapFocusInputRow: { height: 29, flexDirection: 'row', alignItems: 'center', gap: 7 },
-  mapFocusBullet: { color: '#3f719b', fontSize: 14 },
-  mapFocusBulletEnd: { color: '#d8957d' },
-  mapFocusInput: { flex: 1, color: '#17283b', fontSize: 14, fontWeight: '700', paddingVertical: 0 },
-  mapFocusRecommendations: { position: 'absolute', zIndex: 2, bottom: 0, left: 0, right: 0, paddingTop: 14, paddingBottom: 12, backgroundColor: 'rgba(255,255,255,0.98)', borderTopLeftRadius: 22, borderTopRightRadius: 22, shadowColor: '#17324b', shadowOpacity: 0.14, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 },
-  mapFocusLabel: { color: '#d8957d', fontSize: 10, fontWeight: '800', letterSpacing: 1, paddingHorizontal: 16, marginBottom: 9 },
-  mapFocusChips: { gap: 10, paddingHorizontal: 16 },
-  mapFocusChip: { width: 164, minHeight: 100, padding: 13, borderRadius: 17, borderWidth: 1, borderColor: '#dce8ef', backgroundColor: '#fff' },
-  mapFocusChipCode: { color: '#3f719b', fontSize: 12, fontWeight: '900' },
-  mapFocusChipText: { color: '#17283b', fontSize: 13, fontWeight: '800', lineHeight: 18, marginTop: 6 },
-  mapFocusChipMeta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 9 },
-  mapFocusChipMetaText: { color: '#728092', fontSize: 11, fontWeight: '700' },
+  mapFocusOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#fff', zIndex: 30 },
+  floatingBackButton: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: '#ffffff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    shadowColor: '#17324b',
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e2edf4',
+  },
+  floatingBackText: {
+    color: '#17283b',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  bottomSheetContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#ffffff', borderTopLeftRadius: 28, borderTopRightRadius: 28, shadowColor: '#17324b', shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: -5 }, elevation: 14, borderTopWidth: 1, borderTopColor: '#e0ebf2', zIndex: 25, overflow: 'hidden' },
+  sheetHandleTouchArea: { width: '100%', paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
+  sheetHandle: { width: 44, height: 5, borderRadius: 3, backgroundColor: '#c4d3de' },
+  sheetScrollContent: { paddingHorizontal: 18, paddingBottom: 32 },
+  sheetSelectedCard: { paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#edf2f6' },
+  sheetHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  sheetEyebrow: { color: '#3f719b', fontSize: 10, fontWeight: '800', letterSpacing: 1.1 },
+  sheetTitle: { color: '#17283b', fontSize: 18, fontWeight: '800', marginTop: 2 },
+  sheetBadge: { alignSelf: 'flex-start', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  sheetBadgeText: { fontSize: 12, fontWeight: '900' },
+  sheetStatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: '#f1f6fa', borderRadius: 14 },
+  sheetStatItem: { alignItems: 'center', flex: 1 },
+  sheetStatDivider: { width: 1, height: 22, backgroundColor: '#dce6ee' },
+  sheetStatValue: { fontSize: 13, fontWeight: '800', color: '#17283b' },
+  sheetStatLabel: { fontSize: 10, color: '#728092', marginTop: 1 },
+  sheetPoints: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 },
+  sheetPointText: { flex: 1, color: '#516273', fontSize: 12, fontWeight: '600' },
+  startDot: { color: '#4e9b78', fontWeight: '800' },
+  endDot: { color: '#d8957d', fontWeight: '800' },
+  sheetActionButtons: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 13 },
+  sheetStartBtn: { flex: 1.2, height: 42, borderRadius: 14, backgroundColor: '#3f719b', alignItems: 'center', justifyContent: 'center' },
+  sheetStartBtnActive: { backgroundColor: '#4e9b78' },
+  sheetStartBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
+  sheetMoreBtn: { height: 42, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: '#cadce8', alignItems: 'center', justifyContent: 'center' },
+  sheetMoreBtnText: { color: '#3f719b', fontSize: 12, fontWeight: '700' },
+  sheetToggleBtn: { height: 42, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#f0f5f9', alignItems: 'center', justifyContent: 'center' },
+  sheetToggleBtnText: { color: '#385b77', fontSize: 12, fontWeight: '700' },
+  sheetAlternativesSection: { marginTop: 14, paddingTop: 4 },
+  sheetAlternativesHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  sheetAlternativesEyebrow: { color: '#d8957d', fontSize: 10, fontWeight: '800', letterSpacing: 1.1 },
+  sheetAlternativesTitle: { color: '#17283b', fontSize: 16, fontWeight: '800', marginTop: 2 },
+  sheetAlternativesHint: { color: '#728092', fontSize: 11, fontWeight: '600' },
+  sheetAlternativesList: { gap: 9 },
+  sheetAlternativeCard: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 16, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2edf4', gap: 10 },
+  sheetAlternativeCardActive: { borderColor: '#3f719b', backgroundColor: '#f1f8fd' },
+  sheetAlternativeCardPressed: { backgroundColor: '#edf5fa' },
+  sheetAltBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  sheetAltBadgeText: { fontSize: 12, fontWeight: '900' },
+  sheetAltInfo: { flex: 1, minWidth: 0 },
+  sheetAltTitle: { color: '#17283b', fontSize: 13, fontWeight: '800' },
+  sheetAltMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  sheetAltMetaText: { color: '#728092', fontSize: 11 },
+  sheetAltAction: { alignItems: 'flex-end' },
+  sheetActivePill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#3f719b' },
+  sheetActivePillText: { color: '#ffffff', fontSize: 11, fontWeight: '800' },
+  sheetSelectPill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#bed4e2', backgroundColor: '#ffffff' },
+  sheetSelectPillText: { color: '#3f719b', fontSize: 11, fontWeight: '700' },
   bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e3ebf0', paddingTop: 9 },
   navItem: { alignItems: 'center', minWidth: 60, gap: 3 },
   navActive: { color: '#3f719b', fontSize: 11, fontWeight: '700' },
   navText: { color: '#728092', fontSize: 11, fontWeight: '600' },
 });
-
-
