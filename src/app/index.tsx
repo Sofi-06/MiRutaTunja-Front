@@ -49,7 +49,7 @@ const getBackendUrl = () => {
 };
 
 export default function HomeScreen() {
-  return <WebHomeScreen />;
+  return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
 }
 
 const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
