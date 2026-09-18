@@ -31,7 +31,7 @@ import { getCurrentBusFare } from '@/services/fareService';
 
 const getBackendUrl = () => {
   if (process.env.EXPO_PUBLIC_BACKEND_URL) {
-    return process.env.EXPO_PUBLIC_BACKEND_URL;
+    return process.env.EXPO_PUBLIC_BACKEND_URL.replace(/\/+$/, '');
   }
   if (Platform.OS === 'web') {
     return 'http://localhost:3000';
