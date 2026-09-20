@@ -1,71 +1,112 @@
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import PageScaffold from '@/components/layout/PageScaffold';
 import Icon from '@/components/ui/Icon';
+import placesData from '@/data/places.json';
 import { getFavorites, toggleFavorite } from '@/services/localData';
 
-const places = [
-  { name: 'Plaza de Bolívar', category: 'Historia y cultura', detail: 'Centro histórico de Tunja', icon: 'location' as const },
-  { name: 'Pozo de Donato', category: 'Patrimonio', detail: 'Monumento tradicional del centro', icon: 'star' as const },
-  { name: 'Estadio La Independencia', category: 'Deporte', detail: 'Escenarios y actividades deportivas', icon: 'route' as const },
-  { name: 'Parque Santander', category: 'Naturaleza', detail: 'Espacio verde para caminar y descansar', icon: 'location' as const },
-  { name: 'Casa del Fundador', category: 'Historia y cultura', detail: 'Museo y memoria de la ciudad', icon: 'star' as const },
-  { name: 'Universidad Pedagógica y Tecnológica', category: 'Educación', detail: 'Punto de interés universitario', icon: 'bus' as const },
-  { name: 'Puente de Boyacá', category: 'Historia y cultura', detail: 'Monumento nacional de la independencia', icon: 'star' as const },
-  { name: 'Catedral Basílica Metropolitana', category: 'Historia y cultura', detail: 'Arquitectura religiosa en el centro histórico', icon: 'location' as const },
-  { name: 'Iglesia de San Laureano', category: 'Historia y cultura', detail: 'Uno de los templos tradicionales de Tunja', icon: 'star' as const },
-  { name: 'Convento de Santa Clara la Real', category: 'Historia y cultura', detail: 'Patrimonio colonial de la ciudad', icon: 'location' as const },
-  { name: 'Bosque de la República', category: 'Naturaleza', detail: 'Zona verde y espacio recreativo urbano', icon: 'location' as const },
-  { name: 'Parque Recreacional del Norte', category: 'Naturaleza', detail: 'Senderos y actividades al aire libre', icon: 'route' as const },
-  { name: 'Centro Comercial Unicentro', category: 'Compras y gastronomía', detail: 'Restaurantes, comercios y servicios', icon: 'location' as const },
-  { name: 'Centro Comercial Viva Tunja', category: 'Compras y gastronomía', detail: 'Tiendas y oferta gastronómica', icon: 'location' as const },
-  { name: 'Mercado del Sur', category: 'Compras y gastronomía', detail: 'Productos locales y cocina tradicional', icon: 'star' as const },
-  { name: 'Terminal de Transportes', category: 'Movilidad', detail: 'Conexión regional e intermunicipal', icon: 'bus' as const },
-  { name: 'Parque Pinzón', category: 'Naturaleza', detail: 'Espacio urbano para descansar', icon: 'location' as const },
-  { name: 'Museo Casa Cultural Gustavo Rojas Pinilla', category: 'Historia y cultura', detail: 'Exposiciones y memoria local', icon: 'star' as const },
-  { name: 'Biblioteca Jorge Palacios Preciado', category: 'Educación', detail: 'Consulta, lectura y actividades culturales', icon: 'location' as const },
-  { name: 'Cerro de San Lázaro', category: 'Naturaleza', detail: 'Mirador con vistas de la ciudad', icon: 'route' as const },
-  { name: 'Plaza Real', category: 'Compras y gastronomía', detail: 'Comercio y servicios en la zona central', icon: 'location' as const },
-];
+type PlaceItem = {
+  id: string;
+  name: string;
+  category: string;
+  detail: string;
+  icon: 'location' | 'star' | 'route' | 'bus';
+  lat: number;
+  lng: number;
+};
+
+const places: PlaceItem[] = placesData as PlaceItem[];
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const isCompact = width < 760;
   const isNative = Platform.OS !== 'web';
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Todos');
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+
   useEffect(() => {
     void getFavorites().then((favorites) => setFavoriteIds(favorites.map((favorite) => favorite.id)));
   }, []);
+
   const categories = ['Todos', ...Array.from(new Set(places.map((place) => place.category)))];
-  const visiblePlaces = places.filter((place) => (category === 'Todos' || place.category === category) && `${place.name} ${place.category}`.toLowerCase().includes(query.toLowerCase()));
+  const visiblePlaces = places.filter(
+    (place) =>
+      (category === 'Todos' || place.category === category) &&
+      `${place.name} ${place.category}`.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const handleSelectPlace = (place: PlaceItem) => {
+    router.push({
+      pathname: '/',
+      params: {
+        destLat: place.lat.toString(),
+        destLng: place.lng.toString(),
+        destName: place.name,
+      },
+    });
+  };
 
   return (
     <PageScaffold>
       <View style={[styles.content, isCompact && styles.contentPhone, isNative && styles.contentNative]}>
         <Text style={styles.eyebrow}>TURISMO EN TUNJA</Text>
         <Text style={[styles.title, isNative && styles.titleNative]}>Descubre Tunja</Text>
-        <Text style={styles.subtitle}>Encuentra lugares históricos, naturaleza, gastronomía y planes para recorrer la ciudad.</Text>
+        <Text style={styles.subtitle}>
+          Encuentra lugares históricos, naturaleza, gastronomía y planes para recorrer la ciudad.
+        </Text>
         <View style={[styles.searchBox, isNative && styles.searchBoxNative]}>
           <Icon name="search" color="#728092" size={20} />
-          <TextInput value={query} onChangeText={setQuery} placeholder="Buscar un lugar en Tunja" placeholderTextColor="#728092" style={styles.searchInput} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar un lugar en Tunja"
+            placeholderTextColor="#728092"
+            style={styles.searchInput}
+          />
         </View>
         <View style={styles.categories}>
           {categories.map((item) => (
-            <Pressable key={item} onPress={() => setCategory(item)} style={[styles.categoryPill, category === item && styles.categoryPillActive]}>
+            <Pressable
+              key={item}
+              onPress={() => setCategory(item)}
+              style={[styles.categoryPill, category === item && styles.categoryPillActive]}
+            >
               <Text style={category === item ? styles.categoryTextActive : styles.categoryText}>{item}</Text>
             </Pressable>
           ))}
         </View>
         <View style={styles.list}>
           {visiblePlaces.map((item) => (
-            <Pressable key={item.name} style={[styles.card, isCompact && styles.cardPhone, isNative && styles.cardNative]}>
+            <Pressable
+              key={item.id || item.name}
+              onPress={() => handleSelectPlace(item)}
+              style={[styles.card, isCompact && styles.cardPhone, isNative && styles.cardNative]}
+            >
               <View style={styles.cardTop}>
-                <View style={styles.iconCircle}><Icon name={item.icon} color="#3f719b" size={24} /></View>
-                <Pressable onPress={async (event) => { event.stopPropagation(); const favorites = await toggleFavorite({ id: `place:${item.name}`, type: 'place', title: item.name, subtitle: item.category }); setFavoriteIds(favorites.map((favorite) => favorite.id)); }}>
-                  <Icon name="heart" color={favoriteIds.includes(`place:${item.name}`) ? '#d8957d' : '#728092'} size={21} />
+                <View style={styles.iconCircle}>
+                  <Icon name={item.icon} color="#3f719b" size={24} />
+                </View>
+                <Pressable
+                  onPress={async (event) => {
+                    event.stopPropagation();
+                    const favorites = await toggleFavorite({
+                      id: `place:${item.name}`,
+                      type: 'place',
+                      title: item.name,
+                      subtitle: item.category,
+                    });
+                    setFavoriteIds(favorites.map((favorite) => favorite.id));
+                  }}
+                >
+                  <Icon
+                    name="heart"
+                    color={favoriteIds.includes(`place:${item.name}`) ? '#d8957d' : '#728092'}
+                    size={21}
+                  />
                 </Pressable>
               </View>
               <Text style={styles.placeName}>{item.name}</Text>

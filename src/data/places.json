@@ -1,0 +1,191 @@
+[
+  {
+    "id": "plaza-bolivar",
+    "name": "Plaza de Bolívar",
+    "category": "Historia y cultura",
+    "detail": "Centro histórico de Tunja",
+    "icon": "location",
+    "lat": 5.5324627,
+    "lng": -73.3615504
+  },
+  {
+    "id": "pozo-donato",
+    "name": "Pozo de Donato",
+    "category": "Patrimonio",
+    "detail": "Monumento tradicional y sitio sagrado Muisca",
+    "icon": "star",
+    "lat": 5.55282,
+    "lng": -73.35334
+  },
+  {
+    "id": "estadio-independencia",
+    "name": "Estadio La Independencia",
+    "category": "Deporte",
+    "detail": "Escenarios y actividades deportivas de la Villa Olímpica",
+    "icon": "route",
+    "lat": 5.5435,
+    "lng": -73.3524
+  },
+  {
+    "id": "parque-santander",
+    "name": "Parque Santander",
+    "category": "Naturaleza",
+    "detail": "Espacio verde para caminar y descansar en el centro",
+    "icon": "location",
+    "lat": 5.5358,
+    "lng": -73.3606
+  },
+  {
+    "id": "casa-fundador",
+    "name": "Casa del Fundador",
+    "category": "Historia y cultura",
+    "detail": "Museo y memoria colonial de la ciudad",
+    "icon": "star",
+    "lat": 5.5332,
+    "lng": -73.3614
+  },
+  {
+    "id": "universidad-uptc",
+    "name": "Universidad Pedagógica y Tecnológica",
+    "category": "Educación",
+    "detail": "Campus central universitario del norte",
+    "icon": "bus",
+    "lat": 5.5562,
+    "lng": -73.3516
+  },
+  {
+    "id": "puente-boyaca",
+    "name": "Puente de Boyacá",
+    "category": "Historia y cultura",
+    "detail": "Monumento nacional de la independencia",
+    "icon": "star",
+    "lat": 5.4526,
+    "lng": -73.4332
+  },
+  {
+    "id": "catedral-metropolitana",
+    "name": "Catedral Basílica Metropolitana",
+    "category": "Historia y cultura",
+    "detail": "Arquitectura religiosa en el centro histórico",
+    "icon": "location",
+    "lat": 5.5327,
+    "lng": -73.3612
+  },
+  {
+    "id": "iglesia-san-laureano",
+    "name": "Iglesia de San Laureano",
+    "category": "Historia y cultura",
+    "detail": "Uno de los templos tradicionales de Tunja",
+    "icon": "star",
+    "lat": 5.5284,
+    "lng": -73.3639
+  },
+  {
+    "id": "convento-santa-clara",
+    "name": "Convento de Santa Clara la Real",
+    "category": "Historia y cultura",
+    "detail": "Patrimonio colonial de la ciudad",
+    "icon": "location",
+    "lat": 5.535,
+    "lng": -73.3592
+  },
+  {
+    "id": "bosque-republica",
+    "name": "Bosque de la República",
+    "category": "Naturaleza",
+    "detail": "Zona verde y espacio recreativo urbano",
+    "icon": "location",
+    "lat": 5.5292,
+    "lng": -73.3667
+  },
+  {
+    "id": "parque-norte",
+    "name": "Parque Recreacional del Norte",
+    "category": "Naturaleza",
+    "detail": "Senderos y actividades al aire libre",
+    "icon": "route",
+    "lat": 5.5587,
+    "lng": -73.3442
+  },
+  {
+    "id": "cc-unicentro",
+    "name": "Centro Comercial Unicentro",
+    "category": "Compras y gastronomía",
+    "detail": "Restaurantes, comercios y servicios",
+    "icon": "location",
+    "lat": 5.5458,
+    "lng": -73.3519
+  },
+  {
+    "id": "cc-viva-tunja",
+    "name": "Centro Comercial Viva Tunja",
+    "category": "Compras y gastronomía",
+    "detail": "Tiendas y oferta gastronómica",
+    "icon": "location",
+    "lat": 5.5492,
+    "lng": -73.349
+  },
+  {
+    "id": "mercado-del-sur",
+    "name": "Mercado del Sur",
+    "category": "Compras y gastronomía",
+    "detail": "Productos locales y cocina tradicional",
+    "icon": "star",
+    "lat": 5.5218,
+    "lng": -73.3644
+  },
+  {
+    "id": "terminal-transportes",
+    "name": "Terminal de Transportes",
+    "category": "Movilidad",
+    "detail": "Conexión regional e intermunicipal",
+    "icon": "bus",
+    "lat": 5.530809,
+    "lng": -73.34496
+  },
+  {
+    "id": "parque-pinzon",
+    "name": "Parque Pinzón",
+    "category": "Naturaleza",
+    "detail": "Espacio urbano para descansar",
+    "icon": "location",
+    "lat": 5.5365,
+    "lng": -73.3628
+  },
+  {
+    "id": "museo-rojas-pinilla",
+    "name": "Museo Casa Cultural Gustavo Rojas Pinilla",
+    "category": "Historia y cultura",
+    "detail": "Exposiciones y memoria local",
+    "icon": "star",
+    "lat": 5.5342,
+    "lng": -73.3632
+  },
+  {
+    "id": "biblioteca-jorge-palacios",
+    "name": "Biblioteca Jorge Palacios Preciado",
+    "category": "Educación",
+    "detail": "Consulta, lectura y actividades culturales",
+    "icon": "location",
+    "lat": 5.5552,
+    "lng": -73.3522
+  },
+  {
+    "id": "cerro-san-lazaro",
+    "name": "Cerro de San Lázaro",
+    "category": "Naturaleza",
+    "detail": "Mirador con vistas de la ciudad",
+    "icon": "route",
+    "lat": 5.5296,
+    "lng": -73.3712
+  },
+  {
+    "id": "plaza-real",
+    "name": "Plaza Real",
+    "category": "Compras y gastronomía",
+    "detail": "Comercio y servicios en la zona central",
+    "icon": "location",
+    "lat": 5.5345,
+    "lng": -73.3595
+  }
+]

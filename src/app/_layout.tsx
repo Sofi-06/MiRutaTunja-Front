@@ -9,6 +9,8 @@ export default function RootLayout() {
       <Stack.Screen name="favorites/index" options={{ title: 'Favoritos' }} />
       <Stack.Screen name="profile/index" options={{ title: 'Perfil' }} />
       <Stack.Screen name="routes/search" options={{ title: 'Buscar ruta' }} />
+      <Stack.Screen name="politica-de-privacidad/index" options={{ title: 'Política de Privacidad' }} />
+      <Stack.Screen name="terminos-y-condiciones/index" options={{ title: 'Términos y Condiciones' }} />
     </Stack>
   );
 }

@@ -39,10 +39,10 @@ const FOOTER_SECTIONS: LinkSection[] = [
   {
     title: 'RUTASTUNJA',
     links: [
-      { label: 'Ayuda' },
-      { label: 'Contacto' },
-      { label: 'Privacidad' },
-      { label: 'Términos' },
+      { label: 'Ayuda', route: '/politica-de-privacidad' },
+      { label: 'Contacto', route: '/politica-de-privacidad' },
+      { label: 'Privacidad', route: '/politica-de-privacidad' },
+      { label: 'Términos', route: '/terminos-y-condiciones' },
     ],
   },
 ];

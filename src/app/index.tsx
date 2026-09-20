@@ -27,26 +27,8 @@ import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 import { geocodeLocation as serviceGeocodeLocation, reverseGeocode } from '@/services/placesService';
-import Constants from 'expo-constants';
+import { getBackendUrl } from '@/services/backendUrl';
 import { addRecentSearch, getRecentSearches, RecentSearch } from '@/services/localData';
-
-const getBackendUrl = () => {
-  if (process.env.EXPO_PUBLIC_BACKEND_URL) {
-    return process.env.EXPO_PUBLIC_BACKEND_URL.replace(/\/+$/, '');
-  }
-  if (Platform.OS === 'web') {
-    return 'http://localhost:3000';
-  }
-  const hostUri =
-    Constants.expoConfig?.hostUri ||
-    (Constants as any).manifest2?.extra?.expoClient?.hostUri ||
-    (Constants as any).manifest?.debuggerHost;
-  if (hostUri) {
-    const host = hostUri.split(':')[0];
-    return `http://${host}:3000`;
-  }
-  return 'http://localhost:3000';
-};
 
 export default function HomeScreen() {
   return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
@@ -131,7 +113,12 @@ function WebHomeScreen() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isCustomSearchActive, setIsCustomSearchActive] = useState(false);
   const [isTripStarted, setIsTripStarted] = useState(false);
-  const { routeCode } = useLocalSearchParams<{ routeCode?: string }>();
+  const { routeCode, destLat, destLng, destName } = useLocalSearchParams<{
+    routeCode?: string;
+    destLat?: string;
+    destLng?: string;
+    destName?: string;
+  }>();
 
   useEffect(() => {
     void getRecentSearches().then(setRecentSearches);
@@ -727,12 +714,41 @@ function WebHomeScreen() {
     }
   };
 
-  // Escuchar cambios de routeCode para cargar la ruta automáticamente al ingresar a la pantalla principal
+  // Escuchar cambios de routeCode o destino turístico para cargar la ruta/destino en el mapa
   useEffect(() => {
-    if (routeCode) {
+    if (destLat && destLng) {
+      const lat = parseFloat(destLat);
+      const lng = parseFloat(destLng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const clickDestCoords = { lat, lng };
+        const name = destName || 'Destino seleccionado';
+        setDestCoords(clickDestCoords);
+        setDestination(name);
+        setIsCustomSearchActive(true);
+
+        const currentOrigin = originCoords || { lat: 5.5324627, lng: -73.3615504 };
+        if (!originCoords) {
+          setOriginCoords(currentOrigin);
+          setOriginName('Plaza de Bolívar');
+        }
+
+        const recs = getRecommendedRoutes(currentOrigin, clickDestCoords);
+        if (recs.length > 0) {
+          const bestRoute = recs[0];
+          handleSelectRoute(bestRoute.code, currentOrigin, clickDestCoords, true);
+        } else {
+          setActiveRouteInfo({
+            code: 'PERS',
+            title: `Ruta a ${name}`,
+            originName: originName || 'Plaza de Bolívar',
+            destinationName: name,
+          });
+        }
+      }
+    } else if (routeCode) {
       handleSelectRoute(routeCode);
     }
-  }, [routeCode]);
+  }, [routeCode, destLat, destLng, destName]);
 
   // Obtener etiquetas descriptivas de dirección (ej: "Sur a Norte (Terminal - Norte)")
   const directionLabels = (() => {

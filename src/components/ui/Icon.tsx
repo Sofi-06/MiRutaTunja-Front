@@ -24,6 +24,15 @@ const iconMap = {
   chatbot: 'robot-outline',
   trash: 'trash-can-outline',
   menu: 'menu',
+  shield: 'shield-check-outline',
+  document: 'file-document-outline',
+  mail: 'email-outline',
+  scale: 'scale-balance',
+  lock: 'lock-outline',
+  check: 'check-circle-outline',
+  info: 'information-outline',
+  copy: 'content-copy',
+  external: 'open-in-new',
 } as const satisfies Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']>;
 
 type IconName = keyof typeof iconMap;

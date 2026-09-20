@@ -7,7 +7,6 @@ import {
   ImageBackground,
   Modal,
   PanResponder,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,9 +15,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
-import Constants from 'expo-constants';
 
 import MapView from '@/components/Map/MapView';
 import HistoryModal from '@/components/history/HistoryModal';
@@ -26,26 +24,9 @@ import { routesRegistry } from '@/components/Map/routesRegistry';
 import Icon from '@/components/ui/Icon';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 import { searchPlaces, geocodeLocation, PlaceResult, reverseGeocode } from '@/services/placesService';
+import { getBackendUrl } from '@/services/backendUrl';
 import { addRecentSearch } from '@/services/localData';
 import { getCurrentBusFare } from '@/services/fareService';
-
-const getBackendUrl = () => {
-  if (process.env.EXPO_PUBLIC_BACKEND_URL) {
-    return process.env.EXPO_PUBLIC_BACKEND_URL.replace(/\/+$/, '');
-  }
-  if (Platform.OS === 'web') {
-    return 'http://localhost:3000';
-  }
-  const hostUri =
-    Constants.expoConfig?.hostUri ||
-    (Constants as any).manifest2?.extra?.expoClient?.hostUri ||
-    (Constants as any).manifest?.debuggerHost;
-  if (hostUri) {
-    const host = hostUri.split(':')[0];
-    return `http://${host}:3000`;
-  }
-  return 'http://localhost:3000';
-};
 
 function getRouteSegments(key: string) {
   const route = routesRegistry[key as keyof typeof routesRegistry];
@@ -260,6 +241,12 @@ function RouteBottomSheet({
 export default function MobileHome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { routeCode, destLat, destLng, destName } = useLocalSearchParams<{
+    routeCode?: string;
+    destLat?: string;
+    destLng?: string;
+    destName?: string;
+  }>();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [selectedKey, setSelectedKey] = useState('R1');
@@ -278,6 +265,24 @@ export default function MobileHome() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const [fareInfo, setFareInfo] = useState(getCurrentBusFare());
+
+  useEffect(() => {
+    if (destLat && destLng) {
+      const lat = parseFloat(destLat);
+      const lng = parseFloat(destLng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setDestination(destName || 'Destino seleccionado');
+        setDestinationCoords({ lat, lng });
+        setShowSelectedRoute(true);
+        setIsMapFocused(true);
+      }
+    } else if (routeCode) {
+      const match = routeCode.match(/R-?0*(\d+)/i);
+      const key = match ? `R${match[1]}` : routeCode;
+      setSelectedKey(key);
+      setShowSelectedRoute(true);
+    }
+  }, [routeCode, destLat, destLng, destName]);
 
   useEffect(() => {
     setFareInfo(getCurrentBusFare());
