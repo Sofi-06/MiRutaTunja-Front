@@ -43,6 +43,7 @@ export default function SelectedRouteCard({
   code = 'WALK',
   duration = '22 min',
   distanceText = '1.2 km',
+  stopsCount = 12,
   originName = 'Mi ubicación',
   destinationName = 'Destino seleccionado',
   schedule,
@@ -89,9 +90,12 @@ export default function SelectedRouteCard({
 
   return (
     <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact, isCompact && styles.selectedRouteCardPhone]}>
+      <View style={styles.routeRecommendationRow}>
+        <Text style={styles.routeRecommendationBadge}>Ruta recomendada</Text>
+        <Text style={styles.routeFastBadge}>⚡ Más rápida</Text>
+      </View>
       <View style={styles.selectedRouteHeader}>
         <View style={{ flex: 1, paddingRight: 8 }}>
-          <Text style={styles.selectedRouteEyebrow}>RECORRIDO SELECCIONADO</Text>
           <Text numberOfLines={1} style={styles.selectedRouteTitle}>{title}</Text>
         </View>
         <View style={styles.selectedRouteHeaderActions}>
@@ -116,18 +120,16 @@ export default function SelectedRouteCard({
 
       <View style={styles.routeStats}>
         <View style={styles.routeStat}>
+          <Icon name="clock" color={colors.blueDark} size={18} />
           <Text style={styles.routeStatValue}>{duration}</Text>
-          <Text style={styles.routeStatLabel}>Duración</Text>
         </View>
         <View style={styles.routeStat}>
+          <Icon name="bus" color={colors.blueDark} size={18} />
+          <Text style={styles.routeStatValue}>{stopsCount} paradas</Text>
+        </View>
+        <View style={styles.routeStat}>
+          <Icon name="route" color={colors.blueDark} size={18} />
           <Text style={styles.routeStatValue}>{distanceText}</Text>
-          <Text style={styles.routeStatLabel}>Distancia</Text>
-        </View>
-        <View style={styles.routeStat}>
-          <Text style={[styles.routeStatValue, { color: fareInfo.isFestiveOrNight ? colors.coral : colors.ink }]}>
-            {fareInfo.fareText}
-          </Text>
-          <Text style={styles.routeStatLabel}>{fareInfo.label}</Text>
         </View>
       </View>
 
@@ -192,6 +194,14 @@ export default function SelectedRouteCard({
           </View>
         </View>
       )}
+
+      <View style={styles.selectedBusOption}>
+        <Text style={styles.selectedBusCode}>{code}</Text>
+        <View style={styles.selectedBusCopy}>
+          <Text numberOfLines={1} style={styles.selectedBusName}>{routeName || title}</Text>
+          <Text style={styles.selectedBusFare}>{fareInfo.fareText} · {fareInfo.label}</Text>
+        </View>
+      </View>
 
       <View style={{ marginTop: 20, padding: 16, backgroundColor: '#f8fafc', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

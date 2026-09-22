@@ -1,121 +1,62 @@
 import { useRouter } from 'expo-router';
 import { Image, Pressable, Text, View } from 'react-native';
 
+import Icon from '@/components/ui/Icon';
 import { footerStyles as styles } from '@/styles/footer.styles';
 
 type FooterProps = Readonly<{
   isCompact?: boolean;
+  internal?: boolean;
 }>;
 
-type NavLink = {
-  label: string;
-  route?: string;
-};
-
-type LinkSection = {
-  title: string;
-  links: NavLink[];
-};
-
-const FOOTER_SECTIONS: LinkSection[] = [
-  {
-    title: 'NAVEGA',
-    links: [
-      { label: 'Inicio', route: '/' },
-      { label: 'Rutas', route: '/routes' },
-      { label: 'Turismo', route: '/explore' },
-      { label: 'Favoritos', route: '/favorites' },
-    ],
-  },
-  {
-    title: 'TURISMO',
-    links: [
-      { label: 'Centro histórico' },
-      { label: 'Zona norte' },
-      { label: 'Zona sur' },
-      { label: 'UPTC' },
-    ],
-  },
-  {
-    title: 'RUTASTUNJA',
-    links: [
-      { label: 'Ayuda', route: '/politica-de-privacidad' },
-      { label: 'Contacto', route: '/politica-de-privacidad' },
-      { label: 'Privacidad', route: '/politica-de-privacidad' },
-      { label: 'Términos', route: '/terminos-y-condiciones' },
-    ],
-  },
-];
-
-export default function Footer({ isCompact = false }: FooterProps) {
+export default function Footer({ isCompact = false, internal = false }: FooterProps) {
   const router = useRouter();
 
-  const handlePress = (route?: string) => {
-    if (route) {
-      router.push(route as any);
-    }
-  };
+  const links = [
+    { label: 'Inicio', route: '/', icon: 'home' as const },
+    { label: 'Rutas', route: '/routes', icon: 'route' as const },
+    { label: 'Explorar', route: '/explore', icon: 'target' as const },
+    { label: 'Favoritos', route: '/favorites', icon: 'heart' as const },
+  ];
 
   return (
     <View style={styles.footer}>
-      <View style={[styles.footerInner, isCompact && styles.footerInnerPhone]}>
-        <View style={[styles.footerMain, isCompact && styles.footerMainPhone]}>
-          {/* Brand Column */}
-          <View style={[styles.brandColumn, isCompact && styles.brandColumnPhone]}>
-            <Pressable onPress={() => router.push('/')} style={[styles.brandRow, isCompact && styles.brandRowPhone]}>
-              <View style={[styles.brandMark, isCompact && styles.brandMarkPhone]}>
-                <Image
-                  source={require('@/assets/images/faviconT.png')}
-                  style={[styles.brandLogo, isCompact && styles.brandLogoPhone]}
-                  accessibilityLabel="Logo de RutasTunja"
-                />
-              </View>
-              <View>
-                <Text style={[styles.brandName, isCompact && styles.brandNamePhone]}>
-                  Rutas<Text style={styles.brandAccent}>Tunja</Text>
-                </Text>
-                <Text style={styles.brandTagline}>MOVILIDAD URBANA</Text>
-              </View>
-            </Pressable>
-            <Text style={[styles.brandDescription, isCompact && styles.brandDescriptionPhone]}>
-              Información de transporte público urbano para Tunja, Boyacá. Un proyecto pensado para la ciudad y su gente.
-            </Text>
-          </View>
-
-          {/* Navigation Links Columns */}
-          <View style={[styles.linksGroup, isCompact && styles.linksGroupPhone]}>
-            {FOOTER_SECTIONS.map((section) => (
-              <View key={section.title} style={[styles.linkColumn, isCompact && styles.linkColumnPhone]}>
-                <Text style={[styles.columnTitle, isCompact && styles.columnTitlePhone]}>{section.title}</Text>
-                {section.links.map((link) => (
-                  <Pressable
-                    key={link.label}
-                    onPress={() => handlePress(link.route)}
-                    style={({ pressed }) => [
-                      styles.linkItem,
-                      isCompact && styles.linkItemPhone,
-                      pressed && { opacity: 0.7 },
-                    ]}
-                  >
-                    <Text style={[styles.linkText, isCompact && styles.linkTextPhone]}>
-                      {link.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ))}
+      <View style={[styles.artworkWindow, internal && styles.artworkWindowInternal, isCompact && styles.artworkWindowPhone]}>
+        <Image
+          source={internal ? require('@/assets/images/footerotras.png') : require('@/assets/images/footer.png')}
+          resizeMode="contain"
+          style={[styles.footerArtwork, internal && styles.footerArtworkInternal, isCompact && styles.footerArtworkPhone]}
+          accessibilityLabel={internal ? 'Tunja, más cerca de ti' : 'Tunja, una ciudad que se recorre'}
+        />
+      </View>
+      <View style={[styles.infoArea, isCompact && styles.infoAreaPhone]}>
+        <View style={[styles.infoRow, isCompact && styles.infoRowPhone]}>
+          <Pressable onPress={() => router.push('/')} style={[styles.footerBrand, isCompact && styles.footerBrandPhone]}>
+            <Image source={require('@/assets/images/Logoo.png')} resizeMode="contain" style={[styles.footerLogo, isCompact && styles.footerLogoPhone]} />
+          </Pressable>
+          {!isCompact && (
+            <View style={styles.footerNav}>
+              {links.map((link) => (
+                <Pressable key={link.label} onPress={() => router.push(link.route as never)} style={styles.footerNavItem}>
+                  <Icon name={link.icon} color="#315b79" size={23} />
+                  <Text style={styles.footerNavText}>{link.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+          <View style={[styles.footerEnd, isCompact && styles.footerEndPhone]}>
+            {!isCompact && <View style={styles.socials}>
+              <Icon name="instagram" color="#315b79" size={23} />
+              <Icon name="facebook" color="#315b79" size={23} />
+            </View>}
+            <View style={styles.legalLinks}>
+              <Pressable onPress={() => router.push('/politica-de-privacidad')}><Text style={styles.legalLinkText}>Privacidad</Text></Pressable>
+              <Text style={styles.legalSeparator}>·</Text>
+              <Pressable onPress={() => router.push('/terminos-y-condiciones')}><Text style={styles.legalLinkText}>Términos</Text></Pressable>
+            </View>
           </View>
         </View>
-
-        {/* Divider line */}
-        <View style={[styles.divider, isCompact && styles.dividerPhone]} />
-
-        {/* Bottom Row */}
-        <View style={[styles.bottomRow, isCompact && styles.bottomRowPhone]}>
-          <Text style={[styles.copyrightText, isCompact && styles.copyrightTextPhone]}>
-            © 2026 RutasTunja · Hecho en Boyacá
-          </Text>
-        </View>
+        <Text style={styles.copyright}>© 2026 MiRutaTunja · Hecho en Boyacá 💛</Text>
       </View>
     </View>
   );

@@ -22,6 +22,13 @@ const toneStyles = {
   gold: styles.routeCodeGold,
 };
 
+const busColors = {
+  blue: '#1686bd',
+  green: '#54a85d',
+  coral: '#a94bcb',
+  gold: '#efb51d',
+};
+
 export default function RouteCard({ code, title, description, duration, frequency, stops, tone, isCompact = false, onPress }: RouteCardProps) {
   return (
     <Pressable
@@ -34,21 +41,20 @@ export default function RouteCard({ code, title, description, duration, frequenc
     >
       <View style={styles.routeCardTop}>
         <Text style={[styles.routeCode, toneStyles[tone]]}>{code}</Text>
-        <Icon name="arrow" color={colors.muted} size={16} />
+        <Icon name="star" color="#a9b4ba" size={17} />
       </View>
       <Text style={[styles.routeCardTitle, isCompact && styles.routeCardTitlePhone]}>{title}</Text>
-      <Text style={[styles.routeCardDescription, isCompact && styles.routeCardDescriptionPhone]}>{description}</Text>
-      <View style={[styles.routeCardDivider, isCompact && styles.routeCardDividerPhone]} />
       <View style={[styles.routeCardMeta, isCompact && styles.routeCardMetaPhone]}>
         <View style={styles.routeMetaItem}>
-          <Icon name="clock" size={15} />
+          <Icon name="clock" color={colors.blueDark} size={16} />
           <Text style={styles.routeMetaText}>{duration}</Text>
         </View>
-        <View style={styles.metaSeparator} />
-        <Text style={styles.routeMetaText}>{frequency}</Text>
-        <View style={styles.metaSeparator} />
-        <Text style={styles.routeMetaText}>{stops}</Text>
+        <View style={styles.routeMetaItem}>
+          <Icon name="pin" color={colors.blueDark} size={16} />
+          <Text style={styles.routeMetaText}>{stops}</Text>
+        </View>
       </View>
+      <View style={styles.routeBusIcon}><Icon name="bus" color={busColors[tone]} size={34} /></View>
     </Pressable>
   );
 }

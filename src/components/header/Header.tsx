@@ -34,28 +34,21 @@ export default function Header({ isCompact }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { label: 'Inicio', href: '/' },
-    { label: 'Rutas', href: '/routes' as never },
-    { label: 'Turismo', href: '/explore' },
-    { label: 'Favoritos', href: '/favorites' },
+    { label: 'Inicio', href: '/', icon: 'home' as const },
+    { label: 'Rutas', href: '/routes' as never, icon: 'route' as const },
+    { label: 'Explorar', href: '/explore', icon: 'target' as const },
+    { label: 'Favoritos', href: '/favorites', icon: 'heart' as const },
   ] as const;
 
   return (
     <View style={[styles.headerInner, isCompact && styles.headerInnerCompact, isCompact && styles.headerInnerPhone]}>
       <Pressable onPress={() => router.push('/')} style={[styles.brand, isCompact && styles.brandPhone]}>
-        <View style={[styles.brandMark, isCompact && styles.brandMarkPhone]}>
-          <Image
-            source={require('@/assets/images/faviconT.png')}
-            style={[styles.brandLogo, isCompact && styles.brandLogoPhone]}
-            accessibilityLabel="Logo de RutasTunja"
-          />
-        </View>
-        <View>
-          <Text style={[styles.brandName, isCompact && styles.brandNamePhone]}>
-            Rutas<Text style={styles.brandAccent}>Tunja</Text>
-          </Text>
-          <Text style={[styles.brandTagline, isCompact && styles.brandTaglinePhone]}>MOVILIDAD URBANA</Text>
-        </View>
+        <Image
+          source={require('@/assets/images/Logoo.png')}
+          resizeMode="contain"
+          style={[styles.brandLogoFull, isCompact && styles.brandLogoFullPhone]}
+          accessibilityLabel="Logo de RutaTunja"
+        />
       </Pressable>
 
       {!isCompact && (
@@ -65,6 +58,7 @@ export default function Header({ isCompact }: HeaderProps) {
 
             return (
               <Pressable key={item.href} onPress={() => router.push(item.href)} style={[styles.navItem, isActive && styles.navItemActive]}>
+                <Icon name={item.icon} color={isActive ? colors.blueDark : colors.muted} size={20} />
                 <Text style={isActive ? styles.navTextActive : styles.navText}>{item.label}</Text>
               </Pressable>
             );
@@ -73,6 +67,12 @@ export default function Header({ isCompact }: HeaderProps) {
       )}
 
       <View style={styles.headerActions}>
+        {!isCompact && (
+          <View style={styles.weatherPill}>
+            <Text style={styles.weatherIcon}>☀</Text>
+            <View><Text style={styles.weatherCity}>Tunja</Text><Text style={styles.weatherTemp}>18°C</Text></View>
+          </View>
+        )}
         <View style={styles.notificationAnchor}>
           <Pressable
             accessibilityLabel="Notificaciones"
@@ -80,7 +80,7 @@ export default function Header({ isCompact }: HeaderProps) {
             onPress={() => setIsNotificationsOpen((open) => !open)}
             style={[styles.iconButton, isCompact && styles.iconButtonPhone]}
           >
-            <Icon name="notification" color={colors.muted} size={20} />
+            <Icon name="account" color={colors.blueDark} size={24} />
           </Pressable>
           {!isCompact && isNotificationsOpen && <View style={styles.notificationPopover}><NotificationContent onClose={() => setIsNotificationsOpen(false)} /></View>}
         </View>

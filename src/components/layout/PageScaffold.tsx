@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Header from '@/components/header/Header';
+import Footer from '@/components/footer/Footer';
 import HistoryModal from '@/components/history/HistoryModal';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import Icon from '@/components/ui/Icon';
@@ -50,6 +51,7 @@ export default function PageScaffold({ children }: PageScaffoldProps) {
       </SafeAreaView>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {children}
+        {!isNative && <Footer isCompact={width < 760} internal />}
       </ScrollView>
       {isNative && <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}><MobileBottomNav /></SafeAreaView>}
     </View>
@@ -57,9 +59,9 @@ export default function PageScaffold({ children }: PageScaffoldProps) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#f2f7fa' },
-  header: { backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.border },
-  scrollContent: { flexGrow: 1, paddingBottom: 18 },
+  page: { flex: 1, backgroundColor: '#fffdf8' },
+  header: { position: 'relative', zIndex: 100, overflow: 'visible', backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.border },
+  scrollContent: { flexGrow: 1, position: 'relative', zIndex: 0 },
   bottomSafeArea: { backgroundColor: '#fff' },
   nativeHeaderInner: { minHeight: 70, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nativeBrand: { flexDirection: 'row', alignItems: 'center', gap: 10 },

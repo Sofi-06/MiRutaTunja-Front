@@ -1,180 +1,29 @@
 import { StyleSheet } from 'react-native';
-import { colors } from './home.styles';
 
 export const footerStyles = StyleSheet.create({
-  footer: {
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5edf3',
-    width: '100%',
-  },
-  footerInner: {
-    width: '100%',
-    maxWidth: 1820,
-    alignSelf: 'center',
-    paddingHorizontal: 44,
-    paddingTop: 40,
-    paddingBottom: 28,
-  },
-  footerInnerPhone: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 28,
-  },
-  footerMain: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 36,
-  },
-  footerMainPhone: {
-    flexDirection: 'column',
-    gap: 36,
-  },
-  brandColumn: {
-    maxWidth: 380,
-    flexShrink: 1,
-  },
-  brandColumnPhone: {
-    maxWidth: '100%',
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  brandRowPhone: {
-    gap: 10,
-  },
-  brandMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    backgroundColor: '#f0f6fb',
-    borderWidth: 1,
-    borderColor: '#dfebf4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandMarkPhone: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-  },
-  brandLogo: {
-    width: 36,
-    height: 36,
-  },
-  brandLogoPhone: {
-    width: 30,
-    height: 30,
-  },
-  brandName: {
-    color: colors.ink,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.4,
-  },
-  brandNamePhone: {
-    fontSize: 18,
-  },
-  brandAccent: {
-    color: colors.blue,
-  },
-  brandTagline: {
-    color: colors.muted,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    marginTop: 1,
-  },
-  brandDescription: {
-    color: '#718092',
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 18,
-    fontWeight: '400',
-  },
-  brandDescriptionPhone: {
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 14,
-  },
-  linksGroup: {
-    flexDirection: 'row',
-    gap: 48,
-    flexWrap: 'wrap',
-  },
-  linksGroupPhone: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    flexWrap: 'nowrap',
-  },
-  linkColumn: {
-    minWidth: 120,
-  },
-  linkColumnPhone: {
-    flex: 1,
-    minWidth: 0,
-  },
-  columnTitle: {
-    color: colors.ink,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.4,
-    marginBottom: 18,
-    textTransform: 'uppercase',
-  },
-  columnTitlePhone: {
-    fontSize: 11,
-    letterSpacing: 1,
-    marginBottom: 14,
-  },
-  linkItem: {
-    paddingVertical: 6,
-  },
-  linkItemPhone: {
-    paddingVertical: 4,
-  },
-  linkText: {
-    color: '#6b7a8d',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  linkTextPhone: {
-    fontSize: 12.5,
-  },
-  linkTextHover: {
-    color: colors.blueDark,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e6eef4',
-    marginTop: 32,
-    marginBottom: 22,
-  },
-  dividerPhone: {
-    marginTop: 32,
-    marginBottom: 20,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bottomRowPhone: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  copyrightText: {
-    color: '#7c8b9d',
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  copyrightTextPhone: {
-    fontSize: 12,
-    textAlign: 'center',
-  },
+  footer: { position: 'relative', width: '100%', marginTop: 0, backgroundColor: '#fffdf8' },
+  artworkWindow: { position: 'relative', width: '100%', height: 220, overflow: 'hidden', backgroundColor: '#fffdf8' },
+  artworkWindowInternal: { height: 250 },
+  artworkWindowPhone: { height: 180 },
+  footerArtwork: { position: 'absolute', zIndex: 3, left: 0, right: 0, bottom: -105, width: '100%', aspectRatio: 3 },
+  footerArtworkInternal: { top: -180, bottom: undefined },
+  footerArtworkPhone: { top: 0, bottom: undefined, left: -70, right: undefined, width: 540, height: 180, aspectRatio: undefined },
+  infoArea: { position: 'relative', minHeight: 120, paddingHorizontal: 54, paddingTop: 13, paddingBottom: 12, backgroundColor: '#fffdf8' },
+  infoAreaPhone: { minHeight: 125, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },
+  infoRow: { width: '100%', maxWidth: 1880, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 22 },
+  infoRowPhone: { gap: 12 },
+  footerBrand: { paddingRight: 22, borderRightWidth: 1, borderRightColor: '#d8e2dc' },
+  footerBrandPhone: { paddingRight: 0, borderRightWidth: 0 },
+  footerLogo: { width: 205, height: 58 },
+  footerLogoPhone: { width: 145, height: 48 },
+  footerNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 26, flex: 1 },
+  footerNavItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  footerNavText: { color: '#587083', fontSize: 14, fontWeight: '600' },
+  footerEnd: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  footerEndPhone: { gap: 8 },
+  socials: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingRight: 22, borderRightWidth: 1, borderRightColor: '#d8e2dc' },
+  legalLinks: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  legalLinkText: { color: '#587083', fontSize: 12, fontWeight: '600' },
+  legalSeparator: { color: '#91a29b', fontSize: 12 },
+  copyright: { color: '#71877e', fontSize: 11, textAlign: 'center', marginTop: 8 },
 });

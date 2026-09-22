@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
+  Image,
   ImageBackground,
   Platform,
   Pressable,
@@ -104,6 +105,7 @@ const getRecommendedRoutes = (
 function WebHomeScreen() {
   const { width } = useWindowDimensions();
   const isCompact = width < 760;
+  const isMapCompact = width < 1100;
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [exploreOffset, setExploreOffset] = useState(0);
@@ -816,49 +818,75 @@ function WebHomeScreen() {
           source={require('@/assets/images/tunja.jpg')}
           style={[styles.hero, isCompact && styles.heroPhone]}
           imageStyle={[styles.heroImage, isCompact && styles.heroImagePhone]}
+          resizeMode="cover"
         >
-          <View pointerEvents="none" style={styles.heroOverlay} />
-          <View pointerEvents="none" style={[styles.heroFadeLayerOne, isCompact && styles.heroFadePhone]} />
-          <View pointerEvents="none" style={[styles.heroFadeLayerTwo, isCompact && styles.heroFadePhone]} />
-          <View pointerEvents="none" style={[styles.heroFadeLayerThree, isCompact && styles.heroFadePhone]} />
-          <View pointerEvents="none" style={[styles.heroFadeLayerFour, isCompact && styles.heroFadePhone]} />
+          <View style={[styles.heroOverlay, { pointerEvents: 'none' }]} />
+          <View style={[styles.heroCreamPanel, isCompact && styles.heroFadePhone, { pointerEvents: 'none' }]} />
+          <View style={[styles.heroCreamBubble, isCompact && styles.heroFadePhone, { pointerEvents: 'none' }]} />
+          <View style={[styles.heroSkyBubble, isCompact && styles.heroFadePhone, { pointerEvents: 'none' }]} />
+          {!isCompact && <Image source={require('@/assets/images/hoja2.png')} resizeMode="contain" style={styles.heroLeaf} />}
           <View style={[styles.heroInner, isCompact && styles.heroInnerCompact, isCompact && styles.heroInnerPhone]}>
-            <View style={[styles.locationPill, isCompact && styles.locationPillPhone]}>
-              <Icon name="location" color={colors.coral} size={18} />
-              <Text style={[styles.locationText, isCompact && styles.locationTextPhone]}>TUNJA · BOYACÁ</Text>
-            </View>
             <Text style={[styles.heroTitle, isCompact && styles.heroTitleCompact, isCompact && styles.heroTitlePhone]}>
-              Muévete por la ciudad,{ '\n' }
-              <Text style={styles.heroTitleBlue}>tan simple como{ '\n' }caminar el centro.</Text>
+              Tu compañero{ '\n' }para moverte por
             </Text>
+            <View style={styles.heroTunjaRow}>
+              <Text style={styles.heroTitleGreen}>Tunja</Text>
+              <View style={styles.heroAccentMarks}>
+                <View style={[styles.heroAccentMark, styles.heroAccentMarkTop]} />
+                <View style={[styles.heroAccentMark, styles.heroAccentMarkMiddle]} />
+                <View style={[styles.heroAccentMark, styles.heroAccentMarkBottom]} />
+              </View>
+            </View>
             <Text style={[styles.heroDescription, isCompact && styles.heroDescriptionPhone]}>
-              Consulta rutas de buses urbanos, encuentra el paradero más cercano y planifica{ '\n' }
-              tu viaje con información clara y en tiempo real.
+              Encuentra rutas, paraderos y lugares de interés{ '\n' }
+              para llegar más fácil a donde necesitas.
             </Text>
 
             <View style={[styles.homeQuickActions, isCompact && styles.homeQuickActionsPhone]}>
-              <Pressable onPress={() => router.push('/favorites')} style={[styles.quickPill, styles.quickPillActive, isCompact && styles.quickPillPhone]}>
-                <Icon name="heart" color={colors.blue} size={isCompact ? 18 : 19} />
-                <Text style={[styles.quickTextActive, isCompact && styles.quickTextPhone]}>Favoritos</Text>
+              <Pressable onPress={() => scrollRef.current?.scrollTo({ y: exploreOffset, animated: true })} style={[styles.quickPill, styles.quickPillBlue, isCompact && styles.quickPillPhone]}>
+                <Icon name="bus" color={colors.blueDark} size={isCompact ? 18 : 21} />
+                <Text style={[styles.quickTextActive, isCompact && styles.quickTextPhone]}>Buscar ruta</Text>
               </Pressable>
-              <Pressable onPress={() => scrollRef.current?.scrollTo({ y: exploreOffset + insightsOffset, animated: true })} style={[styles.quickPill, isCompact && styles.quickPillPhone]}>
-                <Icon name="history" color={colors.muted} size={isCompact ? 17 : 18} />
-                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Recientes</Text>
+              <Pressable onPress={handleUseCurrentLocation} style={[styles.quickPill, styles.quickPillGreen, isCompact && styles.quickPillPhone]}>
+                <Icon name="location" color="#4f9e68" size={isCompact ? 18 : 21} />
+                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Mi ubicación</Text>
               </Pressable>
-              <Pressable onPress={() => router.push('/routes' as never)} style={[styles.quickPill, isCompact && styles.quickPillPhone]}>
-                <Icon name="bus" color={colors.muted} size={isCompact ? 18 : 19} />
-                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Todas las rutas</Text>
+              <Pressable onPress={() => router.push('/favorites')} style={[styles.quickPill, styles.quickPillGold, isCompact && styles.quickPillPhone]}>
+                <Icon name="star" color="#d4a20c" size={isCompact ? 18 : 21} />
+                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Mis lugares</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/explore')} style={[styles.quickPill, styles.quickPillPurple, isCompact && styles.quickPillPhone]}>
+                <Icon name="target" color="#8d50b0" size={isCompact ? 18 : 21} />
+                <Text style={[styles.quickText, isCompact && styles.quickTextPhone]}>Lugares turísticos</Text>
               </Pressable>
             </View>
+            {!isCompact && (
+              <View style={styles.heroSloganWrap}>
+                <Text style={styles.heroSlogan}>Tunja{ '\n' }siempre{ '\n' }te mueve</Text>
+                <View style={styles.heroSloganAccent}>
+                  <View style={[styles.heroAccentMark, styles.heroAccentMarkTop]} />
+                  <View style={[styles.heroAccentMark, styles.heroAccentMarkMiddle]} />
+                  <View style={[styles.heroAccentMark, styles.heroAccentMarkBottom]} />
+                </View>
+              </View>
+            )}
           </View>
         </ImageBackground>
 
         <View onLayout={(event) => setExploreOffset(event.nativeEvent.layout.y)} style={[styles.exploreSection, isCompact && styles.exploreSectionPhone]}>
           <View style={styles.mapSection}>
-            <Text style={styles.sectionEyebrow}>DESCUBRE LA CIUDAD</Text>
-            <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Planifica tu recorrido</Text>
-            <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el trayecto, haz clic en el mapa para fijar tu origen o destino.</Text>
-            <View style={[styles.mapSearchBarWrap, isCompact && styles.mapSearchBarWrapPhone]}>
+            {!isCompact && <Image source={require('@/assets/images/hoja1.png')} resizeMode="contain" style={styles.exploreLeafLeft} />}
+            {!isCompact && <Image source={require('@/assets/images/hoja3.png')} resizeMode="contain" style={styles.exploreLeafRight} />}
+            <View style={styles.exploreHeadingRow}>
+              <View style={styles.exploreHeadingIcon}>
+                <Icon name="map" color={colors.blueDark} size={34} />
+              </View>
+              <View>
+                <Text style={[styles.exploreTitle, isCompact && styles.sectionTitlePhone]}>Explora la ciudad</Text>
+                <Text style={[styles.exploreDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el mapa y encuentra la mejor ruta para tu destino.</Text>
+              </View>
+            </View>
+            <View style={[styles.mapSearchBarWrap, isMapCompact && styles.mapSearchBarWrapPhone]}>
               <SearchBar
                 origin={originName}
                 onOriginChange={setOriginName}
@@ -886,7 +914,7 @@ function WebHomeScreen() {
                     }
                   }
                 }}
-                isCompact={isCompact}
+                isCompact={isMapCompact}
                 showQuickActions={false}
                 onUseCurrentLocation={handleUseCurrentLocation}
                 onSearchBoth={handleSearchRoute}
@@ -894,8 +922,8 @@ function WebHomeScreen() {
                 onStartPickDestination={() => setPickMode('DEST')}
               />
             </View>
-            <View style={[styles.mapRouteLayout, isCompact && styles.mapRouteLayoutCompact]}>
-              <View style={[styles.mapContainer, isCompact && styles.mapContainerPhone]}>
+            <View style={[styles.mapRouteLayout, isMapCompact && styles.mapRouteLayoutCompact]}>
+              <View style={[styles.mapContainer, isMapCompact && styles.mapContainerPhone]}>
                 <MapView
                   isTripStarted={isTripStarted}
                   route={filteredRoute}
@@ -909,7 +937,7 @@ function WebHomeScreen() {
                 />
               </View>
               <SelectedRouteCard
-                isCompact={isCompact}
+                isCompact={isMapCompact}
                 recommendedRoutes={recommendedRoutesList.filter(
                   (route) => route.code !== activeRouteInfo.code
                 )}
@@ -949,27 +977,31 @@ function WebHomeScreen() {
 
           <View style={[styles.sectionHeaderRow, isCompact && styles.sectionHeaderRowPhone]}>
             <View style={styles.sectionHeaderCopy}>
-              <Text style={styles.sectionEyebrow}>MOVIDAS ESTA SEMANA</Text>
-              <Text style={[styles.sectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas más utilizadas</Text>
-              <Text style={[styles.sectionDescription, isCompact && styles.sectionDescriptionPhone]}>Las líneas con mayor demanda en Tunja durante esta semana.</Text>
+              <View style={styles.routesHeadingRow}>
+                <View style={styles.routesHeadingIcon}><Icon name="bus" color={colors.blueDark} size={31} /></View>
+                <View>
+                  <Text style={[styles.routesSectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas más utilizadas</Text>
+                  <Text style={[styles.routesSectionDescription, isCompact && styles.sectionDescriptionPhone]}>Las líneas con mayor demanda en Tunja durante esta semana.</Text>
+                </View>
+              </View>
             </View>
             {!isCompact && <Pressable onPress={() => router.push('/routes' as never)}><Text style={styles.sectionLink}>Ver todas  ›</Text></Pressable>}
           </View>
 
           <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
             <RouteCard
-              code="R-01"
-              title="Ruta 1: Arboleda – Terminal"
+              code="K-07"
+              title="Arboleda – Terminal"
               description="Despacho Arboleda → Terminal de Transportes"
-              duration="25 min"
+              duration="18 min"
               frequency="cada 8 min"
-              stops="2 despachos"
+              stops="12 paradas"
               tone="blue"
               isCompact={isCompact}
-              onPress={() => handleSelectRoute('R-01')}
+              onPress={() => handleSelectRoute('R-07')}
             />
             <RouteCard
-              code="R-07"
+              code="K-01"
               title="Terminal – Norte"
               description="Terminal de Transportes → Barrio Los Muiscas"
               duration="31 min"
@@ -977,10 +1009,10 @@ function WebHomeScreen() {
               stops="19 paradas"
               tone="green"
               isCompact={isCompact}
-              onPress={() => handleSelectRoute('R-07')}
+              onPress={() => handleSelectRoute('R-01')}
             />
             <RouteCard
-              code="R-11"
+              code="K-11"
               title="Sur – Hospital"
               description="Villa Universitaria → Hospital San Rafael"
               duration="27 min"
@@ -991,12 +1023,12 @@ function WebHomeScreen() {
               onPress={() => handleSelectRoute('R-11')}
             />
             <RouteCard
-              code="R-15"
+              code="K-15"
               title="Pozo de Donato"
               description="Plaza Real → Pozo de Donato"
               duration="18 min"
               frequency="cada 15 min"
-              stops="11 paradas"
+              stops="12 paradas"
               tone="coral"
               isCompact={isCompact}
               onPress={() => handleSelectRoute('R-15')}

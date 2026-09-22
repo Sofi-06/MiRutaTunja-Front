@@ -21,6 +21,7 @@ const iconMap = {
   home: 'home-variant-outline',
   account: 'account-circle-outline',
   route: 'map-marker-path',
+  map: 'map-outline',
   chatbot: 'robot-outline',
   trash: 'trash-can-outline',
   menu: 'menu',
@@ -33,6 +34,8 @@ const iconMap = {
   info: 'information-outline',
   copy: 'content-copy',
   external: 'open-in-new',
+  instagram: 'instagram',
+  facebook: 'facebook',
 } as const satisfies Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']>;
 
 type IconName = keyof typeof iconMap;
