@@ -666,7 +666,7 @@ export default function MobileHome() {
         <Pressable onPress={() => router.push('/routes' as never)} style={styles.navItem}><Icon name="route" color="#728092" size={24} /><Text style={styles.navText}>Rutas</Text></Pressable>
         <Pressable onPress={() => router.push('/favorites')} style={styles.navItem}><Icon name="heart" color="#728092" size={24} /><Text style={styles.navText}>Favoritos</Text></Pressable>
         <Pressable onPress={() => router.push('/explore')} style={styles.navItem}><Icon name="location" color="#728092" size={24} /><Text style={styles.navText}>Turismo</Text></Pressable>
-        <Pressable onPress={() => Alert.alert('RutaBot', 'Muy pronto podrás consultar rutas, paraderos y tarifas con el asistente virtual.')} style={styles.navItem}><Icon name="chatbot" color="#728092" size={24} /><Text style={styles.navText}>RutaBot</Text></Pressable>
+        <Pressable onPress={() => Alert.alert('RutaBot', 'Muy pronto podrás consultar rutas, recorridos y tarifas con el asistente virtual.')} style={styles.navItem}><Icon name="chatbot" color="#728092" size={24} /><Text style={styles.navText}>RutaBot</Text></Pressable>
       </View>
     </SafeAreaView>
   );

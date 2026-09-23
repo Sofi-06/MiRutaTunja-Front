@@ -53,7 +53,7 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Metadatos Primarios de SEO */}
         <title>MiRutaTunja - Rutas de Transporte Público y Colectivos en Tunja</title>
         <meta name="title" content="MiRutaTunja - Rutas de Transporte Público y Colectivos en Tunja" />
-        <meta name="description" content="Consulta las 26 rutas de colectivo urbano en Tunja, explora paraderos, calcula trayectos multimodales y planifica tu movilidad fácil." />
+        <meta name="description" content="Consulta las 26 rutas de colectivo urbano en Tunja, explora recorridos, calcula trayectos multimodales y planifica tu movilidad fácil." />
         <meta name="keywords" content="rutas de bus tunja, transporte publico tunja, mi ruta tunja, colectivo tunja, bus urbano tunja, terminal de transportes tunja, uniboyaca tunja, uptc tunja" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://mirutatunja.com/" />
@@ -63,7 +63,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta property="og:url" content="https://mirutatunja.com/" />
         <meta property="og:site_name" content="MiRutaTunja" />
         <meta property="og:title" content="MiRutaTunja - Muévete fácil por Tunja" />
-        <meta property="og:description" content="Consulta mapas, paraderos y horarios de las 26 rutas de transporte urbano en Tunja." />
+        <meta property="og:description" content="Consulta mapas, recorridos y horarios de las 26 rutas de transporte urbano en Tunja." />
         <meta property="og:locale" content="es_CO" />
 
         {/* Twitter */}

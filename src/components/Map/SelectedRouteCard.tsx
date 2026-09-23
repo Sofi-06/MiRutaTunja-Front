@@ -14,7 +14,7 @@ type SelectedRouteCardProps = Readonly<{
   code?: string;
   duration?: string;
   distanceText?: string;
-  stopsCount?: number;
+  routeStops?: string[];
   originName?: string;
   destinationName?: string;
   schedule?: {
@@ -24,14 +24,6 @@ type SelectedRouteCardProps = Readonly<{
   routeName?: string;
   routeCategory?: string;
   routeMapLink?: string;
-  recommendedRoutes?: Array<{
-    code: string;
-    title: string;
-    dist: number;
-    originDist: number;
-    destDist: number;
-  }>;
-  onSelectRecommendedRoute?: (code: string) => void;
   onClearMap?: () => void;
 }>;
 
@@ -43,15 +35,13 @@ export default function SelectedRouteCard({
   code = 'WALK',
   duration = '22 min',
   distanceText = '1.2 km',
-  stopsCount = 12,
+  routeStops = [],
   originName = 'Mi ubicación',
   destinationName = 'Destino seleccionado',
   schedule,
   routeName,
   routeCategory,
   routeMapLink,
-  recommendedRoutes = [],
-  onSelectRecommendedRoute,
   onClearMap,
 }: SelectedRouteCardProps) {
   const [internalTripStarted, setInternalTripStarted] = useState(false);
@@ -124,10 +114,6 @@ export default function SelectedRouteCard({
           <Text style={styles.routeStatValue}>{duration}</Text>
         </View>
         <View style={styles.routeStat}>
-          <Icon name="bus" color={colors.blueDark} size={18} />
-          <Text style={styles.routeStatValue}>{stopsCount} paradas</Text>
-        </View>
-        <View style={styles.routeStat}>
           <Icon name="route" color={colors.blueDark} size={18} />
           <Text style={styles.routeStatValue}>{distanceText}</Text>
         </View>
@@ -147,49 +133,22 @@ export default function SelectedRouteCard({
         </View>
       )}
 
-      {recommendedRoutes && recommendedRoutes.length > 0 && (
+      {routeStops.length > 0 && (
         <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 14 }}>
           <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink, marginBottom: 8 }}>
-            🚌 Rutas alternativas disponibles:
+            Recorrido de la ruta
           </Text>
           <View style={{ gap: 8 }}>
-            {recommendedRoutes.slice(0, 4).map((route) => (
-              <Pressable
-                key={route.code}
-                onPress={() => onSelectRecommendedRoute?.(route.code)}
-                style={({ pressed }) => [
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    padding: 10,
-                    backgroundColor: pressed ? '#edf2f7' : '#f8fafc',
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: '#e2e8f0',
-                    gap: 8,
-                  }
-                ]}
-              >
-                <View style={{
-                  backgroundColor: '#edf4f8',
-                  borderRadius: 8,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                }}>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.blueDark }}>
-                    {route.code}
-                  </Text>
+            {routeStops.map((stop, index) => (
+              <View key={`${stop}-${index}`} style={{ flexDirection: 'row', alignItems: 'flex-start', minHeight: 28 }}>
+                <View style={{ alignItems: 'center', width: 18 }}>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: index === 0 ? '#22c55e' : index === routeStops.length - 1 ? '#ef4444' : colors.blueDark }} />
+                  {index < routeStops.length - 1 && <View style={{ width: 2, flex: 1, minHeight: 18, backgroundColor: '#cbd5e1' }} />}
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: colors.ink }}>
-                    {route.title}
-                  </Text>
-                  <Text style={{ fontSize: 10, color: colors.muted, marginTop: 2 }}>
-                    A {(route.originDist * 1000).toFixed(0)}m de origen · {(route.destDist * 1000).toFixed(0)}m de destino
-                  </Text>
-                </View>
-                <Icon name="chevron" color={colors.blueDark} size={14} />
-              </Pressable>
+                <Text numberOfLines={2} style={{ flex: 1, marginLeft: 10, marginBottom: 8, color: colors.ink, fontSize: 12, fontWeight: index === 0 || index === routeStops.length - 1 ? '700' : '500' }}>
+                  {stop}
+                </Text>
+              </View>
             ))}
           </View>
         </View>
@@ -200,30 +159,6 @@ export default function SelectedRouteCard({
         <View style={styles.selectedBusCopy}>
           <Text numberOfLines={1} style={styles.selectedBusName}>{routeName || title}</Text>
           <Text style={styles.selectedBusFare}>{fareInfo.fareText} · {fareInfo.label}</Text>
-        </View>
-      </View>
-
-      <View style={{ marginTop: 20, padding: 16, backgroundColor: '#f8fafc', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', gap: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#22c55e' }} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.muted }}>ORIGEN</Text>
-            <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: colors.ink, marginTop: 2 }}>
-              {originName}
-            </Text>
-          </View>
-        </View>
-        
-        <View style={{ height: 1, backgroundColor: '#e2e8f0', marginLeft: 20 }} />
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#ef4444' }} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.muted }}>DESTINO</Text>
-            <Text numberOfLines={1} style={{ fontSize: 14, fontWeight: '700', color: colors.ink, marginTop: 2 }}>
-              {destinationName}
-            </Text>
-          </View>
         </View>
       </View>
 

@@ -7,9 +7,10 @@ import { footerStyles as styles } from '@/styles/footer.styles';
 type FooterProps = Readonly<{
   isCompact?: boolean;
   internal?: boolean;
+  showArtwork?: boolean;
 }>;
 
-export default function Footer({ isCompact = false, internal = false }: FooterProps) {
+export default function Footer({ isCompact = false, internal = false, showArtwork = true }: FooterProps) {
   const router = useRouter();
 
   const links = [
@@ -21,14 +22,14 @@ export default function Footer({ isCompact = false, internal = false }: FooterPr
 
   return (
     <View style={styles.footer}>
-      <View style={[styles.artworkWindow, internal && styles.artworkWindowInternal, isCompact && styles.artworkWindowPhone]}>
+      {showArtwork && <View style={[styles.artworkWindow, internal && styles.artworkWindowInternal, isCompact && styles.artworkWindowPhone]}>
         <Image
           source={internal ? require('@/assets/images/footerotras.png') : require('@/assets/images/footer.png')}
           resizeMode="contain"
           style={[styles.footerArtwork, internal && styles.footerArtworkInternal, isCompact && styles.footerArtworkPhone]}
           accessibilityLabel={internal ? 'Tunja, más cerca de ti' : 'Tunja, una ciudad que se recorre'}
         />
-      </View>
+      </View>}
       <View style={[styles.infoArea, isCompact && styles.infoAreaPhone]}>
         <View style={[styles.infoRow, isCompact && styles.infoRowPhone]}>
           <Pressable onPress={() => router.push('/')} style={[styles.footerBrand, isCompact && styles.footerBrandPhone]}>

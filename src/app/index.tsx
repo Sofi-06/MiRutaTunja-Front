@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Image,
   ImageBackground,
@@ -41,6 +41,20 @@ const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => 
   return Math.sqrt(dLat * dLat + dLng * dLng) * 111.32; // Distancia aproximada en km
 };
 
+const getShortRouteTitle = (name: string) => {
+  const sectors = name
+    .split(/\s*-\s*/)
+    .map((sector) => sector.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .filter((sector, index, all) => all.findIndex((item) => item.toLowerCase() === sector.toLowerCase()) === index);
+
+  if (sectors.length <= 2) return sectors.join(' – ');
+  if (sectors[0].toLowerCase() === sectors[sectors.length - 1].toLowerCase()) {
+    return `${sectors[0]} – ${sectors[1]}`;
+  }
+  return `${sectors[0]} – ${sectors[sectors.length - 1]}`;
+};
+
 const getRecommendedRoutes = (
   origin: { lat: number; lng: number } | null,
   dest: { lat: number; lng: number } | null
@@ -81,7 +95,7 @@ const getRecommendedRoutes = (
       const num = key.replace('R', '');
       const formattedCode = `R-${num.padStart(2, '0')}`;
       const title = metadata
-        ? `${metadata.name.split(' - ')[0]} – ${metadata.name.split(' - ').slice(-1)[0]}`
+        ? getShortRouteTitle(metadata.name)
         : `Ruta ${key}`;
 
       // Score de conveniencia global: prioriza llegar lo más cerca posible del destino (1.4x) y origen (1.0x)
@@ -126,6 +140,11 @@ function WebHomeScreen() {
     void getRecentSearches().then(setRecentSearches);
   }, []);
 
+  const saveRecentSearch = async (origin: string, destination: string) => {
+    if (!origin.trim() || !destination.trim()) return;
+    setRecentSearches(await addRecentSearch(origin.trim(), destination.trim()));
+  };
+
   // Estados para cálculo de rutas dinámicas
   const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>({
     lat: 5.5324627, // Plaza de Bolívar por defecto
@@ -139,6 +158,7 @@ function WebHomeScreen() {
     distanceText: '0 km',
     durationText: '0 min',
   });
+  const [routeStops, setRouteStops] = useState<string[]>([]);
 
   // Estado para la información activa de la ruta que se muestra en la tarjeta de detalles
   const [activeRouteInfo, setActiveRouteInfo] = useState<{
@@ -194,7 +214,7 @@ function WebHomeScreen() {
   const localRouteData = activeRouteKey ? routesRegistry[activeRouteKey as keyof typeof routesRegistry] : null;
 
   // Obtener colores únicos de los trazos de la ruta activa para separar Ida y Vuelta
-  const uniqueColors = (() => {
+  const uniqueColors = useMemo(() => {
     if (!localRouteData?.path?.features) return [];
     const colorsSet = new Set<string>();
     localRouteData.path.features.forEach((feature: any) => {
@@ -203,12 +223,12 @@ function WebHomeScreen() {
       }
     });
     return Array.from(colorsSet);
-  })();
+  }, [localRouteData]);
 
   const hasMultipleDirections = uniqueColors.length > 1;
 
   // Ruta filtrada derivada para el mapa
-  const filteredRoute = localRouteData
+  const filteredRoute = useMemo(() => localRouteData
     ? (() => {
         const segments: any[] = [];
         localRouteData.path.features.forEach((feature: any) => {
@@ -248,10 +268,13 @@ function WebHomeScreen() {
         });
         return segments;
       })()
-    : calculatedRoute;
+    : calculatedRoute, [localRouteData, calculatedRoute, hasMultipleDirections, uniqueColors, showIda, showVuelta]);
 
   // Calcular la lista de rutas recomendadas en tiempo de renderizado
   const recommendedRoutesList = getRecommendedRoutes(originCoords, destCoords);
+  const alternativeRoutes = recommendedRoutesList
+    .filter((route) => route.code !== activeRouteInfo.code);
+  const showAlternativeRoutes = Boolean((isCustomSearchActive || activeRouteKey) && destCoords && destination);
 
   // Efecto para calcular ruta cuando cambie el origen, el destino o la ruta activa
   useEffect(() => {
@@ -389,6 +412,9 @@ function WebHomeScreen() {
       setOriginName(address);
     }
 
+    if (destCoords && destination) {
+      void saveRecentSearch(address, destination);
+    }
     if (destCoords) {
       const recs = getRecommendedRoutes(clickOriginCoords, destCoords);
       if (recs.length > 0) {
@@ -430,6 +456,9 @@ function WebHomeScreen() {
       setDestination(address);
     }
 
+    if (originCoords && originName) {
+      void saveRecentSearch(originName, address);
+    }
     if (originCoords) {
       const recs = getRecommendedRoutes(originCoords, clickDestCoords);
       if (recs.length > 0) {
@@ -487,7 +516,7 @@ function WebHomeScreen() {
     setDestCoords(dCoords);
     setDestination(destPlace.name);
     setIsCustomSearchActive(true);
-    setRecentSearches(await addRecentSearch(originPlace.name, destPlace.name));
+    await saveRecentSearch(originPlace.name, destPlace.name);
 
     // Calcular rutas sugeridas para ver si hay una directa en bus
     const recs = getRecommendedRoutes(oCoords, dCoords);
@@ -511,6 +540,7 @@ function WebHomeScreen() {
     setOriginCoords(null);
     setOriginName('');
     setCalculatedRoute(undefined);
+    setRouteStops([]);
     setIsCustomSearchActive(false);
     setIsTripStarted(false);
     setActiveRouteInfo({
@@ -545,6 +575,28 @@ function WebHomeScreen() {
       }
 
       const metadata = routesMetadata[key as keyof typeof routesMetadata];
+      const endpointNames = routeData.points?.features
+        ?.filter((feature: any) => feature.geometry?.type === 'Point' && feature.properties?.name)
+        .map((feature: any) => String(feature.properties.name).replace(/\s+/g, ' ').trim())
+        .filter((name: string, index: number, names: string[]) => names.indexOf(name) === index) || [];
+      const roadNames = routeData.path.features
+        .filter((feature: any) => feature.geometry?.type === 'LineString' && feature.properties?.name)
+        .map((feature: any) => String(feature.properties.name).replace(/\s+/g, ' ').trim())
+        .filter((name: string, index: number, names: string[]) => names.indexOf(name) === index);
+      const importantPattern = /terminal|universidad|uptc|hospital|plaza|parque|glorieta|green hills|viva|unicentro|pozo|estadio|mercado|muiscas|arboleda|bol[ií]var|nieves|as[ií]s|viaducto|triunfo|retorno|avenida norte|avenida oriental|avenida maldonado|avenida col[oó]n/i;
+      // Quitamos únicamente las calles que vienen solas. Si la etiqueta
+      // también menciona un lugar conocido, la conservamos completa.
+      const genericStreetPattern = /^(calle|carrera|diagonal|transversal)\s*[\w-]+\s*$/i;
+      const importantRoadNames = roadNames.filter((name: string) => importantPattern.test(name) && !genericStreetPattern.test(name));
+      const routeSequence = [
+        endpointNames[0],
+        ...importantRoadNames,
+        endpointNames.length > 1 ? endpointNames[endpointNames.length - 1] : undefined,
+      ]
+        .filter((name): name is string => Boolean(name))
+        .filter((name, index, names) => names.indexOf(name) === index)
+        .slice(0, 12);
+      setRouteStops(routeSequence);
       const segments: { path: [number, number][]; color: string }[] = [];
       const routeCoordinates: [number, number][] = [];
       
@@ -729,6 +781,7 @@ function WebHomeScreen() {
         setIsCustomSearchActive(true);
 
         const currentOrigin = originCoords || { lat: 5.5324627, lng: -73.3615504 };
+        void saveRecentSearch(originName || 'Plaza de Bolívar', name);
         if (!originCoords) {
           setOriginCoords(currentOrigin);
           setOriginName('Plaza de Bolívar');
@@ -838,7 +891,7 @@ function WebHomeScreen() {
               </View>
             </View>
             <Text style={[styles.heroDescription, isCompact && styles.heroDescriptionPhone]}>
-              Encuentra rutas, paraderos y lugares de interés{ '\n' }
+              Encuentra rutas, recorridos y lugares de interés{ '\n' }
               para llegar más fácil a donde necesitas.
             </Text>
 
@@ -881,9 +934,9 @@ function WebHomeScreen() {
               <View style={styles.exploreHeadingIcon}>
                 <Icon name="map" color={colors.blueDark} size={34} />
               </View>
-              <View>
+              <View style={styles.exploreHeadingCopy}>
                 <Text style={[styles.exploreTitle, isCompact && styles.sectionTitlePhone]}>Explora la ciudad</Text>
-                <Text style={[styles.exploreDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el mapa y encuentra la mejor ruta para tu destino.</Text>
+                <Text numberOfLines={isCompact ? 2 : undefined} style={[styles.exploreDescription, isCompact && styles.sectionDescriptionPhone]}>Consulta el mapa y encuentra la mejor ruta para tu destino.</Text>
               </View>
             </View>
             <View style={[styles.mapSearchBarWrap, isMapCompact && styles.mapSearchBarWrapPhone]}>
@@ -894,6 +947,9 @@ function WebHomeScreen() {
                   setOriginName(name);
                   setOriginCoords(coords);
                   setIsCustomSearchActive(true);
+                  if (destination) {
+                    void saveRecentSearch(name, destination);
+                  }
                   if (destCoords) {
                     const recs = getRecommendedRoutes(coords, destCoords);
                     if (recs.length > 0) {
@@ -907,6 +963,9 @@ function WebHomeScreen() {
                   setDestination(name);
                   setDestCoords(coords);
                   setIsCustomSearchActive(true);
+                  if (originName) {
+                    void saveRecentSearch(originName, name);
+                  }
                   if (originCoords) {
                     const recs = getRecommendedRoutes(originCoords, coords);
                     if (recs.length > 0) {
@@ -938,10 +997,6 @@ function WebHomeScreen() {
               </View>
               <SelectedRouteCard
                 isCompact={isMapCompact}
-                recommendedRoutes={recommendedRoutesList.filter(
-                  (route) => route.code !== activeRouteInfo.code
-                )}
-                onSelectRecommendedRoute={(code) => handleSelectRoute(code, originCoords, destCoords, true)}
                 onClearMap={handleClearMap}
                 isTripStarted={isTripStarted}
                 onToggleTrip={() => setIsTripStarted((started) => !started)}
@@ -949,6 +1004,7 @@ function WebHomeScreen() {
                 code={activeRouteInfo.code}
                 duration={routeStats.durationText}
                 distanceText={routeStats.distanceText}
+                routeStops={routeStops}
                 originName={originName || 'Ninguno'}
                 destinationName={destination || 'Ninguno'}
                 schedule={(() => {
@@ -979,70 +1035,55 @@ function WebHomeScreen() {
             <View style={styles.sectionHeaderCopy}>
               <View style={styles.routesHeadingRow}>
                 <View style={styles.routesHeadingIcon}><Icon name="bus" color={colors.blueDark} size={31} /></View>
-                <View>
-                  <Text style={[styles.routesSectionTitle, isCompact && styles.sectionTitlePhone]}>Rutas más utilizadas</Text>
-                  <Text style={[styles.routesSectionDescription, isCompact && styles.sectionDescriptionPhone]}>Las líneas con mayor demanda en Tunja durante esta semana.</Text>
+                <View style={styles.routesHeadingCopy}>
+                  <Text numberOfLines={2} style={[styles.routesSectionTitle, isCompact && styles.sectionTitlePhone]}>{showAlternativeRoutes ? 'Rutas alternativas disponibles' : 'Rutas más utilizadas'}</Text>
+                  <Text numberOfLines={isCompact ? 2 : undefined} style={[styles.routesSectionDescription, isCompact && styles.sectionDescriptionPhone]}>{showAlternativeRoutes ? 'Otras rutas que también pasan cerca de tu origen y destino.' : 'Las líneas con mayor demanda en Tunja durante esta semana.'}</Text>
                 </View>
               </View>
             </View>
-            {!isCompact && <Pressable onPress={() => router.push('/routes' as never)}><Text style={styles.sectionLink}>Ver todas  ›</Text></Pressable>}
+            {!isCompact && !showAlternativeRoutes && <Pressable onPress={() => router.push('/routes' as never)}><Text style={styles.sectionLink}>Ver todas  ›</Text></Pressable>}
           </View>
 
-          <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
-            <RouteCard
-              code="K-07"
-              title="Arboleda – Terminal"
-              description="Despacho Arboleda → Terminal de Transportes"
-              duration="18 min"
-              frequency="cada 8 min"
-              stops="12 paradas"
-              tone="blue"
-              isCompact={isCompact}
-              onPress={() => handleSelectRoute('R-07')}
-            />
-            <RouteCard
-              code="K-01"
-              title="Terminal – Norte"
-              description="Terminal de Transportes → Barrio Los Muiscas"
-              duration="31 min"
-              frequency="cada 9 min"
-              stops="19 paradas"
-              tone="green"
-              isCompact={isCompact}
-              onPress={() => handleSelectRoute('R-01')}
-            />
-            <RouteCard
-              code="K-11"
-              title="Sur – Hospital"
-              description="Villa Universitaria → Hospital San Rafael"
-              duration="27 min"
-              frequency="cada 12 min"
-              stops="16 paradas"
-              tone="gold"
-              isCompact={isCompact}
-              onPress={() => handleSelectRoute('R-11')}
-            />
-            <RouteCard
-              code="K-15"
-              title="Pozo de Donato"
-              description="Plaza Real → Pozo de Donato"
-              duration="18 min"
-              frequency="cada 15 min"
-              stops="12 paradas"
-              tone="coral"
-              isCompact={isCompact}
-              onPress={() => handleSelectRoute('R-15')}
-            />
-          </View>
+          {showAlternativeRoutes ? (
+            <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
+              {alternativeRoutes.length > 0 ? alternativeRoutes.slice(0, 4).map((route, index) => (
+                <RouteCard
+                  key={`${route.code}-${index}`}
+                  code={route.code}
+                  title={route.title}
+                  description={`A ${(route.originDist * 1000).toFixed(0)} m del origen · ${(route.destDist * 1000).toFixed(0)} m del destino`}
+                  duration={`${Math.round(route.dist * 1000)} m`}
+                  frequency=""
+                  tone={(['blue', 'green', 'gold', 'coral'] as const)[index % 4]}
+                  isCompact={isCompact}
+                  onPress={() => handleSelectRoute(route.code, originCoords, destCoords, true)}
+                />
+              )) : <Text style={{ color: colors.muted, fontSize: 14, paddingVertical: 12 }}>No encontramos otra ruta cercana para este trayecto.</Text>}
+            </View>
+          ) : (
+            <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
+              <RouteCard code="K-07" title="Arboleda – Terminal" description="Despacho Arboleda → Terminal de Transportes" duration="18 min" frequency="cada 8 min" tone="blue" isCompact={isCompact} onPress={() => handleSelectRoute('R-07')} />
+              <RouteCard code="K-01" title="Terminal – Norte" description="Terminal de Transportes → Barrio Los Muiscas" duration="31 min" frequency="cada 9 min" tone="green" isCompact={isCompact} onPress={() => handleSelectRoute('R-01')} />
+              <RouteCard code="K-11" title="Sur – Hospital" description="Villa Universitaria → Hospital San Rafael" duration="27 min" frequency="cada 12 min" tone="gold" isCompact={isCompact} onPress={() => handleSelectRoute('R-11')} />
+              <RouteCard code="K-15" title="Pozo de Donato" description="Plaza Real → Pozo de Donato" duration="18 min" frequency="cada 15 min" tone="coral" isCompact={isCompact} onPress={() => handleSelectRoute('R-15')} />
+            </View>
+          )}
 
-          {isCompact && <Pressable onPress={() => router.push('/routes' as never)}><Text style={[styles.sectionLink, styles.sectionLinkBelowPhone]}>Ver todas las rutas  ›</Text></Pressable>}
+          {isCompact && !showAlternativeRoutes && <Pressable onPress={() => router.push('/routes' as never)}><Text style={[styles.sectionLink, styles.sectionLinkBelowPhone]}>Ver todas las rutas  ›</Text></Pressable>}
 
           <View onLayout={(event) => setInsightsOffset(event.nativeEvent.layout.y)}>
             <RouteInsights
               isCompact={isCompact}
               recentSearches={recentSearches}
-              onSelectRoute={(code) => handleSelectRoute(`R-${code.replace('R', '').padStart(2, '0')}`)}
               onSelectRecent={handleSearchRoute}
+              onSelectPlace={(place) => router.push({
+                pathname: '/',
+                params: {
+                  destLat: place.lat.toString(),
+                  destLng: place.lng.toString(),
+                  destName: place.name,
+                },
+              })}
             />
           </View>
         </View>

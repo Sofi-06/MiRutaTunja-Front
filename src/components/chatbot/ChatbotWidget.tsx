@@ -30,7 +30,7 @@ export default function ChatbotWidget({ isCompact = false }: Readonly<{ isCompac
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: '¡Hola! Soy RutaBot 🤖, tu asistente de transporte para Tunja. Próximamente podrás preguntarme en tiempo real sobre rutas, tarifas y paraderos.',
+      text: '¡Hola! Soy RutaBot 🤖, tu asistente de transporte para Tunja. Próximamente podrás preguntarme en tiempo real sobre rutas, tarifas y recorridos.',
       sender: 'bot',
     },
   ]);

@@ -48,10 +48,10 @@ export const toggleFavorite = async (favorite: Favorite) => {
   return next;
 };
 
-export const getRecentSearches = () => read<RecentSearch>(recentKey);
+export const getRecentSearches = async () => (await read<RecentSearch>(recentKey)).slice(0, 5);
 export const addRecentSearch = async (origin: string, destination: string) => {
   const current = await getRecentSearches();
-  const next = [{ origin, destination, createdAt: Date.now() }, ...current.filter((item) => item.origin !== origin || item.destination !== destination)].slice(0, 8);
+  const next = [{ origin, destination, createdAt: Date.now() }, ...current.filter((item) => item.origin !== origin || item.destination !== destination)].slice(0, 5);
   await write(recentKey, next);
   return next;
 };

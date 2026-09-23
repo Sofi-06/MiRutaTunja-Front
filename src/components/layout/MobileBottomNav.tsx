@@ -19,7 +19,7 @@ export default function MobileBottomNav() {
     {items.map((item) => {
       const active = item.label === 'Rutas' ? pathname.startsWith('/routes') : pathname === item.href;
       const handlePress = () => item.label === 'RutaBot'
-        ? Alert.alert('RutaBot', 'Muy pronto podrás consultar rutas, paraderos y tarifas con el asistente virtual.')
+        ? Alert.alert('RutaBot', 'Muy pronto podrás consultar rutas, recorridos y tarifas con el asistente virtual.')
         : router.push(item.href as never);
       return <Pressable key={item.label} onPress={handlePress} style={styles.item}><Icon name={item.icon} color={active ? '#3f719b' : '#728092'} size={23} /><Text style={active ? styles.activeText : styles.text}>{item.label}</Text></Pressable>;
     })}

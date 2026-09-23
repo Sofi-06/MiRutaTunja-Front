@@ -12,20 +12,20 @@ const sampleRecentSearches = [
 ] as const;
 
 const popularPlaces = [
-  { title: 'Centro histórico', icon: 'location' as const, color: '#e5a81c', route: 'R15' },
-  { title: 'Terminal de buses', icon: 'bus' as const, color: '#4b9c61', route: 'R7' },
-  { title: 'Universidades', icon: 'star' as const, color: '#d2a313', route: 'R11' },
-  { title: 'Lugares turísticos', icon: 'target' as const, color: '#8c54ad', route: null },
+  { title: 'Plaza de Bolívar', icon: 'location' as const, color: '#e5a81c', lat: 5.5324627, lng: -73.3615504 },
+  { title: 'Terminal de Transportes', icon: 'bus' as const, color: '#4b9c61', lat: 5.530809, lng: -73.34496 },
+  { title: 'Universidad UPTC', icon: 'star' as const, color: '#d2a313', lat: 5.5562, lng: -73.3516 },
+  { title: 'Centro Comercial Unicentro', icon: 'target' as const, color: '#8c54ad', lat: 5.5458, lng: -73.3519 },
 ] as const;
 
 type RouteInsightsProps = Readonly<{
   isCompact?: boolean;
   recentSearches?: RecentSearch[];
-  onSelectRoute?: (code: string) => void;
+  onSelectPlace?: (place: { name: string; lat: number; lng: number }) => void;
   onSelectRecent?: (origin: string, destination: string) => void;
 }>;
 
-export default function RouteInsights({ isCompact = false, recentSearches = [], onSelectRoute, onSelectRecent }: RouteInsightsProps) {
+export default function RouteInsights({ isCompact = false, recentSearches = [], onSelectRecent, onSelectPlace }: RouteInsightsProps) {
   const router = useRouter();
   const visibleSearches = recentSearches.length > 0
     ? recentSearches.map(({ origin, destination, createdAt }) => [origin, destination, new Date(createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })] as const)
@@ -40,16 +40,16 @@ export default function RouteInsights({ isCompact = false, recentSearches = [], 
               <Icon name="location" color="#e4a91a" size={20} />
               <Text style={[styles.insightTitle, isCompact && styles.insightTitlePhone]}>Lugares populares en Tunja</Text>
             </View>
-            <Text style={styles.insightDescription}>Descubre los sitios más visitados y llega fácilmente.</Text>
+            <Text style={styles.insightDescription}>Los destinos más consultados para moverte por la ciudad.</Text>
           </View>
           {!isCompact && <Pressable onPress={() => router.push('/explore')}><Text style={styles.insightLink}>Ver todas  →</Text></Pressable>}
         </View>
-        <View style={styles.popularPlacesGrid}>
+        <View style={[styles.popularPlacesGrid, isCompact && styles.popularPlacesGridPhone]}>
           {popularPlaces.map((place) => (
             <Pressable
               key={place.title}
-              onPress={() => place.route ? onSelectRoute?.(place.route) : router.push('/explore')}
-              style={styles.popularPlaceCard}
+              onPress={() => onSelectPlace?.({ name: place.title, lat: place.lat, lng: place.lng })}
+              style={[styles.popularPlaceCard, isCompact && styles.popularPlaceCardPhone]}
             >
               <Image source={require('@/assets/images/tunja.jpg')} resizeMode="cover" style={styles.popularPlaceImage} />
               <View style={styles.popularPlaceFooter}>
@@ -68,7 +68,6 @@ export default function RouteInsights({ isCompact = false, recentSearches = [], 
             <Icon name="history" color="#4b9f70" size={20} />
             <Text style={[styles.insightTitle, isCompact && styles.insightTitlePhone]}>Tus rutas recientes</Text>
           </View>
-          {!isCompact && <Text style={styles.insightLink}>Ver todas  →</Text>}
         </View>
         <View style={[styles.recentList, isCompact && styles.recentListPhone]}>
           {visibleSearches.map(([origin, destination, date]) => (

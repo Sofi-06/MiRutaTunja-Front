@@ -12,7 +12,6 @@ import { useRouter } from 'expo-router';
 
 import PageScaffold from '@/components/layout/PageScaffold';
 import Icon from '@/components/ui/Icon';
-import Footer from '@/components/footer/Footer';
 
 export type LegalTab = 'privacy' | 'terms';
 
@@ -57,7 +56,7 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
   };
 
   return (
-    <PageScaffold>
+    <PageScaffold footerInternal={false}>
       <View style={[styles.container, isCompact && styles.containerCompact]}>
         {/* Header Hero */}
         <View style={styles.heroSection}>
@@ -158,7 +157,7 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
               <View style={styles.summaryCardContent}>
                 <Text style={styles.summaryCardHeading}>Ubicación Transitoria</Text>
                 <Text style={styles.summaryCardDesc}>
-                  Tu GPS se utiliza exclusivamente en el navegador para calcular rutas y paraderos cercanos en Tunja. No rastreamos tu historial fuera de la consulta.
+                  Tu GPS se utiliza exclusivamente en el navegador para calcular rutas y recorridos cercanos en Tunja. No rastreamos tu historial fuera de la consulta.
                 </Text>
               </View>
             </View>
@@ -246,7 +245,7 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
                   <View style={styles.detailContent}>
                     <Text style={styles.detailTitle}>Ubicación Geográfica (GPS / Dirección IP)</Text>
                     <Text style={styles.detailText}>
-                      Con la única finalidad de ubicar al usuario en el mapa interactivo para mostrar las rutas de transporte público colectivo, paraderos e itinerarios más cercanos a su posición actual en Tunja.
+                      Con la única finalidad de ubicar al usuario en el mapa interactivo para mostrar las rutas de transporte público colectivo e itinerarios cercanos a su posición actual en Tunja.
                     </Text>
                   </View>
                 </View>
@@ -317,7 +316,7 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
                 <View style={styles.bulletRow}>
                   <Text style={styles.bulletDot}>•</Text>
                   <Text style={styles.bulletText}>
-                    Guardar preferencias de visualización del mapa, capas de paraderos, rutas preferidas y configuración de interfaz.
+                    Guardar preferencias de visualización del mapa, rutas preferidas y configuración de interfaz.
                   </Text>
                 </View>
                 <View style={styles.bulletRow}>
@@ -420,7 +419,7 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
                 <Text style={styles.sectionHeading}>Naturaleza del Servicio</Text>
               </View>
               <Text style={styles.paragraph}>
-                MiRutaTunja es un servicio web informativo, pedagógico y cívico diseñado para facilitar la visualización, consulta de itinerarios, paraderos, tiempos estimados y trazados de rutas de transporte público colectivo en la ciudad de Tunja, Boyacá.
+                MiRutaTunja es un servicio web informativo, pedagógico y cívico diseñado para facilitar la visualización, consulta de itinerarios, tiempos estimados y trazados de rutas de transporte público colectivo en la ciudad de Tunja, Boyacá.
               </Text>
               <View style={styles.noticeBox}>
                 <Icon name="info" size={18} color="#d8957d" />
@@ -446,7 +445,7 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
                   <View style={styles.detailContent}>
                     <Text style={styles.detailTitle}>Exactitud y Actualización de la Información</Text>
                     <Text style={styles.detailText}>
-                      Si bien se ejecutan revisiones continuas para mantener actualizados los recorridos, paraderos y frecuencias, la Plataforma no puede garantizar que la información esté totalmente libre de errores, variaciones temporales por desvíos viales, obras públicas, festividades o decisiones operativas imprevistas de las empresas transportadoras o autoridades de tránsito.
+                      Si bien se ejecutan revisiones continuas para mantener actualizados los recorridos y frecuencias, la Plataforma no puede garantizar que la información esté totalmente libre de errores, variaciones temporales por desvíos viales, obras públicas, festividades o decisiones operativas imprevistas de las empresas transportadoras o autoridades de tránsito.
                     </Text>
                   </View>
                 </View>
@@ -508,8 +507,6 @@ export default function LegalView({ initialTab = 'privacy' }: LegalViewProps) {
         </View>
       </View>
 
-      {/* Global Footer */}
-      <Footer isCompact={isCompact} />
     </PageScaffold>
   );
 }

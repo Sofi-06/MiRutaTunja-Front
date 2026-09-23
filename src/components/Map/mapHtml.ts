@@ -361,6 +361,27 @@ export const mapHtml = `
           projection: 'globe' // Efecto globo 3D premium
         });
 
+        // La rueda normal desplaza la página principal; Ctrl/Cmd + rueda conserva el zoom del mapa.
+          map.scrollZoom.disable();
+          map.getCanvas().addEventListener('wheel', function(event) {
+            if (event.ctrlKey || event.metaKey) {
+              event.preventDefault();
+              event.stopPropagation();
+              map.zoomTo(map.getZoom() - (event.deltaY * 0.002), { duration: 0 });
+              return;
+            }
+
+            // El iframe captura la rueda; cancelamos su scroll interno y lo
+            // reenviamos a la pagina principal para no bloquear la navegacion.
+            event.preventDefault();
+            event.stopPropagation();
+
+            window.parent.postMessage({
+              type: 'MAP_SCROLL',
+              deltaY: event.deltaY
+            }, '*');
+        }, { passive: false });
+
         // Controles de navegación de Mapbox
         map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 

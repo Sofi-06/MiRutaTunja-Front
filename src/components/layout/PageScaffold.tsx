@@ -10,7 +10,11 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import Icon from '@/components/ui/Icon';
 import { colors } from '@/styles/home.styles';
 
-type PageScaffoldProps = Readonly<{ children: ReactNode }>;
+type PageScaffoldProps = Readonly<{
+  children: ReactNode;
+  footerArtwork?: boolean;
+  footerInternal?: boolean;
+}>;
 
 function NativeMobileHeader() {
   const router = useRouter();
@@ -40,7 +44,7 @@ function NativeMobileHeader() {
   );
 }
 
-export default function PageScaffold({ children }: PageScaffoldProps) {
+export default function PageScaffold({ children, footerArtwork = true, footerInternal = true }: PageScaffoldProps) {
   const { width } = useWindowDimensions();
   const isNative = Platform.OS !== 'web';
 
@@ -51,7 +55,7 @@ export default function PageScaffold({ children }: PageScaffoldProps) {
       </SafeAreaView>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {children}
-        {!isNative && <Footer isCompact={width < 760} internal />}
+        {!isNative && <Footer isCompact={width < 760} internal={footerInternal} showArtwork={footerArtwork} />}
       </ScrollView>
       {isNative && <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}><MobileBottomNav /></SafeAreaView>}
     </View>

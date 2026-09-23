@@ -133,6 +133,7 @@ export default function SearchBar({
               placeholderTextColor={colors.muted}
               style={{ 
                 flex: 1, 
+                minWidth: 0,
                 height: 40,
                 fontSize: 14,
                 color: colors.ink,
@@ -186,6 +187,7 @@ export default function SearchBar({
               placeholderTextColor={colors.muted}
               style={{ 
                 flex: 1, 
+                minWidth: 0,
                 height: 40,
                 fontSize: 14,
                 color: colors.ink,

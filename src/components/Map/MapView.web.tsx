@@ -27,6 +27,37 @@ export default function MapView({
   onSelectDestination,
 }: MapViewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const pendingScrollRef = useRef(0);
+  const scrollFrameRef = useRef<number | null>(null);
+
+  const scrollPageContainer = (deltaY: number) => {
+    // El mapa solo debe transferir desplazamiento vertical. El deltaX del
+    // trackpad podía mover horizontalmente toda la pantalla y desalinear la UI.
+    pendingScrollRef.current += deltaY;
+
+    if (scrollFrameRef.current !== null) return;
+
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      const queuedDeltaY = pendingScrollRef.current;
+      pendingScrollRef.current = 0;
+      scrollFrameRef.current = null;
+
+      let element = iframeRef.current?.parentElement || null;
+
+      while (element) {
+        const styles = window.getComputedStyle(element);
+        const canScroll = /(auto|scroll)/.test(styles.overflowY)
+          && element.scrollHeight > element.clientHeight + 1;
+        if (canScroll) {
+          element.scrollBy({ top: queuedDeltaY, left: 0, behavior: 'auto' });
+          return;
+        }
+        element = element.parentElement;
+      }
+
+      window.scrollBy({ top: queuedDeltaY, left: 0, behavior: 'auto' });
+    });
+  };
 
   useEffect(() => {
     if (iframeRef.current?.contentWindow) {
@@ -60,6 +91,8 @@ export default function MapView({
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+
       let data = event.data;
       if (typeof data === 'string') {
         try { data = JSON.parse(data); } catch(e) {}
@@ -75,6 +108,8 @@ export default function MapView({
           } else if (onMapClick) {
             onMapClick(data.lat, data.lng);
           }
+        } else if (data.type === 'MAP_SCROLL') {
+          scrollPageContainer(Number(data.deltaY) || 0);
         }
       }
     };
@@ -82,6 +117,11 @@ export default function MapView({
     window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('message', handleMessage);
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
+      pendingScrollRef.current = 0;
     };
   }, [onMapClick, onSelectOrigin, onSelectDestination]);
 
