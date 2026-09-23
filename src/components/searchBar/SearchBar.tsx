@@ -42,30 +42,45 @@ export default function SearchBar({
   const [localDestination, setLocalDestination] = useState(destination);
   const [focusedField, setFocusedField] = useState<'origin' | 'destination' | null>(null);
 
-  // Sincronizar desde propiedades externas únicamente cuando el campo NO está enfocado por el usuario
+  // Refs (no estado) que marcan si el usuario editó el campo después de la última
+  // sincronización con las props externas. A diferencia de `focusedField`, no dependen
+  // del orden exacto de los eventos onBlur/onPress del navegador: onBlur se dispara
+  // antes que el onPress de una sugerencia o de "Calcular Ruta", así que depender solo
+  // del foco dejaba una ventana en la que una prop nueva podía pisar lo que el usuario
+  // acababa de escribir o seleccionar.
+  const userEditedOriginRef = useRef(false);
+  const userEditedDestinationRef = useRef(false);
+
+  // Sincronizar desde propiedades externas solo si el usuario no dejó una edición pendiente
   useEffect(() => {
-    if (focusedField !== 'origin' && origin !== localOrigin) {
+    if (!userEditedOriginRef.current && origin !== localOrigin) {
       setLocalOrigin(origin);
     }
-  }, [origin, focusedField]);
+  }, [origin, localOrigin]);
 
   useEffect(() => {
-    if (focusedField !== 'destination' && destination !== localDestination) {
+    if (!userEditedDestinationRef.current && destination !== localDestination) {
       setLocalDestination(destination);
     }
-  }, [destination, focusedField]);
+  }, [destination, localDestination]);
 
   // Estados para autocompletado
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
   const [activeField, setActiveField] = useState<'origin' | 'destination' | null>(null);
   const timeoutRef = useRef<any>(null);
+  // Recuerda el último texto por el que ya se pidieron sugerencias, para no
+  // relanzar la búsqueda de red al simple reenfocar un campo sin cambios.
+  const lastSearchedOriginRef = useRef<string>('');
+  const lastSearchedDestinationRef = useRef<string>('');
 
   const handleTextChange = (text: string, field: 'origin' | 'destination') => {
     if (field === 'origin') {
       setLocalOrigin(text);
+      userEditedOriginRef.current = true;
       onOriginChange(text);
     } else {
       setLocalDestination(text);
+      userEditedDestinationRef.current = true;
       onDestinationChange(text);
     }
 
@@ -84,6 +99,11 @@ export default function SearchBar({
     timeoutRef.current = setTimeout(async () => {
       console.log(`SearchBar: Debounce triggered for ${field}: "${text}"`);
       const results = await searchPlaces(text);
+      if (field === 'origin') {
+        lastSearchedOriginRef.current = text;
+      } else {
+        lastSearchedDestinationRef.current = text;
+      }
       setSuggestions(results.filter((place): place is PlaceResult => Boolean(place?.name && Number.isFinite(place.lat) && Number.isFinite(place.lng))));
     }, 350);
   };
@@ -91,12 +111,14 @@ export default function SearchBar({
   const handleSelectSuggestion = (place: PlaceResult) => {
     if (activeField === 'origin') {
       setLocalOrigin(place.name);
+      userEditedOriginRef.current = false;
       onOriginChange(place.name);
       if (onOriginSelect) {
         onOriginSelect(place.name, { lat: place.lat, lng: place.lng });
       }
     } else if (activeField === 'destination') {
       setLocalDestination(place.name);
+      userEditedDestinationRef.current = false;
       onDestinationChange(place.name);
       if (onDestinationSelect) {
         onDestinationSelect(place.name, { lat: place.lat, lng: place.lng });
@@ -119,14 +141,21 @@ export default function SearchBar({
               onFocus={() => {
                 setFocusedField('origin');
                 if (localOrigin.trim()) {
-                  setActiveField('origin');
-                  handleTextChange(localOrigin, 'origin');
+                  // Si ya se buscó este mismo texto, solo reabre el dropdown existente
+                  // en vez de relanzar la búsqueda (evita carreras con una respuesta lenta).
+                  if (localOrigin === lastSearchedOriginRef.current) {
+                    setActiveField('origin');
+                  } else {
+                    handleTextChange(localOrigin, 'origin');
+                  }
                 }
               }}
               onBlur={() => {
                 setFocusedField(null);
               }}
               onSubmitEditing={() => {
+                userEditedOriginRef.current = false;
+                userEditedDestinationRef.current = false;
                 if (onSearchBoth) onSearchBoth(localOrigin, localDestination);
               }}
               placeholder="¿De dónde sales? (ej: UPTC, Plaza de Bolívar...)"
@@ -172,14 +201,19 @@ export default function SearchBar({
               onFocus={() => {
                 setFocusedField('destination');
                 if (localDestination.trim()) {
-                  setActiveField('destination');
-                  handleTextChange(localDestination, 'destination');
+                  if (localDestination === lastSearchedDestinationRef.current) {
+                    setActiveField('destination');
+                  } else {
+                    handleTextChange(localDestination, 'destination');
+                  }
                 }
               }}
               onBlur={() => {
                 setFocusedField(null);
               }}
               onSubmitEditing={() => {
+                userEditedOriginRef.current = false;
+                userEditedDestinationRef.current = false;
                 if (onSearchBoth) onSearchBoth(localOrigin, localDestination);
               }}
               placeholder="¿A dónde quieres ir? (ej: Terminal, Hospital...)"
@@ -279,8 +313,12 @@ export default function SearchBar({
             <Icon name="gps" color={colors.blue} size={17} />
             <Text style={styles.searchLocationActionText}>Usar mi ubicación</Text>
           </Pressable>
-          <Pressable 
-            onPress={() => onSearchBoth && onSearchBoth(localOrigin, localDestination)} 
+          <Pressable
+            onPress={() => {
+              userEditedOriginRef.current = false;
+              userEditedDestinationRef.current = false;
+              onSearchBoth && onSearchBoth(localOrigin, localDestination);
+            }}
             style={[styles.searchButton, { position: 'relative', right: 0, height: 38, paddingHorizontal: 14 }]}
           >
             <Text style={styles.searchButtonText}>Calcular Ruta</Text>
