@@ -8,7 +8,6 @@ import {
   Text,
   useWindowDimensions,
   View,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -23,6 +22,7 @@ import RouteCard from '@/components/routeCard/RouteCard';
 import RouteInsights from '@/components/routeCard/RouteInsights';
 import SearchBar from '@/components/searchBar/SearchBar';
 import Icon from '@/components/ui/Icon';
+import Toast, { ToastData, ToastVariant } from '@/components/ui/Toast';
 import MobileHome from '@/components/mobile/MobileHome';
 import { colors, styles } from '@/styles/home.styles';
 import { routesRegistry } from '@/components/Map/routesRegistry';
@@ -34,6 +34,28 @@ import { addRecentSearch, getRecentSearches, RecentSearch } from '@/services/loc
 export default function HomeScreen() {
   return Platform.OS === 'web' ? <WebHomeScreen /> : <MobileHome />;
 }
+
+// Origen de respaldo, usado únicamente cuando la geolocalización real falla o el permiso es denegado.
+const DEFAULT_ORIGIN = { lat: 5.5324627, lng: -73.3615504, name: 'Plaza de Bolívar' };
+
+// Resuelve la ubicación GPS actual del dispositivo, compartida entre el botón manual
+// y el intento silencioso al iniciar la app.
+type LocationResult = { lat: number; lng: number } | 'denied' | null;
+const resolveCurrentLocation = async (): Promise<LocationResult> => {
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      return 'denied';
+    }
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    return { lat: location.coords.latitude, lng: location.coords.longitude };
+  } catch (error) {
+    console.error('Error obteniendo ubicación actual:', error);
+    return null;
+  }
+};
 
 const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
   const dLat = lat1 - lat2;
@@ -146,11 +168,10 @@ function WebHomeScreen() {
   };
 
   // Estados para cálculo de rutas dinámicas
-  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>({
-    lat: 5.5324627, // Plaza de Bolívar por defecto
-    lng: -73.3615504,
-  });
-  const [originName, setOriginName] = useState('Plaza de Bolívar');
+  // El origen inicia vacío: se completa con la ubicación GPS real (ver efecto de arranque más abajo)
+  // y solo cae a Plaza de Bolívar si la geolocalización falla o el permiso es denegado.
+  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [originName, setOriginName] = useState('');
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [pickMode, setPickMode] = useState<'ORIGIN' | 'DEST' | null>(null);
   const [calculatedRoute, setCalculatedRoute] = useState<any | undefined>(undefined);
@@ -169,9 +190,25 @@ function WebHomeScreen() {
   }>({
     code: 'PERS',
     title: 'Selecciona una ruta o destino',
-    originName: 'Plaza de Bolívar',
+    originName: 'Ninguno',
     destinationName: 'Ninguno',
   });
+
+  // Aviso no bloqueante en pantalla (reemplaza Alert.alert, que en web abre un
+  // window.alert/confirm bloqueante que puede robar el foco y resetear el scroll).
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimeoutRef = useRef<any>(null);
+  const showToast = (variant: ToastVariant, title: string, message?: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ variant, title, message });
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 3500);
+  };
+
+  // Se incrementa únicamente ante una confirmación explícita del usuario (Calcular Ruta,
+  // click en el mapa, elegir una ruta/recomendación) — dispara el cálculo de ruta contra
+  // el backend sin que el simple hecho de elegir una sugerencia de origen/destino lo haga.
+  const [routeRequestKey, setRouteRequestKey] = useState(0);
+  const confirmRouteRequest = () => setRouteRequestKey((k) => k + 1);
 
   // Estados para controlar visualización de Ida y Vuelta en las rutas
   const [showIda, setShowIda] = useState(true);
@@ -213,7 +250,8 @@ function WebHomeScreen() {
   // Determinar si la ruta seleccionada proviene del registro local
   const localRouteData = activeRouteKey ? routesRegistry[activeRouteKey as keyof typeof routesRegistry] : null;
 
-  // Obtener colores únicos de los trazos de la ruta activa para separar Ida y Vuelta
+  // Obtener colores únicos de los trazos de la ruta activa para separar Ida y Vuelta.
+  // Memoizado: solo depende de qué ruta local está activa, no de cada tecla escrita en el buscador.
   const uniqueColors = useMemo(() => {
     if (!localRouteData?.path?.features) return [];
     const colorsSet = new Set<string>();
@@ -227,56 +265,66 @@ function WebHomeScreen() {
 
   const hasMultipleDirections = uniqueColors.length > 1;
 
-  // Ruta filtrada derivada para el mapa
-  const filteredRoute = useMemo(() => localRouteData
-    ? (() => {
-        const segments: any[] = [];
-        localRouteData.path.features.forEach((feature: any) => {
-          if (feature.geometry && feature.geometry.type === 'LineString') {
-            const originalColor = feature.properties?.stroke?.toLowerCase();
-            
-            let shouldShow = true;
-            let displayColor = '#8b5cf6'; // Morado por defecto
+  // Ruta filtrada derivada para el mapa. Memoizado por la misma razón: recorre todas las
+  // coordenadas de la ruta activa y no debe recalcularse en cada cambio de texto del buscador.
+  const filteredRoute = useMemo(() => {
+    if (!localRouteData) return calculatedRoute;
 
-            if (hasMultipleDirections && originalColor) {
-              const colorIndex = uniqueColors.indexOf(originalColor);
-              if (colorIndex === 0) {
-                // Sentido 1 (Ida) - morado
-                shouldShow = showIda;
-                displayColor = '#8b5cf6';
-              } else {
-                // Sentido 2 (Vuelta) - verde
-                shouldShow = showVuelta;
-                displayColor = '#10b981';
-              }
-            } else {
-              // Si tiene un único trazo, se rige por si está activo alguno de los sentidos
-              shouldShow = showIda || showVuelta;
-              displayColor = '#8b5cf6';
-            }
+    const segments: any[] = [];
+    localRouteData.path.features.forEach((feature: any) => {
+      if (feature.geometry && feature.geometry.type === 'LineString') {
+        const originalColor = feature.properties?.stroke?.toLowerCase();
 
-            if (shouldShow) {
-              segments.push({
-                path: feature.geometry.coordinates,
-                color: displayColor,
-                originalColor: feature.properties?.stroke || originalColor || displayColor,
-                name: feature.properties?.name || 'Vía',
-                properties: feature.properties || {},
-              });
-            }
+        let shouldShow = true;
+        let displayColor = '#8b5cf6'; // Morado por defecto
+
+        if (hasMultipleDirections && originalColor) {
+          const colorIndex = uniqueColors.indexOf(originalColor);
+          if (colorIndex === 0) {
+            // Sentido 1 (Ida) - morado
+            shouldShow = showIda;
+            displayColor = '#8b5cf6';
+          } else {
+            // Sentido 2 (Vuelta) - verde
+            shouldShow = showVuelta;
+            displayColor = '#10b981';
           }
-        });
-        return segments;
-      })()
-    : calculatedRoute, [localRouteData, calculatedRoute, hasMultipleDirections, uniqueColors, showIda, showVuelta]);
+        } else {
+          // Si tiene un único trazo, se rige por si está activo alguno de los sentidos
+          shouldShow = showIda || showVuelta;
+          displayColor = '#8b5cf6';
+        }
 
-  // Calcular la lista de rutas recomendadas en tiempo de renderizado
-  const recommendedRoutesList = getRecommendedRoutes(originCoords, destCoords);
+        if (shouldShow) {
+          segments.push({
+            path: feature.geometry.coordinates,
+            color: displayColor,
+            originalColor: feature.properties?.stroke || originalColor || displayColor,
+            name: feature.properties?.name || 'Vía',
+            properties: feature.properties || {},
+          });
+        }
+      }
+    });
+    return segments;
+  }, [localRouteData, hasMultipleDirections, uniqueColors, showIda, showVuelta, calculatedRoute]);
+
+  // Calcular la lista de rutas recomendadas. Memoizado por coordenadas primitivas: es un
+  // recorrido pesado sobre TODAS las rutas registradas y no debe repetirse en cada tecla
+  // escrita en el buscador (antes se recalculaba en cada render y, con origen y destino ya
+  // fijados, era lo bastante costoso como para sentirse como si el input perdiera el foco).
+  const recommendedRoutesList = useMemo(
+    () => getRecommendedRoutes(originCoords, destCoords),
+    [originCoords?.lat, originCoords?.lng, destCoords?.lat, destCoords?.lng]
+  );
   const alternativeRoutes = recommendedRoutesList
     .filter((route) => route.code !== activeRouteInfo.code);
   const showAlternativeRoutes = Boolean((isCustomSearchActive || activeRouteKey) && destCoords && destination);
 
-  // Efecto para calcular ruta cuando cambie el origen, el destino o la ruta activa
+  // Efecto para calcular ruta contra el backend, disparado únicamente por una
+  // confirmación explícita del usuario (routeRequestKey), no por cada cambio de
+  // coordenadas — así elegir una sola sugerencia de origen/destino no recalcula
+  // la ruta ni interrumpe al usuario mientras sigue buscando.
   useEffect(() => {
     if (!originCoords || !destCoords) return;
 
@@ -336,58 +384,39 @@ function WebHomeScreen() {
     };
 
     fetchRoute();
-  }, [originCoords, destCoords, activeRouteKey]);
+    // Solo depende de routeRequestKey: se lee originCoords/destCoords/activeRouteKey
+    // vigentes al momento de la confirmación, pero no se re-ejecuta por su sola mutación.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeRequestKey]);
 
-  // Función para obtener la ubicación GPS actual del dispositivo
+  // Función para obtener la ubicación GPS actual del dispositivo (botón manual)
   const handleUseCurrentLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permiso denegado',
-          'Necesitamos permisos de ubicación para utilizar tu posición GPS actual.'
-        );
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const { latitude, longitude } = location.coords;
-      
-      // Actualizar origen con GPS actual
-      setOriginCoords({ lat: latitude, lng: longitude });
-      setOriginName('Mi ubicación actual');
-      
-      Alert.alert(
-        'Ubicación actualizada',
-        `Se ha fijado tu ubicación actual (${latitude.toFixed(4)}, ${longitude.toFixed(4)}) como origen.`
-      );
-    } catch (error) {
-      console.error('Error obteniendo ubicación actual:', error);
-      Alert.alert(
-        'Error',
-        'No se pudo obtener tu ubicación actual. Asegúrate de tener el GPS activado.'
-      );
+    const result = await resolveCurrentLocation();
+    if (result === 'denied') {
+      showToast('error', 'Permiso denegado', 'Necesitamos permisos de ubicación para utilizar tu posición GPS actual.');
+      return;
     }
+    if (!result) {
+      showToast('error', 'Error', 'No se pudo obtener tu ubicación actual. Asegúrate de tener el GPS activado.');
+      return;
+    }
+
+    setOriginCoords(result);
+    setOriginName('Mi ubicación actual');
+    showToast('success', 'Ubicación actualizada', `Se ha fijado tu ubicación actual (${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}) como origen.`);
   };
 
-  // Obtener ubicación GPS actual al iniciar la aplicación de forma silenciosa
+  // Obtener ubicación GPS actual al iniciar la aplicación de forma silenciosa;
+  // si falla o el permiso es denegado, cae a Plaza de Bolívar como respaldo explícito.
   useEffect(() => {
     const fetchCurrentLocationSilently = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          const { latitude, longitude } = location.coords;
-          setOriginCoords({ lat: latitude, lng: longitude });
-          setOriginName('Mi ubicación actual');
-        }
-      } catch (error) {
-        console.error('Error obteniendo ubicación actual al iniciar:', error);
+      const result = await resolveCurrentLocation();
+      if (result && result !== 'denied') {
+        setOriginCoords(result);
+        setOriginName('Mi ubicación actual');
+      } else {
+        setOriginCoords({ lat: DEFAULT_ORIGIN.lat, lng: DEFAULT_ORIGIN.lng });
+        setOriginName(DEFAULT_ORIGIN.name);
       }
     };
 
@@ -421,6 +450,7 @@ function WebHomeScreen() {
         const bestRoute = recs[0];
         handleSelectRoute(bestRoute.code, clickOriginCoords, destCoords, true);
       } else {
+        confirmRouteRequest();
         setActiveRouteInfo({
           code: 'PERS',
           title: 'Ruta personalizada',
@@ -465,6 +495,7 @@ function WebHomeScreen() {
         const bestRoute = recs[0];
         handleSelectRoute(bestRoute.code, originCoords, clickDestCoords, true);
       } else {
+        confirmRouteRequest();
         setActiveRouteInfo({
           code: 'PERS',
           title: 'Ruta personalizada',
@@ -487,23 +518,38 @@ function WebHomeScreen() {
     return await serviceGeocodeLocation(query);
   };
 
+  // Resuelve un punto a partir del texto del buscador: si el texto no cambió desde la
+  // última vez (p. ej. "Mi ubicación actual" fijada por GPS, o una dirección obtenida por
+  // reverse-geocoding al hacer click en el mapa), reutiliza las coordenadas ya conocidas
+  // en vez de volver a geocodificar un texto que no es un lugar buscable por nombre.
+  const resolvePoint = async (
+    query: string,
+    knownName: string,
+    knownCoords: { lat: number; lng: number } | null
+  ): Promise<{ lat: number; lng: number; name: string } | null> => {
+    if (knownCoords && query.trim() === knownName.trim()) {
+      return { lat: knownCoords.lat, lng: knownCoords.lng, name: knownName };
+    }
+    return geocodeLocation(query);
+  };
+
   // Función para buscar ambos puntos e inyectar origen/destino en el mapa
   const handleSearchRoute = async (originQuery: string, destQuery: string) => {
     if (!originQuery.trim() || !destQuery.trim()) {
-      Alert.alert('Campos vacíos', 'Por favor ingresa tanto el punto de partida como el destino.');
+      showToast('error', 'Campos vacíos', 'Por favor ingresa tanto el punto de partida como el destino.');
       return;
     }
 
-    // Geocodificar origen y destino
-    const originPlace = await geocodeLocation(originQuery);
-    const destPlace = await geocodeLocation(destQuery);
+    // Geocodificar origen y destino (o reutilizar coordenadas ya conocidas, ver resolvePoint)
+    const originPlace = await resolvePoint(originQuery, originName, originCoords);
+    const destPlace = await resolvePoint(destQuery, destination, destCoords);
 
     if (!originPlace) {
-      Alert.alert('Origen no encontrado', `No se pudo encontrar la ubicación de partida: "${originQuery}"`);
+      showToast('error', 'Origen no encontrado', `No se pudo encontrar la ubicación de partida: "${originQuery}"`);
       return;
     }
     if (!destPlace) {
-      Alert.alert('Destino no encontrado', `No se pudo encontrar la ubicación de destino: "${destQuery}"`);
+      showToast('error', 'Destino no encontrado', `No se pudo encontrar la ubicación de destino: "${destQuery}"`);
       return;
     }
 
@@ -524,6 +570,7 @@ function WebHomeScreen() {
       const bestRoute = recs[0];
       handleSelectRoute(bestRoute.code, oCoords, dCoords, true);
     } else {
+      confirmRouteRequest();
       setActiveRouteInfo({
         code: 'PERS',
         title: `Ruta de ${originPlace.name} a ${destPlace.name}`,
@@ -564,13 +611,17 @@ function WebHomeScreen() {
     overrideDest?: { lat: number; lng: number } | null,
     preventCoordsOverride = false
   ) => {
+    // handleSelectRoute solo se invoca desde acciones explícitas del usuario
+    // (Calcular Ruta, click en el mapa, elegir una ruta/recomendación), así que
+    // confirmamos aquí el recálculo de ruta contra el backend.
+    confirmRouteRequest();
     try {
       const match = routeCode.match(/R-?0*(\d+)/i);
       const key = match ? `R${match[1]}` : routeCode;
       const routeData = routesRegistry[key];
 
       if (!routeData) {
-        Alert.alert('Error', `No se encontró información para la ruta ${routeCode}`);
+        showToast('error', 'Error', `No se encontró información para la ruta ${routeCode}`);
         return;
       }
 
@@ -624,7 +675,7 @@ function WebHomeScreen() {
       });
 
       if (routeCoordinates.length === 0) {
-        Alert.alert('Error', `No se encontraron coordenadas válidas para la ruta ${routeCode}.`);
+        showToast('error', 'Error', `No se encontraron coordenadas válidas para la ruta ${routeCode}.`);
         return;
       }
 
@@ -780,11 +831,11 @@ function WebHomeScreen() {
         setDestination(name);
         setIsCustomSearchActive(true);
 
-        const currentOrigin = originCoords || { lat: 5.5324627, lng: -73.3615504 };
-        void saveRecentSearch(originName || 'Plaza de Bolívar', name);
+        const currentOrigin = originCoords || { lat: DEFAULT_ORIGIN.lat, lng: DEFAULT_ORIGIN.lng };
+        void saveRecentSearch(originName || DEFAULT_ORIGIN.name, name);
         if (!originCoords) {
           setOriginCoords(currentOrigin);
-          setOriginName('Plaza de Bolívar');
+          setOriginName(DEFAULT_ORIGIN.name);
         }
 
         const recs = getRecommendedRoutes(currentOrigin, clickDestCoords);
@@ -792,10 +843,11 @@ function WebHomeScreen() {
           const bestRoute = recs[0];
           handleSelectRoute(bestRoute.code, currentOrigin, clickDestCoords, true);
         } else {
+          confirmRouteRequest();
           setActiveRouteInfo({
             code: 'PERS',
             title: `Ruta a ${name}`,
-            originName: originName || 'Plaza de Bolívar',
+            originName: originName || DEFAULT_ORIGIN.name,
             destinationName: name,
           });
         }
@@ -944,17 +996,13 @@ function WebHomeScreen() {
                 origin={originName}
                 onOriginChange={setOriginName}
                 onOriginSelect={(name, coords) => {
+                  // Solo actualiza el punto elegido; el recálculo de ruta espera a que el
+                  // usuario confirme con "Calcular Ruta" para no interrumpir su búsqueda.
                   setOriginName(name);
                   setOriginCoords(coords);
                   setIsCustomSearchActive(true);
                   if (destination) {
                     void saveRecentSearch(name, destination);
-                  }
-                  if (destCoords) {
-                    const recs = getRecommendedRoutes(coords, destCoords);
-                    if (recs.length > 0) {
-                      handleSelectRoute(recs[0].code, coords, destCoords, true);
-                    }
                   }
                 }}
                 destination={destination}
@@ -965,12 +1013,6 @@ function WebHomeScreen() {
                   setIsCustomSearchActive(true);
                   if (originName) {
                     void saveRecentSearch(originName, name);
-                  }
-                  if (originCoords) {
-                    const recs = getRecommendedRoutes(originCoords, coords);
-                    if (recs.length > 0) {
-                      handleSelectRoute(recs[0].code, originCoords, coords, true);
-                    }
                   }
                 }}
                 isCompact={isMapCompact}
@@ -1092,6 +1134,7 @@ function WebHomeScreen() {
       </ScrollView>
 
       <ChatbotWidget isCompact={isCompact} />
+      {toast && <Toast {...toast} />}
     </View>
   );
 }
