@@ -5,14 +5,17 @@ import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
 import { isFavorite, toggleFavorite } from '@/services/localData';
 
+import Skeleton from '@/components/ui/Skeleton';
+
 type RouteCardProps = Readonly<{
-  code: string;
-  title: string;
-  description: string;
-  duration: string;
-  frequency: string;
-  tone: 'blue' | 'green' | 'coral' | 'gold';
+  code?: string;
+  title?: string;
+  description?: string;
+  duration?: string;
+  frequency?: string;
+  tone?: 'blue' | 'green' | 'coral' | 'gold';
   isCompact?: boolean;
+  isLoading?: boolean;
   onPress?: () => void;
 }>;
 
@@ -30,13 +33,33 @@ const busColors = {
   gold: '#efb51d',
 };
 
-export default function RouteCard({ code, title, description, duration, frequency, tone, isCompact = false, onPress }: RouteCardProps) {
+export default function RouteCard({ code = '', title = '', description, duration = '', frequency, tone = 'blue', isCompact = false, isLoading = false, onPress }: RouteCardProps) {
   const [saved, setSaved] = useState(false);
   const favoriteId = `route:${code}`;
 
   useEffect(() => {
+    if (!code) return;
     void isFavorite(favoriteId).then(setSaved);
-  }, [favoriteId]);
+  }, [favoriteId, code]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.routeCard, isCompact && styles.routeCardPhone, { gap: 10, justifyContent: 'space-between', padding: 16 }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Skeleton width={64} height={24} borderRadius={12} />
+          <Skeleton width={20} height={20} borderRadius={10} />
+        </View>
+        <View style={{ gap: 8, marginVertical: 4 }}>
+          <Skeleton width="88%" height={16} borderRadius={4} />
+          <Skeleton width="60%" height={12} borderRadius={4} />
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Skeleton width={75} height={14} borderRadius={4} />
+          <Skeleton width={32} height={32} borderRadius={16} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <Pressable

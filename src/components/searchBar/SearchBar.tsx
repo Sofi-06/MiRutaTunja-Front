@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import Icon from '@/components/ui/Icon';
+import Skeleton from '@/components/ui/Skeleton';
 import { colors, styles } from '@/styles/home.styles';
 import { searchPlaces, PlaceResult } from '@/services/placesService';
 
@@ -15,6 +16,7 @@ type SearchBarProps = Readonly<{
   onDestinationSelect?: (name: string, coords: { lat: number; lng: number }) => void;
   isCompact: boolean;
   showQuickActions?: boolean;
+  isLoadingOrigin?: boolean;
   onUseCurrentLocation?: () => void;
   onSearchBoth?: (origin: string, destination: string) => void;
   onStartPickOrigin?: () => void;
@@ -30,6 +32,7 @@ export default function SearchBar({
   onDestinationSelect,
   isCompact,
   showQuickActions = true,
+  isLoadingOrigin = false,
   onUseCurrentLocation,
   onSearchBoth,
   onStartPickOrigin,
@@ -66,6 +69,7 @@ export default function SearchBar({
 
   // Estados para autocompletado
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [activeField, setActiveField] = useState<'origin' | 'destination' | null>(null);
   const timeoutRef = useRef<any>(null);
   // Recuerda el último texto por el que ya se pidieron sugerencias, para no
@@ -91,10 +95,12 @@ export default function SearchBar({
     if (!text.trim()) {
       setSuggestions([]);
       setActiveField(null);
+      setIsLoadingSuggestions(false);
       return;
     }
 
     setActiveField(field);
+    setIsLoadingSuggestions(true);
 
     timeoutRef.current = setTimeout(async () => {
       console.log(`SearchBar: Debounce triggered for ${field}: "${text}"`);
@@ -105,6 +111,7 @@ export default function SearchBar({
         lastSearchedDestinationRef.current = text;
       }
       setSuggestions(results.filter((place): place is PlaceResult => Boolean(place?.name && Number.isFinite(place.lat) && Number.isFinite(place.lng))));
+      setIsLoadingSuggestions(false);
     }, 350);
   };
 
@@ -128,6 +135,17 @@ export default function SearchBar({
     setActiveField(null);
   };
 
+  const handleUseCurrentLocationPress = () => {
+    userEditedOriginRef.current = false;
+    setLocalOrigin('Mi ubicación actual');
+    onOriginChange('Mi ubicación actual');
+    setSuggestions([]);
+    setActiveField(null);
+    if (onUseCurrentLocation) {
+      onUseCurrentLocation();
+    }
+  };
+
   return (
     <View style={[styles.searchRow, isCompact && styles.searchRowCompact, isCompact && styles.searchRowPhone, { width: '100%' }]}>
       <View style={[styles.searchBox, { flexDirection: 'column', gap: 10, padding: 14, width: '100%', borderRadius: 16, marginTop: showQuickActions && !isCompact ? 66 : 0 }, isCompact && styles.searchBoxCompact, isCompact && styles.searchBoxPhone]}>
@@ -135,61 +153,45 @@ export default function SearchBar({
           {/* Fila del Origen */}
           <View style={[styles.searchFieldRow, !isCompact && styles.searchFieldRowInline, { flex: 1, minWidth: isCompact ? '100%' : 260 }]}>
             <Icon name="pin" color={colors.blue} size={20} />
-            <TextInput
-              value={localOrigin}
-              onChangeText={(txt) => handleTextChange(txt, 'origin')}
-              onFocus={() => {
-                setFocusedField('origin');
-                if (localOrigin.trim()) {
-                  // Si ya se buscó este mismo texto, solo reabre el dropdown existente
-                  // en vez de relanzar la búsqueda (evita carreras con una respuesta lenta).
-                  if (localOrigin === lastSearchedOriginRef.current) {
-                    setActiveField('origin');
-                  } else {
-                    handleTextChange(localOrigin, 'origin');
+            {isLoadingOrigin && !localOrigin ? (
+              <View style={{ flex: 1, height: 40, backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 12, justifyContent: 'center' }}>
+                <Skeleton width="55%" height={14} borderRadius={4} />
+              </View>
+            ) : (
+              <TextInput
+                value={localOrigin}
+                onChangeText={(txt) => handleTextChange(txt, 'origin')}
+                onFocus={() => {
+                  setFocusedField('origin');
+                  if (localOrigin.trim()) {
+                    if (localOrigin === lastSearchedOriginRef.current) {
+                      setActiveField('origin');
+                    } else {
+                      handleTextChange(localOrigin, 'origin');
+                    }
                   }
-                }
-              }}
-              onBlur={() => {
-                setFocusedField(null);
-              }}
-              onSubmitEditing={() => {
-                userEditedOriginRef.current = false;
-                userEditedDestinationRef.current = false;
-                if (onSearchBoth) onSearchBoth(localOrigin, localDestination);
-              }}
-              placeholder="¿De dónde sales? (ej: UPTC, Plaza de Bolívar...)"
-              placeholderTextColor={colors.muted}
-              style={{ 
-                flex: 1, 
-                minWidth: 0,
-                height: 40,
-                fontSize: 14,
-                color: colors.ink,
-                backgroundColor: '#f1f5f9',
-                borderRadius: 8,
-                paddingHorizontal: 12
-              }}
-            />
-            {onStartPickOrigin && (
-              <Pressable
-                onPress={onStartPickOrigin}
-                hitSlop={6}
-                style={({ pressed }) => ({
-                  backgroundColor: pressed ? '#dbeafe' : '#e0f2fe',
-                  paddingHorizontal: 8,
-                  paddingVertical: 6,
+                }}
+                onBlur={() => {
+                  setFocusedField(null);
+                }}
+                onSubmitEditing={() => {
+                  userEditedOriginRef.current = false;
+                  userEditedDestinationRef.current = false;
+                  if (onSearchBoth) onSearchBoth(localOrigin, localDestination);
+                }}
+                placeholder="¿De dónde sales? (ej: UPTC, Plaza de Bolívar...)"
+                placeholderTextColor={colors.muted}
+                style={{ 
+                  flex: 1, 
+                  minWidth: 0,
+                  height: 40,
+                  fontSize: 14,
+                  color: colors.ink,
+                  backgroundColor: '#f1f5f9',
                   borderRadius: 8,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 3,
-                  borderWidth: 1,
-                  borderColor: '#bae6fd',
-                })}
-              >
-                <Text style={{ fontSize: 13 }}>📍</Text>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.blueDark }}>En mapa</Text>
-              </Pressable>
+                  paddingHorizontal: 12
+                }}
+              />
             )}
           </View>
 
@@ -230,31 +232,11 @@ export default function SearchBar({
                 paddingHorizontal: 12
               }}
             />
-            {onStartPickDestination && (
-              <Pressable
-                onPress={onStartPickDestination}
-                hitSlop={6}
-                style={({ pressed }) => ({
-                  backgroundColor: pressed ? '#fee2e2' : '#fef2f2',
-                  paddingHorizontal: 8,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 3,
-                  borderWidth: 1,
-                  borderColor: '#fecaca',
-                })}
-              >
-                <Text style={{ fontSize: 13 }}>🎯</Text>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: '#b91c1c' }}>En mapa</Text>
-              </Pressable>
-            )}
           </View>
         </View>
 
         {/* Sugerencias de Autocompletado */}
-        {activeField && suggestions.length > 0 && (
+        {activeField && (isLoadingSuggestions || suggestions.length > 0) && (
           <View style={{
             width: '100%',
             backgroundColor: '#ffffff',
@@ -275,41 +257,56 @@ export default function SearchBar({
               <Text style={{ fontSize: 11, fontWeight: '800', color: activeField === 'origin' ? colors.blue : colors.coral, letterSpacing: 0.5 }}>
                 {activeField === 'origin' ? '📍 SUGERENCIAS DE ORIGEN' : '🎯 SUGERENCIAS DE DESTINO'}
               </Text>
-              <Pressable onPress={() => { setSuggestions([]); setActiveField(null); }} hitSlop={8}>
+              <Pressable onPress={() => { setSuggestions([]); setActiveField(null); setIsLoadingSuggestions(false); }} hitSlop={8}>
                 <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '700' }}>Cerrar ✕</Text>
               </Pressable>
             </View>
-            {suggestions.slice(0, 4).map((item, index) => (
-              <Pressable
-                key={index}
-                onPress={() => handleSelectSuggestion(item)}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  paddingVertical: 9,
-                  paddingHorizontal: 6,
-                  backgroundColor: pressed ? '#f8fafc' : 'transparent',
-                  borderRadius: 8,
-                  borderBottomWidth: index < Math.min(suggestions.length, 4) - 1 ? 1 : 0,
-                  borderBottomColor: '#f1f5f9'
-                })}
-              >
-                <Icon name={activeField === 'origin' ? 'pin' : 'target'} color={activeField === 'origin' ? colors.blue : colors.coral} size={16} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink }}>{item.name}</Text>
-                  {item.address && <Text style={{ fontSize: 11, color: colors.muted, marginTop: 1 }} numberOfLines={1}>{item.address}</Text>}
-                </View>
-                <Icon name="chevron" color={colors.muted} size={14} />
-              </Pressable>
-            ))}
+
+            {isLoadingSuggestions ? (
+              <View style={{ paddingVertical: 4, gap: 8 }}>
+                {[1, 2, 3].map((key) => (
+                  <View key={key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 6 }}>
+                    <Skeleton width={18} height={18} borderRadius={9} />
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <Skeleton width="65%" height={14} borderRadius={4} />
+                      <Skeleton width="40%" height={10} borderRadius={4} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              suggestions.slice(0, 4).map((item, index) => (
+                <Pressable
+                  key={index}
+                  onPress={() => handleSelectSuggestion(item)}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingVertical: 9,
+                    paddingHorizontal: 6,
+                    backgroundColor: pressed ? '#f8fafc' : 'transparent',
+                    borderRadius: 8,
+                    borderBottomWidth: index < Math.min(suggestions.length, 4) - 1 ? 1 : 0,
+                    borderBottomColor: '#f1f5f9'
+                  })}
+                >
+                  <Icon name={activeField === 'origin' ? 'pin' : 'target'} color={activeField === 'origin' ? colors.blue : colors.coral} size={16} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.ink }}>{item.name}</Text>
+                    {item.address && <Text style={{ fontSize: 11, color: colors.muted, marginTop: 1 }} numberOfLines={1}>{item.address}</Text>}
+                  </View>
+                  <Icon name="chevron" color={colors.muted} size={14} />
+                </Pressable>
+              ))
+            )}
           </View>
         )}
 
         {/* Acciones */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: 2 }}>
           <Pressable
-            onPress={onUseCurrentLocation}
+            onPress={handleUseCurrentLocationPress}
             style={styles.searchLocationAction}
           >
             <Icon name="gps" color={colors.blue} size={17} />
@@ -355,7 +352,7 @@ export default function SearchBar({
             <Icon name="heart" color={colors.blue} size={18} />
             <Text style={[styles.quickTextActive, styles.quickTextPhone]}>Favoritos</Text>
           </Pressable>
-          <Pressable onPress={onUseCurrentLocation} style={[styles.quickPill, styles.quickPillPhone]}>
+          <Pressable onPress={handleUseCurrentLocationPress} style={[styles.quickPill, styles.quickPillPhone]}>
             <Icon name="gps" color={colors.ink} size={17} />
             <Text style={[styles.quickText, styles.quickTextPhone]}>Mi ubicación</Text>
           </Pressable>

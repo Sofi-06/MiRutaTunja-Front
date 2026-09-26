@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 
 import PageScaffold from '@/components/layout/PageScaffold';
 import Icon from '@/components/ui/Icon';
+import Skeleton from '@/components/ui/Skeleton';
 import routesMetadata from '@/assets/routes/routes-metadata.json';
 import { getFavorites, toggleFavorite } from '@/services/localData';
 
@@ -15,9 +16,13 @@ export default function RoutesScreen() {
   const isCompact = width < 760;
   const isNative = Platform.OS !== 'web';
   const [query, setQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   useEffect(() => {
-    void getFavorites().then((favorites) => setFavoriteIds(favorites.map((favorite) => favorite.id)));
+    void getFavorites().then((favorites) => {
+      setFavoriteIds(favorites.map((favorite) => favorite.id));
+      setIsLoading(false);
+    });
   }, []);
   const filteredRoutes = routeItems.filter((route) => `${route.code} ${route.name} ${route.category}`.toLowerCase().includes(query.toLowerCase()));
 
@@ -44,23 +49,38 @@ export default function RoutesScreen() {
           </View>
         </View>
         <View style={styles.list}>
-          {filteredRoutes.map((item, index) => (
-            <Pressable key={item.key} onPress={() => router.push({ pathname: '/', params: { routeCode: item.code } })} style={[styles.card, isCompact && styles.cardPhone, isNative && styles.cardNative]}>
-              <Image source={require('@/assets/images/hoja3.png')} resizeMode="contain" style={styles.cardLeaf} />
-              <View style={styles.cardTop}>
-                <View style={[styles.codePill, { backgroundColor: ['#e5f3ee', '#edf5e7', '#f0ecf8'][index % 3] }]}><Icon name="bus" color={['#268060', '#59945e', '#7a5da6'][index % 3]} size={19} /><Text style={[styles.code, { color: ['#268060', '#59945e', '#7a5da6'][index % 3] }]}>{item.code}</Text></View>
-                <Pressable onPress={async (event) => { event.stopPropagation(); const favorites = await toggleFavorite({ id: `route:${item.key}`, type: 'route', title: item.code, subtitle: item.name }); setFavoriteIds(favorites.map((favorite) => favorite.id)); }}>
-                  <Icon name="heart" color={favoriteIds.includes(`route:${item.key}`) ? '#d8957d' : '#728092'} size={20} />
+          {isLoading
+            ? [1, 2, 3, 4, 5, 6].map((key) => (
+                <View key={key} style={[styles.card, isCompact && styles.cardPhone, isNative && styles.cardNative, { gap: 12, padding: 20 }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Skeleton width={70} height={28} borderRadius={14} />
+                    <Skeleton width={20} height={20} borderRadius={10} />
+                  </View>
+                  <Skeleton width="85%" height={20} borderRadius={4} />
+                  <Skeleton width="45%" height={14} borderRadius={4} />
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                    <Skeleton width={110} height={24} borderRadius={12} />
+                    <Skeleton width={90} height={24} borderRadius={12} />
+                  </View>
+                </View>
+              ))
+            : filteredRoutes.map((item, index) => (
+                <Pressable key={item.key} onPress={() => router.push({ pathname: '/', params: { routeCode: item.code } })} style={[styles.card, isCompact && styles.cardPhone, isNative && styles.cardNative]}>
+                  <Image source={require('@/assets/images/hoja3.png')} resizeMode="contain" style={styles.cardLeaf} />
+                  <View style={styles.cardTop}>
+                    <View style={[styles.codePill, { backgroundColor: ['#e5f3ee', '#edf5e7', '#f0ecf8'][index % 3] }]}><Icon name="bus" color={['#268060', '#59945e', '#7a5da6'][index % 3]} size={19} /><Text style={[styles.code, { color: ['#268060', '#59945e', '#7a5da6'][index % 3] }]}>{item.code}</Text></View>
+                    <Pressable onPress={async (event) => { event.stopPropagation(); const favorites = await toggleFavorite({ id: `route:${item.key}`, type: 'route', title: item.code, subtitle: item.name }); setFavoriteIds(favorites.map((favorite) => favorite.id)); }}>
+                      <Icon name="heart" color={favoriteIds.includes(`route:${item.key}`) ? '#d8957d' : '#728092'} size={20} />
+                    </Pressable>
+                  </View>
+                  <Text style={styles.routeName}>{item.name}</Text>
+                  <Text style={styles.category}>{item.category}</Text>
+                  <View style={styles.cardBottom}>
+                    <View style={styles.schedulePill}><Icon name="clock" color="#366a58" size={16} /><Text style={styles.schedule}>Lun-Sab: {item.schedule.weekdays.hours}</Text></View>
+                    <View style={styles.routeButton}><Text style={styles.routeButtonText}>Ver recorrido</Text><Icon name="arrow" color="#2f8062" size={17} /></View>
+                  </View>
                 </Pressable>
-              </View>
-              <Text style={styles.routeName}>{item.name}</Text>
-              <Text style={styles.category}>{item.category}</Text>
-              <View style={styles.cardBottom}>
-                <View style={styles.schedulePill}><Icon name="clock" color="#366a58" size={16} /><Text style={styles.schedule}>Lun-Sab: {item.schedule.weekdays.hours}</Text></View>
-                <View style={styles.routeButton}><Text style={styles.routeButtonText}>Ver recorrido</Text><Icon name="arrow" color="#2f8062" size={17} /></View>
-              </View>
-            </Pressable>
-          ))}
+              ))}
         </View>
       </View>
     </PageScaffold>

@@ -4,6 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import PageScaffold from '@/components/layout/PageScaffold';
 import Icon from '@/components/ui/Icon';
+import Skeleton from '@/components/ui/Skeleton';
 import { Favorite, getFavorites, toggleFavorite } from '@/services/localData';
 
 export default function FavoritesScreen() {
@@ -12,8 +13,14 @@ export default function FavoritesScreen() {
   const isCompact = width < 760;
   const isNative = Platform.OS !== 'web';
   const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   useFocusEffect(useCallback(() => {
-    void getFavorites().then(setFavorites);
+    setIsLoading(true);
+    void getFavorites().then((data) => {
+      setFavorites(data);
+      setIsLoading(false);
+    });
   }, []));
 
   return (
@@ -26,24 +33,41 @@ export default function FavoritesScreen() {
           <Text style={[styles.title, isNative && styles.titleNative]}>Tus <Text style={styles.titleAccent}>favoritos</Text></Text>
           <Text style={styles.subtitle}>Guarda aquí tus rutas y lugares preferidos para encontrarlos más rápido.</Text>
         </View>
-        {favorites.length === 0 ? <View style={[styles.emptyCard, isNative && styles.emptyCardNative]}>
-          <View style={styles.iconCircle}><Icon name="heart" color="#3f719b" size={30} /></View>
-          <Text style={styles.emptyTitle}>Aún no tienes favoritos</Text>
-          <Text style={styles.emptyText}>Cuando guardes una ruta o un lugar de interés aparecerá en esta lista.</Text>
-          <View style={[styles.actions, isNative && styles.actionsNative]}>
-            <Pressable onPress={() => router.push('/routes' as never)} style={[styles.primaryButton, isNative && styles.actionButtonNative]}><Text style={styles.primaryText}>Ver rutas</Text></Pressable>
-            <Pressable onPress={() => router.push('/explore')} style={[styles.secondaryButton, isNative && styles.actionButtonNative]}><Text style={styles.secondaryText}>Explorar Tunja</Text></Pressable>
+        {isLoading ? (
+          <View style={styles.favoriteList}>
+            {[1, 2, 3].map((key) => (
+              <View key={key} style={[styles.favoriteRow, isCompact && styles.favoriteRowPhone, { paddingVertical: 16 }]}>
+                <Skeleton width={36} height={36} borderRadius={18} />
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Skeleton width="45%" height={16} borderRadius={4} />
+                  <Skeleton width="70%" height={12} borderRadius={4} />
+                </View>
+                <Skeleton width={20} height={20} borderRadius={10} />
+              </View>
+            ))}
           </View>
-        </View> : <View style={styles.favoriteList}>
-          {favorites.map((favorite) => (
-            <View key={favorite.id} style={[styles.favoriteRow, isCompact && styles.favoriteRowPhone]}>
-              <Image source={require('@/assets/images/hoja3.png')} resizeMode="contain" style={styles.favoriteLeaf} />
-              <View style={styles.favoriteIcon}><Icon name={favorite.type === 'route' ? 'bus' : 'location'} color="#3f719b" size={20} /></View>
-              <View style={styles.favoriteCopy}><Text style={styles.favoriteTitle}>{favorite.title}</Text><Text style={styles.favoriteSubtitle}>{favorite.subtitle}</Text></View>
-              <Pressable onPress={async () => setFavorites(await toggleFavorite(favorite))} accessibilityLabel={`Quitar ${favorite.title} de favoritos`}><Icon name="trash" color="#d8957d" size={21} /></Pressable>
+        ) : favorites.length === 0 ? (
+          <View style={[styles.emptyCard, isNative && styles.emptyCardNative]}>
+            <View style={styles.iconCircle}><Icon name="heart" color="#3f719b" size={30} /></View>
+            <Text style={styles.emptyTitle}>Aún no tienes favoritos</Text>
+            <Text style={styles.emptyText}>Cuando guardes una ruta o un lugar de interés aparecerá en esta lista.</Text>
+            <View style={[styles.actions, isNative && styles.actionsNative]}>
+              <Pressable onPress={() => router.push('/routes' as never)} style={[styles.primaryButton, isNative && styles.actionButtonNative]}><Text style={styles.primaryText}>Ver rutas</Text></Pressable>
+              <Pressable onPress={() => router.push('/explore')} style={[styles.secondaryButton, isNative && styles.actionButtonNative]}><Text style={styles.secondaryText}>Explorar Tunja</Text></Pressable>
             </View>
-          ))}
-        </View>}
+          </View>
+        ) : (
+          <View style={styles.favoriteList}>
+            {favorites.map((favorite) => (
+              <View key={favorite.id} style={[styles.favoriteRow, isCompact && styles.favoriteRowPhone]}>
+                <Image source={require('@/assets/images/hoja3.png')} resizeMode="contain" style={styles.favoriteLeaf} />
+                <View style={styles.favoriteIcon}><Icon name={favorite.type === 'route' ? 'bus' : 'location'} color="#3f719b" size={20} /></View>
+                <View style={styles.favoriteCopy}><Text style={styles.favoriteTitle}>{favorite.title}</Text><Text style={styles.favoriteSubtitle}>{favorite.subtitle}</Text></View>
+                <Pressable onPress={async () => setFavorites(await toggleFavorite(favorite))} accessibilityLabel={`Quitar ${favorite.title} de favoritos`}><Icon name="trash" color="#d8957d" size={21} /></Pressable>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </PageScaffold>
   );

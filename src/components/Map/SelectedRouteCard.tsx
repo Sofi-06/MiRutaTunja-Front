@@ -5,9 +5,11 @@ import Icon from '@/components/ui/Icon';
 import { colors, styles } from '@/styles/home.styles';
 import { isFavorite, toggleFavorite } from '@/services/localData';
 import { getCurrentBusFare } from '@/services/fareService';
+import Skeleton from '@/components/ui/Skeleton';
 
 type SelectedRouteCardProps = Readonly<{
   isCompact?: boolean;
+  isLoading?: boolean;
   isTripStarted?: boolean;
   onToggleTrip?: () => void;
   title?: string;
@@ -29,6 +31,7 @@ type SelectedRouteCardProps = Readonly<{
 
 export default function SelectedRouteCard({
   isCompact = false,
+  isLoading = false,
   isTripStarted: controlledTripStarted,
   onToggleTrip,
   title = 'Mi Ruta Calculada',
@@ -77,6 +80,47 @@ export default function SelectedRouteCard({
     .split(/\s*(?:-|–|—)\s*/)
     .map((place) => place.trim())
     .filter(Boolean))).slice(0, 4);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact, isCompact && styles.selectedRouteCardPhone]}>
+        <View style={styles.routeRecommendationRow}>
+          <Skeleton width={130} height={18} borderRadius={9} />
+          <Skeleton width={90} height={18} borderRadius={9} />
+        </View>
+        <View style={[styles.selectedRouteHeader, { alignItems: 'center' }]}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Skeleton width="70%" height={20} borderRadius={4} />
+          </View>
+          <View style={styles.selectedRouteHeaderActions}>
+            <Skeleton width={48} height={20} borderRadius={4} />
+          </View>
+        </View>
+
+        <View style={styles.routeStats}>
+          <View style={styles.routeStat}>
+            <Skeleton width={18} height={18} borderRadius={9} />
+            <Skeleton width={48} height={14} borderRadius={4} />
+          </View>
+          <View style={styles.routeStat}>
+            <Skeleton width={18} height={18} borderRadius={9} />
+            <Skeleton width={48} height={14} borderRadius={4} />
+          </View>
+        </View>
+
+        <View style={[styles.selectedBusOption, { alignItems: 'center' }]}>
+          <Skeleton width={48} height={48} borderRadius={12} />
+          <View style={[styles.selectedBusCopy, { gap: 6 }]}>
+            <Skeleton width="80%" height={16} borderRadius={4} />
+            <Skeleton width="50%" height={13} borderRadius={4} />
+          </View>
+        </View>
+
+        <Skeleton width="100%" height={48} borderRadius={14} style={{ marginTop: 16 }} />
+        <Skeleton width="100%" height={44} borderRadius={14} style={{ marginTop: 10 }} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.selectedRouteCard, isCompact && styles.selectedRouteCardCompact, isCompact && styles.selectedRouteCardPhone]}>

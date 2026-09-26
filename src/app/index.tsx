@@ -47,10 +47,30 @@ const resolveCurrentLocation = async (): Promise<LocationResult> => {
     if (status !== 'granted') {
       return 'denied';
     }
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    return { lat: location.coords.latitude, lng: location.coords.longitude };
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      if (location?.coords) {
+        return { lat: location.coords.latitude, lng: location.coords.longitude };
+      }
+    } catch (e) {
+      console.warn('Expo Location error, fallbacking to navigator:', e);
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          (err) => {
+            console.error('Browser geolocation error:', err);
+            resolve(null);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+      });
+    }
+    return null;
   } catch (error) {
     console.error('Error obteniendo ubicación actual:', error);
     return null;
@@ -180,6 +200,8 @@ function WebHomeScreen() {
     durationText: '0 min',
   });
   const [routeStops, setRouteStops] = useState<string[]>([]);
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [isInitialAppLoading, setIsInitialAppLoading] = useState(true);
 
   // Estado para la información activa de la ruta que se muestra en la tarjeta de detalles
   const [activeRouteInfo, setActiveRouteInfo] = useState<{
@@ -329,6 +351,7 @@ function WebHomeScreen() {
     if (!originCoords || !destCoords) return;
 
     const fetchRoute = async () => {
+      setIsRouteLoading(true);
       try {
         const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/routes`, {
@@ -380,6 +403,8 @@ function WebHomeScreen() {
         }
       } catch (error) {
         console.error('Error fetching route from backend:', error);
+      } finally {
+        setIsRouteLoading(false);
       }
     };
 
@@ -418,6 +443,7 @@ function WebHomeScreen() {
         setOriginCoords({ lat: DEFAULT_ORIGIN.lat, lng: DEFAULT_ORIGIN.lng });
         setOriginName(DEFAULT_ORIGIN.name);
       }
+      setIsInitialAppLoading(false);
     };
 
     fetchCurrentLocationSilently();
@@ -994,6 +1020,7 @@ function WebHomeScreen() {
             <View style={[styles.mapSearchBarWrap, isMapCompact && styles.mapSearchBarWrapPhone]}>
               <SearchBar
                 origin={originName}
+                isLoadingOrigin={isInitialAppLoading && !originName}
                 onOriginChange={setOriginName}
                 onOriginSelect={(name, coords) => {
                   // Solo actualiza el punto elegido; el recálculo de ruta espera a que el
@@ -1039,6 +1066,7 @@ function WebHomeScreen() {
               </View>
               <SelectedRouteCard
                 isCompact={isMapCompact}
+                isLoading={isInitialAppLoading || isRouteLoading}
                 onClearMap={handleClearMap}
                 isTripStarted={isTripStarted}
                 onToggleTrip={() => setIsTripStarted((started) => !started)}
@@ -1088,26 +1116,38 @@ function WebHomeScreen() {
 
           {showAlternativeRoutes ? (
             <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
-              {alternativeRoutes.length > 0 ? alternativeRoutes.slice(0, 4).map((route, index) => (
-                <RouteCard
-                  key={`${route.code}-${index}`}
-                  code={route.code}
-                  title={route.title}
-                  description={`A ${(route.originDist * 1000).toFixed(0)} m del origen · ${(route.destDist * 1000).toFixed(0)} m del destino`}
-                  duration={`${Math.round(route.dist * 1000)} m`}
-                  frequency=""
-                  tone={(['blue', 'green', 'gold', 'coral'] as const)[index % 4]}
-                  isCompact={isCompact}
-                  onPress={() => handleSelectRoute(route.code, originCoords, destCoords, true)}
-                />
-              )) : <Text style={{ color: colors.muted, fontSize: 14, paddingVertical: 12 }}>No encontramos otra ruta cercana para este trayecto.</Text>}
+              {isRouteLoading ? (
+                [1, 2, 3, 4].map((key) => <RouteCard key={key} isLoading isCompact={isCompact} />)
+              ) : alternativeRoutes.length > 0 ? (
+                alternativeRoutes.slice(0, 4).map((route, index) => (
+                  <RouteCard
+                    key={`${route.code}-${index}`}
+                    code={route.code}
+                    title={route.title}
+                    description={`A ${(route.originDist * 1000).toFixed(0)} m del origen · ${(route.destDist * 1000).toFixed(0)} m del destino`}
+                    duration={`${Math.round(route.dist * 1000)} m`}
+                    frequency=""
+                    tone={(['blue', 'green', 'gold', 'coral'] as const)[index % 4]}
+                    isCompact={isCompact}
+                    onPress={() => handleSelectRoute(route.code, originCoords, destCoords, true)}
+                  />
+                ))
+              ) : (
+                <Text style={{ color: colors.muted, fontSize: 14, paddingVertical: 12 }}>No encontramos otra ruta cercana para este trayecto.</Text>
+              )}
             </View>
           ) : (
             <View style={[styles.routeGrid, isCompact && styles.routeGridPhone]}>
-              <RouteCard code="K-07" title="Arboleda – Terminal" description="Despacho Arboleda → Terminal de Transportes" duration="18 min" frequency="cada 8 min" tone="blue" isCompact={isCompact} onPress={() => handleSelectRoute('R-07')} />
-              <RouteCard code="K-01" title="Terminal – Norte" description="Terminal de Transportes → Barrio Los Muiscas" duration="31 min" frequency="cada 9 min" tone="green" isCompact={isCompact} onPress={() => handleSelectRoute('R-01')} />
-              <RouteCard code="K-11" title="Sur – Hospital" description="Villa Universitaria → Hospital San Rafael" duration="27 min" frequency="cada 12 min" tone="gold" isCompact={isCompact} onPress={() => handleSelectRoute('R-11')} />
-              <RouteCard code="K-15" title="Pozo de Donato" description="Plaza Real → Pozo de Donato" duration="18 min" frequency="cada 15 min" tone="coral" isCompact={isCompact} onPress={() => handleSelectRoute('R-15')} />
+              {isInitialAppLoading ? (
+                [1, 2, 3, 4].map((key) => <RouteCard key={key} isLoading isCompact={isCompact} />)
+              ) : (
+                <>
+                  <RouteCard code="K-07" title="Arboleda – Terminal" description="Despacho Arboleda → Terminal de Transportes" duration="18 min" frequency="cada 8 min" tone="blue" isCompact={isCompact} onPress={() => handleSelectRoute('R-07')} />
+                  <RouteCard code="K-01" title="Terminal – Norte" description="Terminal de Transportes → Barrio Los Muiscas" duration="31 min" frequency="cada 9 min" tone="green" isCompact={isCompact} onPress={() => handleSelectRoute('R-01')} />
+                  <RouteCard code="K-11" title="Sur – Hospital" description="Villa Universitaria → Hospital San Rafael" duration="27 min" frequency="cada 12 min" tone="gold" isCompact={isCompact} onPress={() => handleSelectRoute('R-11')} />
+                  <RouteCard code="K-15" title="Pozo de Donato" description="Plaza Real → Pozo de Donato" duration="18 min" frequency="cada 15 min" tone="coral" isCompact={isCompact} onPress={() => handleSelectRoute('R-15')} />
+                </>
+              )}
             </View>
           )}
 
@@ -1116,6 +1156,7 @@ function WebHomeScreen() {
           <View onLayout={(event) => setInsightsOffset(event.nativeEvent.layout.y)}>
             <RouteInsights
               isCompact={isCompact}
+              isLoading={isInitialAppLoading || isRouteLoading}
               recentSearches={recentSearches}
               onSelectRecent={handleSearchRoute}
               onSelectPlace={(place) => router.push({
